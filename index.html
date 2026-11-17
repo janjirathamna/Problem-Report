@@ -100,6 +100,8 @@
     #report td.n{text-align:center;font-weight:700}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
+
+.dwarn td{background:#fff2b3!important;color:#222!important}.dwarn .lbl{color:#7a5a00!important}
 </style>
 </head>
 <body>
@@ -1280,11 +1282,15 @@ const TABLE_ONLY = ['log', 'modules', 'remarks'];     // pages that have a table
 
 function renderLog(rows) {
   rows = [...rows].sort(byTimeAsc);                  // Issue Log: oldest -> newest
+  const fl = rows.filter(r => r.dateWarn); rows = [...fl, ...rows.filter(r => !r.dateWarn)];   // dates waiting for a check: on top, light yellow
   $('logCount').textContent = `${rows.length} ${t('cases')}`;
+  const DW = ({ th: ['⚠ ตรวจสอบวันที่ก่อนแก้ — ยังไม่ได้แก้ ยืนยันได้ในชีท (ตารางนี้ยังแสดงวันที่ตามที่เขียนไว้)', 'จะแก้เป็น'], zh: ['⚠ 请先核对日期 — 尚未修改，请在表格中确认（此处仍显示原始日期）', '将改为'], en: ['⚠ Check these dates before fixing — nothing changed yet, confirm in the sheet (this table still shows the date as written)', 'will become'] })[lang] || ['⚠ Check dates', 'will become'];
+  const banner = fl.length ? `<tr class="dwarn"><td colspan="5"><b>${DW[0]} (${fl.length})</b><ul style="margin:4px 0 0 18px;list-style:disc">${fl.map(r => (r.dateFix || []).map(x => `<li>${esc(mName(r))} · ${esc(x.f)}: ${esc(x.from)} → ${DW[1]} <b>${esc(x.to)}</b></li>`).join('')).join('')}</ul></td></tr>` : '';
   const sub = v => (lang !== 'en' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
   const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
-  $('tblLog').tBodies[0].innerHTML = rows.map(r => `<tr class="align-top">
-    <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}</td>
+  const dwNote = r => r.dateWarn ? `<div class="lbl">⚠ ${esc(r.dateWarn)}</div>` : '';
+  $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}">
+    <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}${dwNote(r)}</td>
     <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
     <td>${esc(mName(r))}</td>
     <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
