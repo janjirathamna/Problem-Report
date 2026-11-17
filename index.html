@@ -6,11 +6,11 @@
 <title>Non-Standard Problem Report</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0e1318;--panel:#161d24;--panel2:#1c252e;--line:#26313b;--text:#e6edf3;--muted:#8b98a5;--accent:#2dd4bf;--accent-ink:#04201c}
   [data-theme=light]{--bg:#eef1f3;--panel:#fff;--panel2:#f3f5f7;--line:#d9dfe4;--text:#18222b;--muted:#617080;--accent:#0f766e;--accent-ink:#fff}
-  body{font-family:'IBM Plex Sans','Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+  body{font-family:'IBM Plex Sans','Noto Sans Thai','Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px}
   .btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:1;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);white-space:nowrap}
   .btn:hover{border-color:var(--accent)}
@@ -77,7 +77,7 @@
   @media print{
     body{background:#fff!important;color:#111!important;font-size:10.5px}
     body>header,main,dialog{display:none!important}
-    #report{display:block;color:#111;font-family:'IBM Plex Sans','Noto Sans SC',sans-serif}
+    #report{display:block;color:#111;font-family:'IBM Plex Sans','Noto Sans Thai','Noto Sans SC',sans-serif}
     #report h1{font-size:18px;font-weight:700;margin:0}
     #report h2{font-size:13px;font-weight:700;margin:14px 0 6px;padding-bottom:3px;border-bottom:1.5px solid #111}
     #report .meta{color:#444;font-size:10px;margin-top:2px}
@@ -115,6 +115,7 @@
          href="https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?gid=1012980436#gid=1012980436"></a>
       <button id="btn-en" class="btn">EN</button>
       <button id="btn-zh" class="btn">中文</button>
+      <button id="btn-th" class="btn">ไทย</button>
       <button id="btnTheme" class="btn" title="Theme">◐</button>
       <button id="btnPng" class="btn" data-i18n="saveImg"></button>
       <button id="btnCsv" class="btn" title="CSV">⇩ CSV</button>
@@ -284,7 +285,7 @@
 /* ================== CONFIG ================== */
 // Paste your deployed Web App URL (…/exec). Leave empty to preview with demo data.
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxNht563H7COeUnwfF4NUImMsv3bFGoIpiHsE4h1tTrPFemxnskTOBsCw02zQ-ts7G8/exec';
-const APP_VERSION = 'v34-2026-11-10';
+const APP_VERSION = 'v35-2026-11-17';
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
 const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': '#a78bfa' };
@@ -346,18 +347,67 @@ const I18N = {
     issue:'问题', times:'次数', logTitle:'完整问题记录', time:'时间', solution:'解决方法',
     saveTitle:'保存为图片', saveChart:'仅图表', saveBoth:'图表 + 表格', yes:'是', exit:'退出', imgBusy:'正在生成图片…', imgFail:'无法生成图片，请改用 CSV 或 PDF。', dlPng:'⇩ 下载 PNG',
     loading:'数据加载中…', demo:'当前为演示数据。请在 index.html 中设置 GAS_URL 以加载表格数据。',
-    error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' }
+    error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' },
+  th:{ title:'รายงานปัญหาที่ไม่เป็นมาตรฐาน', addData:'＋ เพิ่มข้อมูล', factory:'โรงงาน', machine:'เครื่อง', reset:'รีเซ็ต',
+    all:'ทุกโรงงาน', allM:'ทุกเครื่อง', cases:'รายการ', chartTitle:'ปัญหาต่อเครื่อง',
+    tabOverview:'ภาพรวม', saveImg:'▧ บันทึกรูป', imgTitle:'บันทึกหน้านี้เป็นรูปภาพ',
+    imgHint:'คลิกขวาที่รูปด้านล่าง แล้วเลือก “บันทึกรูปภาพเป็น…” (บนมือถือ: กดค้างที่รูป แล้วเลือก “บันทึกรูปภาพ”)',
+    imgNone:'หน้านี้ไม่มีกราฟให้บันทึก ให้เปิดภาพรวม, Top 3 หรือสรุปตามรุ่น แล้วลองอีกครั้ง',
+    tT1:'จำนวนต่อรุ่น', tT2a:'5 ปัญหาอันดับต้นของ', tT2b:'เครื่องของ', tT3:'5 ปัญหาอันดับต้นของเครื่อง',
+    tH1:'คลิกแท่งกราฟเพื่อดู 5 ปัญหาอันดับต้นของรุ่น หรือคลิกชื่อรุ่น (บนแกนหรือในตาราง) เพื่อดูเครื่องของรุ่นนั้น',
+    tH2a:'5 ปัญหาอันดับต้นของรุ่นนี้ ตารางแยกทุกปัญหาตามหมายเลขเครื่องและโรงงาน คลิกหมายเลขเพื่อดู 5 ปัญหาอันดับต้นของเครื่องนั้น › แสดงวันและเวลา',
+    tH2b:'จำนวนต่อเครื่อง คลิกแท่งกราฟหรือชื่อเครื่องเพื่อดู 5 ปัญหาอันดับต้นของเครื่องนั้น',
+    tH3:'5 ปัญหาอันดับต้นของเครื่องนี้ ตารางแสดงทุกปัญหา › แสดงวันและเวลา',
+    tMachines:'เครื่อง', colMachines:'เครื่อง', colNum:'#',
+    topNoteM:'อันดับ 1 = เกิดบ่อยที่สุด แสดงเฉพาะปัญหาที่เกิด 2 ครั้งขึ้นไปในรุ่นเดียวกัน ปัญหาที่เท่ากันได้อันดับเดียวกัน',
+    topChartTitle:'ปัญหาที่เกิดซ้ำต่อเครื่อง',
+    topChartHint:'หนึ่งแท่งต่อหนึ่งเครื่อง (จำนวนปัญหาที่เกิดซ้ำ) คลิกแท่งกราฟ หรือ › ข้างปัญหาในตาราง เพื่อดูวันและเวลา',
+    whenTip:'แสดงว่าเกิดเมื่อไร', colNo:'#', colDate:'วันที่', colClock:'เวลา', close:'ปิด',
+    tabModel:'สรุปตามรุ่น', mAll:'ทุกรุ่น', mBack:'← ย้อนกลับ', mChart1:'ปัญหาต่อรุ่น', mChart2:'ปัญหาที่เกิดซ้ำใน', mNoRec:'ไม่มีปัญหาที่เกิด 2 ครั้งขึ้นไปในรุ่นนี้',
+    mChart3:'ปัญหาของ', mHint1:'คลิกแท่งกราฟเพื่อดูว่าปัญหาใดเกิดซ้ำในรุ่นนั้น',
+    mHint2:'กราฟ: ปัญหาที่เกิด 2 ครั้งขึ้นไป ตาราง: ทุกปัญหา แยกตามเครื่อง',
+    colMachine:'เครื่อง', brand:'ยี่ห้อ', model:'รุ่น', allB:'ทุกยี่ห้อ', allMod:'ทุกรุ่น',
+    modelTitle:'ปัญหาจัดกลุ่มตามยี่ห้อ + รุ่น', modelNote:'รวมเครื่องทั้งหมดที่ยี่ห้อและรุ่นเดียวกัน', machinesWord:'เครื่อง',
+    modelSortAsc:'เรียงจากน้อยไปมาก', modelSortDesc:'เรียงจากมากไปน้อย',
+    repTitle:'รายงานปัญหาที่ไม่เป็นมาตรฐาน', repLog:'บันทึกปัญหา', rec:'ปัญหาที่เกิดซ้ำ (2 ครั้งขึ้นไป)', one:'ปัญหาที่เกิดครั้งเดียว', generated:'สร้างเมื่อ',
+    nRec:'ประเภทปัญหาที่เกิดซ้ำ', nOne:'ปัญหาที่เกิดครั้งเดียว', dateRange:'วันที่', back:'← ทุกเครื่อง', rankCol:'อันดับ',
+    chartMachine:'ปัญหาของ', hintAll:'คลิกแท่งกราฟเพื่อดูปัญหาของเครื่องนั้น',
+    tabTop:'Top 3 ที่เกิดซ้ำ', tabLog:'บันทึกปัญหา', tabDowntime:'เวลาหยุดเครื่อง', tabModules:'โมดูลของเครื่อง', tabRemarks:'หมายเหตุ',
+    dtTotal:'เวลาหยุดเครื่องรวม', dtColTotal:'รวม (นาที)', dtColAvg:'เฉลี่ย (นาที)', dtColCases:'ครั้ง',
+    dtPick1:'คลิกแท่งกราฟหรือชื่อรุ่นเพื่อดูเครื่องของรุ่นนั้น', dtPick2:'คลิกแท่งกราฟหรือชื่อเครื่องเพื่อดู 5 ปัญหาที่หยุดเครื่องนานที่สุดของเครื่องนั้น',
+    dtPick3:'5 ปัญหาที่หยุดเครื่องนานที่สุด คลิกแท่งกราฟเพื่อแสดงเฉพาะรายการของปัญหานั้น คลิกอีกครั้งเพื่อยกเลิก',
+    dtT2:'เวลาหยุดเครื่องต่อเครื่อง', dtT3:'5 ปัญหาที่หยุดเครื่องนานที่สุด', dtTblT2:'5 ปัญหาที่หยุดเครื่องนานที่สุดของแต่ละเครื่อง', dtTblT3:'เหตุการณ์หยุดเครื่อง (นานที่สุดก่อน)',
+    dtEvents:'เหตุการณ์หยุดเครื่อง', dtAvg:'เฉลี่ยต่อเหตุการณ์', dtLongest:'เหตุการณ์ที่นานที่สุด', dtByModel:'เวลาหยุดเครื่องตามรุ่น (นาที)', dtByDay:'เวลาหยุดเครื่องต่อวัน (นาที)',
+    dtTblTitle:'เหตุการณ์หยุดเครื่องที่นานที่สุด', colMin:'นาที', colReported:'แจ้ง', colFinished:'เสร็จ',
+    dtHint:'จากคอลัมน์ 维修总时间(min) แท่งกราฟแบ่งตามโรงงาน แถวที่เป็นค่า error หรือติดลบจะไม่ถูกนับ',
+    dtEmpty:'ไม่มีข้อมูลเวลาหยุดเครื่อง ตรวจสอบว่าคอลัมน์ 维修总时间(min) มีตัวเลข', dtSkipped:'แถวที่ไม่ถูกนับ (error / ติดลบ)',
+    modTitle:'ประวัติโมดูลของเครื่อง',
+    modNote:'สร้างจากบันทึกปัญหา: โมดูลหนึ่งนับตั้งแต่ครั้งแรกที่บันทึกบนเครื่องนั้น จนถึงบันทึกสุดท้ายก่อนโมดูลถัดไป ส่วนนี้ไม่ใช้ตัวกรองวันที่',
+    colModule:'โมดูล', colFirst:'บันทึกครั้งแรก', colLast:'บันทึกล่าสุด', colEvents:'จำนวนครั้ง', colStatus:'สถานะ', stCurrent:'ปัจจุบัน', stChangedTo:'เปลี่ยนเป็น',
+    modMachines:'เครื่อง', modChanges:'ครั้งที่เปลี่ยนโมดูล', modNotSet:'ไม่ได้ตั้งค่า', modNotRec:'ไม่มีบันทึก',
+    modNoModNote:'ไม่มีการระบุโมดูล (机种) ในบันทึกปัญหาของเครื่องนี้ จึงไม่ทราบว่าผลิตอะไรอยู่ กรุณากรอกคอลัมน์ 机种 ในชีต',
+    modViewCards:'การ์ด', modViewTable:'ตาราง', modLvB:'ยี่ห้อ', modLvM:'รุ่น', modLvV:'เวอร์ชัน', modLvK:'เครื่อง', modPick:'เลือก', modNow:'กำลังผลิต', modSince:'ตั้งแต่',
+    modLastLog:'บันทึกล่าสุด', modLogs:'บันทึก', modFirst:'บันทึกครั้งแรก', modTlTitle:'การเปลี่ยนโมดูล', modNoChange:'ยังไม่มีบันทึกการเปลี่ยนโมดูล',
+    modDateNote:'วันที่มาจากบันทึกการซ่อม: โมดูลนับจากบันทึกแรกที่กล่าวถึง วันที่เปลี่ยนจริงอาจเร็วกว่านี้เล็กน้อย',
+    modEmpty:'ยังไม่มีข้อมูลโมดูล (คอลัมน์ 机种 / module)',
+    remTitle:'หมายเหตุของแต่ละเครื่อง', remNote:'เครื่องที่คอลัมน์ 备注 (หมายเหตุ) มีข้อความ ข้อความที่ซ้ำกับชื่อเครื่องจะถูกข้าม', remEmpty:'ไม่มีหมายเหตุในช่วงนี้', colRemark:'หมายเหตุ',
+    topTitle:'Top 3 ปัญหาที่เกิดซ้ำมากที่สุดของแต่ละเครื่อง', topNote:'อันดับ 1 = เกิดบ่อยที่สุด แสดงเฉพาะปัญหาที่เกิด 2 ครั้งขึ้นไป ปัญหาที่เท่ากันได้อันดับเดียวกัน',
+    issue:'ปัญหา', times:'จำนวนครั้ง', logTitle:'บันทึกปัญหาทั้งหมด', time:'เวลา', solution:'วิธีแก้ไข',
+    saveTitle:'บันทึกเป็นรูปภาพ', saveChart:'เฉพาะกราฟ', saveBoth:'กราฟ + ตาราง', yes:'ใช่', exit:'ออก', imgBusy:'กำลังสร้างรูปภาพ…', imgFail:'สร้างรูปภาพไม่ได้ ลองใช้ CSV หรือ PDF แทน', dlPng:'⇩ ดาวน์โหลด PNG',
+    loading:'กำลังโหลดข้อมูล…', demo:'กำลังแสดงข้อมูลตัวอย่าง ตั้งค่า GAS_URL ใน index.html เพื่อโหลดข้อมูลจากชีต',
+    error:'โหลดข้อมูลไม่สำเร็จ: ', empty:'ไม่มีรายการที่ตรงกับตัวกรองปัจจุบัน', updated:'อัปเดต', total:'รวม' }
 };
 let lang = localStorage.getItem('lang') || 'en';
 let theme = localStorage.getItem('theme') || 'dark';
 const t = k => I18N[lang][k] || k;
+const loc = () => lang === 'zh' ? 'zh-CN' : lang === 'th' ? 'th-TH-u-ca-gregory' : 'en-GB';   // Thai: Christian-era years
 
 /* ================== STATE ================== */
 let DATA = [], NOMACH = [], HISTORY = [], dtChartInst = null, dtChart2Inst = null, chart = null, generatedAt = null, tab = 'overview';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const mName = r => (lang === 'zh' && r.machineCn) ? r.machineCn : r.machineEn;
-const pick = (en, cn) => (lang === 'zh' && cn) ? cn : en;
+const pick = (en, cn, th) => (lang === 'zh' && cn) ? cn : (lang === 'th' && th) ? th : en;   // en / zh / th text of an issue or solution
 const byTimeAsc = (a, b) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0);   // oldest first
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
@@ -418,14 +468,15 @@ function render() {
   renderCards(rows); renderChart(rows); renderTop(rows); renderModelTab(rows); renderDowntime(rows); renderModules(); renderModuleCards(); renderRemarks(rows); renderLog(filtered(true));
 }
 function applyChrome() {
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
   document.documentElement.dataset.theme = theme;
   document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
   $('btn-en').classList.toggle('primary', lang === 'en');
   $('btn-zh').classList.toggle('primary', lang === 'zh');
+  $('btn-th').classList.toggle('primary', lang === 'th');
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.dataset.view !== tab));
-  $('updated').textContent = (generatedAt ? `${t('updated')}: ${new Date(generatedAt).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-GB')}` : '') + ' · ' + APP_VERSION;
+  $('updated').textContent = (generatedAt ? `${t('updated')}: ${new Date(generatedAt).toLocaleString(loc())}` : '') + ' · ' + APP_VERSION;
   $('fFactory').options[0].textContent = t('all');
   $('fMachine').options[0].textContent = t('allM');
   $('fBrand').options[0].textContent = t('allB');
@@ -588,11 +639,12 @@ function buildReport() {
   const mLabel = mk ? mName(rows[0] || { machineEn: '', machineCn: '' }) : t('allM');
   const filt = [`${t('factory')}: ${f || t('all')}`, `${t('machine')}: ${mLabel}`, `${t('brand')}: ${$('fBrand').selectedOptions[0].textContent}`, `${t('model')}: ${$('fModel').selectedOptions[0].textContent}`, `${t('dateRange')}: ${s || '…'} – ${e || '…'}`].join('  |  ');
 
-  const sub = v => (lang === 'zh' && v) ? `<div class="sub">${esc(v)}</div>` : '';
+  const sub = v => (lang !== 'en' && v) ? `<div class="sub">${esc(v)}</div>` : '';
+  const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
   const tr = r => `<tr><td style="white-space:nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}</td>
     <td>${esc(r.factory)}</td><td>${esc(mName(r))}</td>
-    <td>${esc(r.issueEn || r.issueRaw)}${sub(r.issueCn)}</td>
-    <td>${esc(r.solutionEn || r.solutionRaw)}${sub(r.solutionCn)}</td>
+    <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
+    <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td>
     <td class="n">${cnt.get(kOf(r))}</td></tr>`;
   const band = (cls, label, n) => n ? `<tr class="band ${cls}"><td colspan="6">${esc(label)} — ${n} ${t('cases')}</td></tr>` : '';
 
@@ -618,7 +670,7 @@ function buildReport() {
   $('report').innerHTML = `
     <h1>${esc(t('repTitle'))}${prevTab === 'overview' ? '' : ' – ' + esc(t(PDF_NAME[prevTab]))}</h1>
     <div class="meta">${esc(filt)}</div>
-    <div class="meta">${esc(t('generated'))}: ${new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-GB')}</div>
+    <div class="meta">${esc(t('generated'))}: ${new Date().toLocaleString(loc())}</div>
     ${showLog ? kpis : ''}${body}`;
   const im = $('repImg');
   return im && im.decode ? im.decode().catch(() => {}) : Promise.resolve();
@@ -646,7 +698,7 @@ function buildModels(rows) {                         // model -> machines + issu
     const k = modelKeyOf(r);
     const g = map.get(k) || { key: k, label: modelLabel(r), n: 0, byF: {}, machines: new Map(), issues: new Map() };
     g.n++; g.byF[r.factory] = (g.byF[r.factory] || 0) + 1;
-    const ik = r.issueEn || r.issueRaw || '-', txt = pick(ik, r.issueCn);
+    const ik = r.issueEn || r.issueRaw || '-', txt = pick(ik, r.issueCn, r.issueTh);
     const occ = { ts: r.timestamp || '', no: r.machineNo || '', label: r.machineEn, factory: r.factory };
     const m = g.machines.get(r.machineKey) || { key: r.machineKey, no: r.machineNo || '', label: mName(r), factory: r.factory, n: 0, issues: new Map() };
     m.n++; const mi = m.issues.get(ik) || { label: txt, n: 0, times: [] }; mi.n++; mi.times.push(occ); m.issues.set(ik, mi); g.machines.set(r.machineKey, m);
@@ -835,7 +887,7 @@ function groupRows(rows, keyFn, labelFn) {
     const k = keyFn(r);
     const g = map.get(k) || { key: k, label: labelFn(r), factory: r.factory, n: 0, byF: {}, machines: new Set(), issues: new Map() };
     g.n++; g.byF[r.factory] = (g.byF[r.factory] || 0) + 1; g.machines.add(r.machineKey);
-    const ik = r.issueEn || r.issueRaw || '-', i = g.issues.get(ik) || { label: pick(ik, r.issueCn), n: 0, byF: {} };
+    const ik = r.issueEn || r.issueRaw || '-', i = g.issues.get(ik) || { label: pick(ik, r.issueCn, r.issueTh), n: 0, byF: {} };
     i.n++; i.byF[r.factory] = (i.byF[r.factory] || 0) + 1; g.issues.set(ik, i); map.set(k, g);
   });
   return [...map.values()];
@@ -961,7 +1013,7 @@ function dtGroup(rows, keyFn, labelFn) {
   rows.forEach(r => {
     const k = keyFn(r), a = m.get(k) || { key: k, label: labelFn(r), factory: r.factory, n: 0, ev: 0, max: 0, byF: {}, machines: new Set(), issues: new Map() };
     a.n += r.repairMinutes; a.ev++; a.max = Math.max(a.max, r.repairMinutes); a.byF[r.factory] = (a.byF[r.factory] || 0) + r.repairMinutes; a.machines.add(r.machineKey);
-    const ik = dtIssueKey(r), i = a.issues.get(ik) || { key: ik, label: sp1(pick(ik, r.issueCn)), n: 0, ev: 0, max: 0, byF: {} };
+    const ik = dtIssueKey(r), i = a.issues.get(ik) || { key: ik, label: sp1(pick(ik, r.issueCn, r.issueTh)), n: 0, ev: 0, max: 0, byF: {} };
     i.n += r.repairMinutes; i.ev++; i.max = Math.max(i.max, r.repairMinutes); i.byF[r.factory] = (i.byF[r.factory] || 0) + r.repairMinutes; a.issues.set(ik, i); m.set(k, a);
   });
   return [...m.values()];
@@ -1229,13 +1281,14 @@ const TABLE_ONLY = ['log', 'modules', 'remarks'];     // pages that have a table
 function renderLog(rows) {
   rows = [...rows].sort(byTimeAsc);                  // Issue Log: oldest -> newest
   $('logCount').textContent = `${rows.length} ${t('cases')}`;
-  const sub = v => (lang === 'zh' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
+  const sub = v => (lang !== 'en' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
+  const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
   $('tblLog').tBodies[0].innerHTML = rows.map(r => `<tr class="align-top">
     <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}</td>
     <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
     <td>${esc(mName(r))}</td>
-    <td>${esc(r.issueEn || r.issueRaw)}${sub(r.issueCn)}</td>
-    <td>${esc(r.solutionEn || r.solutionRaw)}${sub(r.solutionCn)}</td></tr>`).join('')
+    <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
+    <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td></tr>`).join('')
     || `<tr><td colspan="5" class="text-center lbl">${t('empty')}</td></tr>`;
 }
 
@@ -1272,7 +1325,7 @@ async function doSaveImage(mode) {                       // whole page of the ta
     const title = pageTitle();
     const f = $('fFactory'), b = $('fBrand'), m = $('fModel'), s1 = $('fStart').value, e1 = $('fEnd').value;
     const sub = [f.selectedOptions[0].textContent, b.value ? b.selectedOptions[0].textContent : '', m.value ? m.selectedOptions[0].textContent : '',
-                 (s1 || e1) ? `${s1 || '…'} – ${e1 || '…'}` : ''].filter(Boolean).join('  |  ') + '   ·   ' + new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-GB');
+                 (s1 || e1) ? `${s1 || '…'} – ${e1 || '…'}` : ''].filter(Boolean).join('  |  ') + '   ·   ' + new Date().toLocaleString(loc());
     const font = "'IBM Plex Sans','Noto Sans SC',sans-serif", txt = css('--text'), mut = css('--muted'), bg = css('--panel'), bg2 = css('--panel2');
     const w = el.offsetWidth, tblH = mode === 'chart' ? [...el.querySelectorAll('table')].reduce((a, x) => a + x.offsetHeight, 0) : 0, h = el.scrollHeight - tblH + 90;
     const scale = Math.max(0.5, Math.min(2, 16000 / h, 120e6 / (w * h)));          // keep the canvas inside browser limits
@@ -1452,6 +1505,7 @@ async function exportXLSX() {                        // .xlsx with an editable E
 /* ================== EVENTS ================== */
 $('btn-en').onclick = () => { lang = 'en'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
 $('btn-zh').onclick = () => { lang = 'zh'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
+$('btn-th').onclick = () => { lang = 'th'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
 $('btnTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', theme); render(); };
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); if (tab === 'model' && modelChartInst) modelChartInst.resize(); if (tab === 'top' && topChartInst) topChartInst.resize(); if (tab === 'downtime') { if (dtChartInst) dtChartInst.resize(); if (dtChart2Inst) dtChart2Inst.resize(); } });
 $('fFactory').onchange = () => { buildMachineOptions(); render(); };
