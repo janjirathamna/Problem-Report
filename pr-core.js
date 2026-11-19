@@ -1,238 +1,223 @@
-/* ================== SUPABASE (replaces GAS) ================== */
-const SUPABASE_URL = 'https://pqfhjxpijmqaaoxpmshv.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_DSt6DloT95NQGoOwlLLSiQ_wLurwO0C';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const TZ = 'Asia/Bangkok';        // = spreadsheet time zone
-const ORDER_COL = 'id';           // sort column = original sheet order (first match wins in mappings)
-const DELIMITERS = ['#', ';', '/'];
-const DROP_ISSUE_RE = /^there were no problems or disruptions throughout the day/i;
+/* pr-admin.js — load AFTER pr-core.js and BEFORE the main <script> of index.html */
+(() => {
+const ADMIN_PIN = '00000';                 // <-- แก้รหัสแอดมินตรงนี้ / change the admin PIN here
+const MAX_MIN = 600, db = supabaseClient;
+const $ = id => document.getElementById(id), V = () => $('prV'), B = () => $('prB');
+const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-/* --- helpers (ported 1:1 from GAS) --- */
-const norm_ = s => String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
-const key_ = s => norm_(s).replace(/[\s.。;；]+$/, '');
-const digits_ = s => String(s ?? '').replace(/[^0-9]/g, '');
-const isNA_ = v => { const s = norm_(v); return s === '' || s === 'n/a' || s === 'na' || s === '-'; };
-const sv_ = v => isNA_(v) ? '' : String(v).trim();
-const numVal_ = v => { const n = (typeof v === 'string' && v.trim() !== '') ? Number(v) : v; return (typeof n === 'number' && isFinite(n)) ? n : ''; };
-const nk_ = s => String(s).toLowerCase().replace(/[\s_\-]/g, '');
-const rowOf_ = o => { const m = {}; for (const k in o) m[nk_(k)] = o[k]; return m; };           // column names: case / _ / - ignored
-const fv_ = (m, ...names) => { for (const n of names) { const v = m[nk_(n)]; if (v !== undefined && v !== null) return v; } return ''; };
-const p2 = n => ('0' + n).slice(-2);
-const tzFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const FIELDS = [['factory','Factory','sel'],['ts','Timestamp','dt'],['log_date','Date','date'],['shift','Shift'],['station','Station'],
+  ['machine_raw','Machine'],['machine_no','Machine no.'],['product','Product'],['issue_type','Issue type'],['raw_issue','Issue # Solution','area'],
+  ['repair_start','Repair start','dt'],['recovery_end','Recovery end','dt'],['repair_minutes','Repair min','num'],['qty','Qty','num'],
+  ['fail_rate','Fail rate','num'],['leader','Leader'],['technician','Technician'],['extra','Extra'],['remark','Remark']];
+const ALIAS = { factory:['factory','sheet'], ts:['timestamp','ts'], log_date:['log_date','date','日期'], shift:['shift','班别'], station:['station','站别'],
+  machine_raw:['machine_raw','raw_machine_name','machine'], machine_no:['machine_no','machine_number'], product:['product','机种','機種'],
+  issue_type:['issue_type','设备问题点'], raw_issue:['raw_issue','issue'], repair_start:['repair_start','维修时间'], recovery_end:['recovery_end','复机时间'],
+  repair_minutes:['repair_minutes','维修总时间(min)','维修总时间'], qty:['qty','设备数量'], fail_rate:['fail_rate','设备故障率'],
+  leader:['leader','领班确认'], technician:['technician','维修人员'], extra:['extra'], remark:['remark','备注'] };
 
-/** timestamptz / ISO / text (d/M/yyyy H.mm, d-M-yyyy, 12 h am/pm, Buddhist year) -> 'yyyy-MM-ddTHH:mm:ss' (local TZ) or null. Day first. */
-function toLocal_(v) {
-  if (v instanceof Date) return tzFmt.format(v).replace(' ', 'T');
-  if (typeof v !== 'string') return null;
-  const s = v.trim().replace(/\s+/g, ' ').replace(/\s*น\.?$/, '');
-  if (/^\d{4}-\d\d-\d\d[T ]\d\d:\d\d(:\d\d)?(\.\d+)?(Z|[+-]\d\d(:?\d\d)?)$/.test(s)) return tzFmt.format(new Date(s.replace(' ', 'T'))).replace(' ', 'T');
-  const m = s.match(/^(\d{1,4})[\/\-.](\d{1,2})[\/\-.](\d{1,4})(?:[ T,]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?(?:\s*([AaPp])\.?[Mm]\.?)?)?(?:\.\d+)?$/);
-  if (!m) return null;
-  let d, mo, y;
-  if (m[1].length === 4) { y = +m[1]; mo = +m[2]; d = +m[3]; } else { d = +m[1]; mo = +m[2]; y = +m[3]; }
-  if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; }
-  if (y < 100) y += 2000; else if (y > 2400) y -= 543;
-  let h = m[4] ? +m[4] : 0; const mi = m[5] ? +m[5] : 0, sec = m[6] ? +m[6] : 0;
-  if (m[7]) { const pm = /p/i.test(m[7]); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
-  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || sec > 59 || y < 1990 || y > 2100) return null;
-  const chk = new Date(y, mo - 1, d); if (chk.getDate() !== d) return null;                     // 31/02 -> reject
-  return `${y}-${p2(mo)}-${p2(d)}T${p2(h)}:${p2(mi)}:${p2(sec)}`;
+/* ---------- styles + dialog ---------- */
+document.head.insertAdjacentHTML('beforeend', `<style>
+#prAdm{width:min(1100px,96vw);max-height:92vh;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text)}
+#prAdm::backdrop{background:rgba(0,0,0,.6)}
+#prAdm .ph{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700}
+#prAdm .pb{padding:12px 14px;overflow:auto;max-height:calc(92vh - 52px)}
+#prAdm input,#prAdm select,#prAdm textarea{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:5px 7px;font-size:13px;max-width:100%}
+#prAdm table{width:100%;border-collapse:collapse;font-size:12px}#prAdm td,#prAdm th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+#prAdm .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}#prAdm label{font-size:12px;display:block}
+#prAdm .bad{color:#f87171;font-weight:600}#prAdm .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+</style>`);
+document.body.insertAdjacentHTML('beforeend', '<dialog id="prAdm"><div class="ph"><span>⚙ Data Admin</span><button class="btn" id="prX">✕</button></div><div class="pb" id="prB"></div></dialog>');
+const dlg = $('prAdm');
+$('prX').onclick = () => dlg.close();
+const openBtn = $('btnAdmin');
+if (openBtn) openBtn.onclick = () => { dlg.showModal(); sessionStorage.prAdm === '1' ? main('import') : lock(); };
+
+/* ---------- PIN ---------- */
+function lock() {
+  B().innerHTML = '<div class="row"><input id="prPin" type="password" placeholder="Admin PIN / รหัสแอดมิน"><button class="btn primary" id="prGo">Unlock</button><span class="bad" id="prM"></span></div>';
+  const go = () => { if ($('prPin').value === ADMIN_PIN) { sessionStorage.prAdm = '1'; main('import'); } else $('prM').textContent = 'รหัสไม่ถูกต้อง / Wrong PIN'; };
+  $('prGo').onclick = go; $('prPin').onkeydown = e => { if (e.key === 'Enter') go(); }; $('prPin').focus();
 }
-const splitIssue_ = raw => {
-  const t = String(raw || '').trim();
-  for (const dl of DELIMITERS) { const i = t.indexOf(dl); if (i > 0) return { issue: t.slice(0, i).trim(), solution: t.slice(i + 1).trim() }; }
-  return { issue: t, solution: '' };
-};
-const cleanRemark_ = (v, rawMachine, machineNo) => {
-  const t = sv_(v), n = norm_(t);
-  return (!n || n === norm_(rawMachine) || n === norm_(rawMachine + ' ' + machineNo)) ? '' : t;
-};
+function main(tab) {
+  const T3 = [['import', '⇪ Import'], ['manage', '✎ Add / Edit / Delete'], ['tools', '🛠 Tools']];
+  B().innerHTML = '<div class="row">' + T3.map(([k, l]) => `<button class="btn${k === tab ? ' primary' : ''}" data-t="${k}">${l}</button>`).join('') + '<span id="prMsg"></span></div><div id="prV"></div>';
+  B().querySelectorAll('[data-t]').forEach(b => b.onclick = () => main(b.dataset.t));
+  ({ import: vImport, manage: vManage, tools: vTools })[tab]();
+}
+const msg = s => { const m = $('prMsg'); if (m) m.textContent = s; };
 
-/** Read a whole table (PostgREST returns max 1000 rows per request -> page through). */
-async function fetchAll_(table) {
-  const out = [], step = 1000;
-  for (let from = 0; ; from += step) {
-    const { data, error } = await supabaseClient.from(table).select('*').order(ORDER_COL, { ascending: true }).range(from, from + step - 1);
-    if (error) throw new Error(table + ': ' + error.message);
-    out.push(...data);
-    if (data.length < step) return out;
+/* ---------- parsing / normalising ---------- */
+const T = v => { const s = String(v ?? '').trim(); return s || null; };
+const N = v => { const n = numVal_(v); return n === '' ? null : n; };
+const dstr = d => { d = new Date(Math.round(d.getTime() / 1000) * 1000); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
+const loc = v => v instanceof Date ? dstr(v) : (v === '' || v == null ? null : toLocal_(String(v)));   // -> 'yyyy-MM-ddTHH:mm:ss' (Bangkok) | null
+const tsz = v => { const l = loc(v); return l ? l + '+07:00' : null; };
+const sig = r => [r.factory, r.ts ? Date.parse(r.ts) : '', norm_(r.machine_raw), digits_(r.machine_no), norm_(r.raw_issue)].join('|');
+const toObjs = a => { const rows = a.filter(r => r.some(c => String(c ?? '').trim() !== '')); if (rows.length < 2) return [];
+  const h = rows[0].map(x => String(x).trim()); return rows.slice(1).map(r => Object.fromEntries(h.map((k, i) => [k, r[i] ?? '']))); };
+function parseTable(txt) {                                       // CSV or tab-separated (copy from Excel / Sheets)
+  txt = txt.replace(/^\uFEFF/, ''); const sep = (txt.split('\n')[0] || '').includes('\t') ? '\t' : ',', rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if (q) { if (c === '"') { if (txt[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"' && cell === '') q = true;
+    else if (c === sep) { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && txt[i + 1] === '\n') i++; row.push(cell); cell = ''; rows.push(row); row = []; }
+    else cell += c;
   }
+  row.push(cell); rows.push(row); return toObjs(rows);
+}
+function norm(o, df) {                                           // any header names -> pr_logs row (null = blank row)
+  const m = rowOf_(o), g = k => fv_(m, ...ALIAS[k]), r = {};
+  r.factory = T(g('factory')) || df; r.ts = tsz(g('ts'));
+  const ld = loc(g('log_date')) || (r.ts && loc(r.ts)); r.log_date = ld ? ld.slice(0, 10) : null;
+  ['shift', 'station', 'machine_raw', 'machine_no', 'product', 'issue_type', 'raw_issue', 'leader', 'technician', 'extra', 'remark'].forEach(k => r[k] = T(g(k)));
+  r.repair_start = tsz(g('repair_start')); r.recovery_end = tsz(g('recovery_end'));
+  ['repair_minutes', 'qty', 'fail_rate'].forEach(k => r[k] = N(g(k)));
+  if (!r.machine_raw && !r.raw_issue) return null;
+  if (r.repair_minutes == null && r.ts && r.recovery_end) r.repair_minutes = Math.round((new Date(r.recovery_end) - new Date(r.ts)) / 60000);   // same rule as dashboard
+  return r;
+}
+function flags(r) {                                              // abnormal-value rules
+  if (isNA_(r.machine_raw) || DROP_ISSUE_RE.test(String(r.raw_issue || '').replace(/\s+/g, ' '))) return [];
+  const f = [], m = r.repair_minutes, st = r.repair_start || r.ts;
+  if (!r.recovery_end) f.push('ไม่มี recovery_end');
+  if (m != null && m < 0) f.push('ติดลบ ' + m);
+  if (m != null && m > MAX_MIN) f.push('เกิน ' + MAX_MIN + ' นาที: ' + m);
+  if (r.recovery_end && st && new Date(r.recovery_end) < new Date(st)) f.push('เวลาจบก่อนเวลาเริ่ม');
+  return f;
 }
 
-/* --- mapping tables --- */
-function loadMachineMapping_(rows) {                  // pr_machine_mapping: raw_machine_name | machine_number | chinese
-  const res = { byKey: {}, byName: {} };
-  rows.map(rowOf_).forEach(m => {
-    const raw = norm_(fv_(m, 'raw_machine_name', 'machine_raw', 'machine'));
-    if (!raw) return;
-    const item = { chinese: String(fv_(m, 'chinese', 'machine_cn', 'chinese_name') || '').trim() };
-    res.byKey[raw + '|' + digits_(fv_(m, 'machine_number', 'machine_no'))] = item;
-    if (!res.byName[raw]) res.byName[raw] = item;
-  });
-  return res;
-}
-function loadIssueMapping_(rows) {                    // pr_issue_mapping: issue | english_issue | chinese_issue | solution | english_solution | chinese_solution | category
-  const res = { byIssue: {}, bySolution: {} };
-  rows.map(rowOf_).forEach(m => {
-    const g = (...n) => String(fv_(m, ...n) || '').trim();
-    const raw = [g('issue', 'raw_issue'), g('english_issue', 'issue_en'), g('chinese_issue', 'issue_cn')];
-    const sRaw = [g('solution', 'raw_solution'), g('english_solution', 'solution_en'), g('chinese_solution', 'solution_cn')];
-    const iss = { issueEn: raw[1], issueCn: raw[2], category: g('category') }, sol = { solutionEn: sRaw[1], solutionCn: sRaw[2] };
-    raw.forEach(k => { const key = key_(k); if (key && !res.byIssue[key]) res.byIssue[key] = iss; });
-    sRaw.forEach(k => { const key = key_(k); if (key && !res.bySolution[key]) res.bySolution[key] = sol; });
-  });
-  return res;
-}
-function loadKeywords_(rows) {                        // pr_keyword: keyword1 | model | keyword2 | keyword1_chinese | keyword2_chinese | chinese | english | brand(optional)
-  const list = [];
-  rows.map(rowOf_).forEach(m => {
-    const g = (...n) => String(fv_(m, ...n) ?? '').trim(), kw1 = g('keyword1');
-    const x = { brand: g('brand') || kw1, model: g('model'), fn: g('keyword2'), brandCn: g('keyword1_chinese'), fnCn: g('keyword2_chinese'), cn: g('chinese'), en: g('english') };
-    if (!kw1 || !x.fn) return;
-    x.k1 = norm_(kw1); x.k2 = norm_(x.fn);
-    list.push(x);
-  });
-  return list;
-}
-function hasWord_(h, needle) {
-  if (!needle) return false;
-  const esc = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp('(^|[^a-z0-9])' + esc + '([^a-z0-9]|$)').test(h);
-}
-function modelHit_(r, raw, n) {
-  if (!r.model) return false;
-  if (/^[0-9.]+$/.test(r.model)) { const want = parseFloat(r.model), toks = n.match(/\d+(?:\.\d+)?/g) || []; return toks.some(t => parseFloat(t) === want); }
-  return hasWord_(n, norm_(r.model));
-}
-function matchRow_(raw, rows) {
-  const n = norm_(raw), cands = rows.filter(r => hasWord_(n, r.k1) && hasWord_(n, r.k2));
-  if (!cands.length) return null;
-  const withModel = cands.filter(r => modelHit_(r, raw, n));
-  if (withModel.length) return withModel.sort((a, b) => (b.k1.length + b.k2.length) - (a.k1.length + a.k2.length))[0];
-  const blank = cands.filter(r => !r.model);
-  if (blank.length) return blank[0];
-  const nameHasModel = /\(([^)]*)\)/.test(raw) || /\d+(\.\d+)?/.test(raw);
-  return (!nameHasModel && cands.length === 1) ? cands[0] : null;
+/* ---------- IMPORT (file / paste) ---------- */
+function vImport() {
+  V().innerHTML = `<div class="row"><input type="file" id="iF" accept=".xlsx,.xls,.csv"><span>Default factory:</span><select id="iDF">${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select></div>
+  <textarea id="iT" rows="6" style="width:100%" placeholder="วางข้อมูลจาก Excel/Sheets (แถวแรก = หัวคอลัมน์) / paste table here, first row = headers"></textarea>
+  <div class="row"><button class="btn primary" id="iP">Preview</button><span id="iM"></span></div><div id="iO"></div>`;
+  $('iP').onclick = async () => {
+    $('iM').textContent = '…';
+    try {
+      const file = $('iF').files[0], df = $('iDF').value; let groups;
+      if (file && /\.csv$/i.test(file.name)) groups = [{ f: df, rows: parseTable(await file.text()) }];
+      else if (file) { const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });   // sheet named like a factory = that factory
+        groups = wb.SheetNames.map(n => ({ f: FACTORIES.includes(n) ? n : df, rows: toObjs(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' })) })); }
+      else groups = [{ f: df, rows: parseTable($('iT').value) }];
+      const exist = new Set((await fetchAll_('pr_logs')).map(sig)), seen = new Set(), ok = []; let dup = 0, bad = 0;
+      groups.forEach(g => g.rows.forEach(o => {
+        const r = norm(o, g.f); if (!r) return;
+        if (!FACTORIES.includes(r.factory) || (!r.ts && !r.log_date)) { bad++; return; }
+        const s = sig(r); if (exist.has(s) || seen.has(s)) { dup++; return; }
+        seen.add(s); r.row_key = 'web|' + s; r.source = 'web-import'; ok.push(r);
+      }));
+      $('iM').textContent = '';
+      $('iO').innerHTML = `<p>✔ ${ok.length} new · ⏭ ${dup} duplicate · ✖ ${bad} invalid (factory/date) · ⚠ ${ok.filter(r => flags(r).length).length} abnormal</p>
+        <table><tr><th>Factory</th><th>Time</th><th>Machine</th><th>Issue</th><th>Min</th><th></th></tr>${ok.slice(0, 10).map(r => `<tr><td>${E(r.factory)}</td><td>${E((loc(r.ts) || r.log_date || '').slice(0, 16))}</td><td>${E(r.machine_raw)} ${E(r.machine_no)}</td><td>${E((r.raw_issue || '').slice(0, 50))}</td><td>${r.repair_minutes ?? ''}</td><td>${flags(r).length ? '⚠' : ''}</td></tr>`).join('')}</table>
+        ${ok.length > 10 ? `<p>… +${ok.length - 10}</p>` : ''}${ok.length ? '<div class="row"><button class="btn primary" id="iS">Save to pr_logs</button></div>' : ''}`;
+      if (ok.length) $('iS').onclick = () => startSave(ok, 'insert', null, vImport);
+    } catch (e) { $('iM').textContent = ''; $('iO').innerHTML = `<p class="bad">${E(e.message || e)}</p>`; }
+  };
 }
 
-/** pr_logs + mappings -> same JSON the GAS doGet returned: { ok, generatedAt, data, moduleHistory } */
-async function fetchPayload() {
-  const [logs, mmRows, imRows, kwRows] = await Promise.all(['pr_logs', 'pr_machine_mapping', 'pr_issue_mapping', 'pr_keyword'].map(fetchAll_));
-  const machineMap = loadMachineMapping_(mmRows), issueMap = loadIssueMapping_(imRows), keywords = loadKeywords_(kwRows), out = [];
-  const rows = logs.map(rowOf_).map(m => ({ m, f: String(fv_(m, 'factory', 'sheet')).trim() })).filter(x => FACTORIES.includes(x.f));
-  rows.sort((a, b) => FACTORIES.indexOf(a.f) - FACTORIES.indexOf(b.f));                      // stable: factory order, then sheet order
-  rows.forEach(({ m, f: name }) => {
-    const rawMachine = String(fv_(m, 'raw_machine_name', 'machine_raw') || '').trim(), machineNo = String(fv_(m, 'machine_number', 'machine_no') || '').trim();
-    const rawIssue = String(fv_(m, 'raw_issue', 'issue') || '').trim(), extra = fv_(m, 'extra');
-    if (!rawMachine && !rawIssue) return;
-    if (DROP_ISSUE_RE.test(rawIssue.replace(/\s+/g, ' '))) return;
-    const noMachine = isNA_(rawMachine);
-    const tsRaw = fv_(m, 'timestamp', 'ts'), tsL = toLocal_(tsRaw), dL = toLocal_(fv_(m, 'log_date', 'date', '日期'));
-    const rsL = toLocal_(fv_(m, 'repair_start', '维修时间')), reL = toLocal_(fv_(m, 'recovery_end', '复机时间'));
-    const split = splitIssue_(rawIssue);
-    const mm = machineMap.byKey[norm_(rawMachine) + '|' + digits_(machineNo)] || machineMap.byName[norm_(rawMachine)];
-    const im = issueMap.byIssue[key_(split.issue)], sm = split.solution ? issueMap.bySolution[key_(split.solution)] : null;
-    const kr = matchRow_(rawMachine, keywords), no = digits_(machineNo);
-    const modelNameEn = kr ? (kr.en || [kr.brand, kr.model, kr.fn].filter(Boolean).join(' ')) : '', modelNameCn = kr ? kr.cn : '';
-    let machineCn = mm && mm.chinese ? mm.chinese : '';
-    if (!machineCn && modelNameCn) machineCn = modelNameCn + (no ? ' ' + no + '#' : '');
-    let rm = numVal_(fv_(m, 'repair_minutes', '维修总时间(min)', '维修总时间'));
-    if (rm === '' && tsL && reL) rm = Math.round((new Date(reL) - new Date(tsL)) / 60000);   // = sheet formula (復机 - timestamp) in minutes
-    out.push({
-      id: name + '-' + (fv_(m, 'row_no', 'sheet_row') || fv_(m, 'id')),
-      factory: name,
-      timestamp: tsL || (isNA_(tsRaw) ? '' : String(tsRaw)) || (dL ? dL.slice(0, 10) + 'T00:00:00' : ''),
-      noMachine, machineRaw: rawMachine, machineNo,
-      machineKey: name + '|' + norm_(rawMachine) + '|' + no,
-      machineEn: noMachine ? 'N/A' : rawMachine + (machineNo ? ' ' + machineNo : ''),
-      machineCn,
-      brandEn: kr ? kr.brand : '', brandCn: kr ? kr.brandCn : '',
-      functionEn: kr ? kr.fn : '', functionCn: kr ? kr.fnCn : '',
-      model: kr ? kr.model : '', modelNameEn, modelNameCn,
-      extra: extra === '' || extra == null ? '' : String(extra),
-      issueRaw: split.issue,
-      issueEn: im && im.issueEn ? im.issueEn : split.issue, issueCn: im ? im.issueCn : '',
-      solutionRaw: split.solution,
-      solutionEn: sm && sm.solutionEn ? sm.solutionEn : split.solution, solutionCn: sm ? sm.solutionCn : '',
-      category: im ? im.category : '',
-      date: dL ? dL.slice(0, 10) : sv_(fv_(m, 'log_date', 'date', '日期')),
-      shift: sv_(fv_(m, 'shift', '班别')), station: sv_(fv_(m, 'station', '站别')),
-      product: sv_(fv_(m, 'product', '机种', '機種')), issueType: sv_(fv_(m, 'issue_type', '设备问题点')),
-      repairStart: rsL || sv_(fv_(m, 'repair_start', '维修时间')), recoveryEnd: reL || sv_(fv_(m, 'recovery_end', '复机时间')),
-      repairMinutes: rm, qty: numVal_(fv_(m, 'qty', '设备数量')), failRate: numVal_(fv_(m, 'fail_rate', '设备故障率')),
-      leader: sv_(fv_(m, 'leader', '领班确认')), technician: sv_(fv_(m, 'technician', '维修人员')),
-      remark: cleanRemark_(fv_(m, 'remark', '备注'), rawMachine, machineNo)
+/* ---------- MANAGE (add / edit / delete) ---------- */
+async function vManage() {
+  V().innerHTML = '…'; let rows;
+  try { rows = (await fetchAll_('pr_logs')).sort((a, b) => (a.ts || '') < (b.ts || '') ? 1 : -1); } catch (e) { V().innerHTML = `<p class="bad">${E(e.message)}</p>`; return; }
+  V().innerHTML = `<div class="row"><button class="btn primary" id="mAdd">＋ Add</button><select id="mF"><option value="">All</option>${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select>
+    <input id="mQ" placeholder="search id / machine / issue / technician"><label><input type="checkbox" id="mA"> ⚠ abnormal not confirmed</label></div><div id="mL"></div>`;
+  const draw = () => {
+    const f = $('mF').value, q = norm_($('mQ').value), ab = $('mA').checked;
+    const list = rows.filter(r => (!f || r.factory === f) && (!q || norm_([r.id, r.machine_raw, r.machine_no, r.raw_issue, r.technician].join(' ')).includes(q)) && (!ab || (!r.confirmed && flags(r).length)));
+    $('mL').innerHTML = `<p>${list.length} rows${list.length > 100 ? ' (showing 100)' : ''}</p><table><tr><th>ID</th><th>Factory</th><th>Time</th><th>Machine</th><th>Issue</th><th>Min</th><th></th><th></th></tr>` +
+      list.slice(0, 100).map(r => { const fl = flags(r).length;
+        return `<tr><td>${r.id}</td><td>${E(r.factory)}</td><td>${E((loc(r.ts) || '').slice(5, 16).replace('T', ' '))}</td><td>${E(r.machine_raw)} ${E(r.machine_no)}</td><td>${E((r.raw_issue || '').slice(0, 50))}</td>
+        <td class="${fl && !r.confirmed ? 'bad' : ''}">${r.repair_minutes ?? ''}</td><td>${r.confirmed ? '✔' : fl ? '⚠' : ''}</td><td><button class="btn" data-e="${r.id}">✎</button> <button class="btn" data-d="${r.id}">🗑</button></td></tr>`; }).join('') + '</table>';
+    $('mL').querySelectorAll('[data-e]').forEach(b => b.onclick = () => vForm(rows.find(x => String(x.id) === b.dataset.e)));
+    $('mL').querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
+      if (!confirm('ลบแถว ID ' + b.dataset.d + ' ? / Delete row?')) return;
+      const { error } = await db.from('pr_logs').delete().eq('id', b.dataset.d);
+      if (error) return alert(error.message);
+      if (typeof load === 'function') load(); main('manage'); msg('✔ Deleted');
     });
-  });
-  out.sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
-  return { ok: true, generatedAt: new Date().toISOString(), data: out, moduleHistory: buildModuleHistory_(out) };
+  };
+  ['mF', 'mQ', 'mA'].forEach(i => $(i).oninput = draw); $('mAdd').onclick = () => vForm(null); draw();
+}
+function vForm(r) {
+  const v = k => { const x = r?.[k]; if (x == null) return ''; const t = FIELDS.find(f => f[0] === k)[2]; return t === 'dt' ? (loc(x) || '').slice(0, 16) : t === 'date' ? String(x).slice(0, 10) : x; };
+  V().innerHTML = `<div class="g">${FIELDS.map(([k, l, t]) => `<label>${l}${t === 'sel' ? `<select id="f_${k}" style="width:100%">${FACTORIES.map(f => `<option${v(k) === f ? ' selected' : ''}>${E(f)}</option>`).join('')}</select>`
+    : t === 'area' ? `<textarea id="f_${k}" rows="3" style="width:100%">${E(v(k))}</textarea>`
+    : `<input id="f_${k}" style="width:100%" type="${{ dt: 'datetime-local', date: 'date', num: 'number' }[t] || 'text'}"${t === 'num' ? ' step="any"' : ''} value="${E(v(k))}">`}</label>`).join('')}</div>
+    <div class="row"><button class="btn primary" id="fS">Save</button><button class="btn" id="fC">Cancel</button></div>`;
+  $('fC').onclick = () => main('manage');
+  $('fS').onclick = () => {
+    const o = {}; FIELDS.forEach(([k, , t]) => { const x = $('f_' + k).value; o[k] = t === 'dt' ? (x ? x + ':00' : '') : x; });
+    const n = norm(o, o.factory); if (!n) return alert('กรอก Machine หรือ Issue อย่างน้อย 1 อย่าง');
+    if (!r) { n.source = 'web-add'; n.row_key = 'web|' + sig(n); }
+    startSave([n], r ? 'update' : 'insert', r?.id, () => vForm(r ? { ...r, ...n } : n));
+  };
 }
 
-/** Which module (机种) every machine ran and when it changed (periods of consecutive logs with the same module). */
-function buildModuleHistory_(rows) {
-  const by = {}, out = [], noMod = {}, asc = (a, b) => a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0;
-  rows.forEach(r => {
-    if (r.noMachine || !r.timestamp) return;
-    if (!r.product) { (noMod[r.machineKey] = noMod[r.machineKey] || []).push(r); return; }
-    (by[r.machineKey] = by[r.machineKey] || []).push(r);
-  });
-  Object.keys(by).forEach(k => {
-    const list = by[k].sort(asc), periods = []; let cur = null;
-    list.forEach(r => {
-      if (!cur || norm_(cur.product) !== norm_(r.product)) {
-        cur = { factory: r.factory, machineKey: k, machineRaw: r.machineRaw, machineNo: r.machineNo, brandEn: r.brandEn, brandCn: r.brandCn,
-                modelNameEn: r.modelNameEn, modelNameCn: r.modelNameCn, model: r.model, product: r.product,
-                from: r.timestamp, to: r.timestamp, events: 0, current: false, nextProduct: '', changedAt: '' };
-        periods.push(cur);
-      }
-      cur.to = r.timestamp; cur.events++;
-    });
-    periods.forEach((p, i) => {
-      if (i < periods.length - 1) { p.nextProduct = periods[i + 1].product; p.changedAt = periods[i + 1].from; } else p.current = true;
-      out.push(p);
-    });
-  });
-  Object.keys(noMod).forEach(k => {
-    if (by[k]) return;
-    const list = noMod[k].sort(asc), f = list[0];
-    out.push({ factory: f.factory, machineKey: k, machineRaw: f.machineRaw, machineNo: f.machineNo, brandEn: f.brandEn, brandCn: f.brandCn,
-               modelNameEn: f.modelNameEn, modelNameCn: f.modelNameCn, model: f.model, product: '',
-               from: list[0].timestamp, to: list[list.length - 1].timestamp, events: list.length, current: true, nextProduct: '', changedAt: '' });
-  });
-  return out;
+/* ---------- SAVE + abnormal review ---------- */
+function startSave(rows, mode, id, back) {
+  const bad = rows.filter(r => flags(r).length);
+  bad.length ? vReview(rows, bad, mode, id, back) : commit(rows, mode, id);
+}
+function vReview(rows, bad, mode, id, back) {
+  const dt = (i, k, r) => `<input type="datetime-local" data-i="${i}" data-k="${k}" value="${E((loc(r[k]) || '').slice(0, 16))}">`;
+  V().innerHTML = `<h3 class="bad" style="font-size:16px">⚠ ${bad.length} รายการผิดปกติ / abnormal rows</h3>
+    <p>แก้ค่าในตารางแล้วบันทึก หรือ "ยืนยันเก็บไว้" โดยต้องใส่โน้ตเหตุผล / fix the values, or keep them with a reason (remark).</p>
+    <table><tr><th>Row</th><th>Problem</th><th>Repair start</th><th>Recovery end</th><th>Minutes</th><th>Reason / remark *</th></tr>${bad.map((r, i) =>
+    `<tr><td>${E(r.factory)}<br>${E(r.machine_raw || '')} ${E(r.machine_no || '')}<br>${E((loc(r.ts) || '').slice(0, 16).replace('T', ' '))}</td><td class="bad">${flags(r).map(E).join('<br>')}</td>
+    <td>${dt(i, 'repair_start', r)}</td><td>${dt(i, 'recovery_end', r)}</td>
+    <td><input type="number" step="any" style="width:80px" data-i="${i}" data-k="repair_minutes" value="${r.repair_minutes ?? ''}"></td>
+    <td><input style="width:100%;min-width:200px" data-i="${i}" data-k="note" placeholder="เหตุผล / reason"></td></tr>`).join('')}</table>
+    <div class="row"><button class="btn" id="rB">← กลับไปแก้ไข / Back to edit</button><button class="btn primary" id="rOk">✔ ยืนยันเก็บไว้ & บันทึก / Keep & save</button></div>`;
+  $('rB').onclick = back;
+  $('rOk').onclick = () => {
+    const note = {};
+    V().querySelectorAll('[data-i]').forEach(x => { const r = bad[x.dataset.i], k = x.dataset.k, v = x.value.trim();
+      if (k === 'note') note[x.dataset.i] = v;
+      else if (k === 'repair_minutes') r[k] = v === '' ? null : Number(v);
+      else r[k] = v ? tsz(v + ':00') : null; });
+    const still = bad.filter(r => flags(r).length);
+    if (still.some(r => !note[bad.indexOf(r)])) return alert('กรุณากรอกโน้ตเหตุผลให้ครบทุกแถวที่ยังผิดปกติ / A reason is required for every abnormal row');
+    bad.forEach((r, i) => { r.confirmed = flags(r).length > 0; if (note[i]) r.remark = [r.remark, note[i]].filter(Boolean).join(' | '); });
+    commit(rows, mode, id);
+  };
+}
+async function commit(rows, mode, id) {
+  V().innerHTML = '⏳ Saving…';
+  try {
+    rows.forEach(r => r.confirmed = !!r.confirmed);
+    if (mode === 'update') { const { error } = await db.from('pr_logs').update(rows[0]).eq('id', id); if (error) throw error; }
+    else for (let i = 0; i < rows.length; i += 500) { const { error } = await db.from('pr_logs').insert(rows.slice(i, i + 500)); if (error) throw error; }
+    if (typeof load === 'function') load();                      // refresh the dashboard
+    main('manage'); msg('✔ Saved ' + rows.length + ' row(s)');
+  } catch (e) { alert('Error: ' + (e.message || e)); main('manage'); }
 }
 
-/** Skill Matrix web (old ?type=modules): { ok, generatedAt, items:[{webName, machines:[...]}], unmapped:[] }.  Not used by this page - copy this block to the Skill Matrix page. */
-async function fetchModules() {
-  const [skRows, pl] = await Promise.all([fetchAll_('pr_skill_map'), fetchPayload()]);
-  const map = []; let web = '';
-  skRows.map(rowOf_).forEach(m => {
-    const w = String(fv_(m, 'web_name', 'webname') || '').trim(); if (w) web = w;               // merged WebName cell: carry down
-    const raw = String(fv_(m, 'raw_machine_name', 'rawdata_name', 'raw_name') || '').trim();
-    if (!web || !raw || /^[-–—]+$/.test(raw)) return;
-    map.push({ web, factory: norm_(fv_(m, 'factory')), raw: norm_(raw), no: digits_(fv_(m, 'machine_number', 'machine_no')) });
+/* ---------- TOOLS (old admin.html buttons) ---------- */
+function vTools() {
+  V().innerHTML = `<div class="row">${[['pr_add_new_issues', 'pr_issue_mapping', 'Add new issues to IssueMapping'], ['pr_add_new_machines', 'pr_machine_mapping', 'Add new machines to MachineMapping'], ['pr_add_skill_names', 'pr_skill_map', 'Create SkillWeb names']]
+    .map(([f, t, l]) => `<button class="btn" data-r="${f}|${t}">${l}</button>`).join('')}<button class="btn" id="tC">Check unmatched + module data</button></div><pre id="tO" style="white-space:pre-wrap;font-size:12px"></pre>`;
+  V().querySelectorAll('[data-r]').forEach(b => b.onclick = async () => {
+    const [f, t] = b.dataset.r.split('|'); $('tO').textContent = '…';
+    const { data, error } = await db.rpc(f);
+    $('tO').textContent = error ? error.message : (data ? data + ' new row(s) added to ' + t + ' – fill in the Chinese columns you need.' : 'Nothing new – already in ' + t + '.');
   });
-  const periods = pl.moduleHistory, order = [], byWeb = {};
-  map.forEach(m => { if (!byWeb[m.web]) { byWeb[m.web] = { webName: m.web, machines: {} }; order.push(m.web); } });
-  periods.forEach(p => map.forEach(m => {
-    const pr = norm_(p.machineRaw);
-    if (pr !== m.raw && pr.indexOf(m.raw + ' ') !== 0) return;
-    if (m.factory && norm_(p.factory) !== m.factory) return;
-    if (m.no && digits_(p.machineNo) !== m.no) return;
-    const g = byWeb[m.web].machines;
-    if (!g[p.machineKey]) g[p.machineKey] = { factory: p.factory, machine: p.machineRaw, machineNo: p.machineNo, current: null, periods: [], _seen: {} };
-    const mc = g[p.machineKey], id = p.from + '|' + p.product;
-    if (mc._seen[id]) return; mc._seen[id] = 1;
-    mc.periods.push({ product: p.product, from: p.from, to: p.to });
-    if (p.current) mc.current = { product: p.product, since: p.from };
-  }));
-  const unmapped = [], items = order.map(w => {
-    const machines = Object.keys(byWeb[w].machines).map(k => {
-      const mc = byWeb[w].machines[k]; delete mc._seen;
-      mc.periods.sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : 0); return mc;
-    }).sort((a, b) => (a.factory + a.machineNo).localeCompare(b.factory + b.machineNo, undefined, { numeric: true }));
-    if (!machines.length) unmapped.push(w);
-    return { webName: w, machines };
-  });
-  return { ok: true, generatedAt: new Date().toISOString(), items, unmapped };
+  $('tC').onclick = async () => {
+    const o = $('tO'); o.textContent = '…';
+    try {
+      const rows = (await fetchPayload()).data.filter(r => !r.noMachine), out = [], un = {};
+      rows.filter(r => !r.brandEn).forEach(r => un[r.machineRaw] = (un[r.machineRaw] || 0) + 1);
+      out.push(Object.keys(un).length ? 'No keyword row for:\n' + Object.keys(un).map(k => k + '  (' + un[k] + ' rows)').join('\n') : 'All machine names matched.');
+      FACTORIES.forEach(f => {
+        const mine = rows.filter(r => r.factory === f), keys = {}, withMod = {}, missing = [];
+        mine.forEach(r => { keys[r.machineKey] = r; if (r.product) withMod[r.machineKey] = 1; });
+        Object.keys(keys).forEach(k => { if (!withMod[k] && missing.length < 6) missing.push(keys[k].machineRaw + (keys[k].machineNo ? ' ' + keys[k].machineNo : '')); });
+        out.push(f + ': log rows ' + mine.length + ' | machines ' + Object.keys(keys).length + ' | machines with a module ' + Object.keys(withMod).length +
+          ' | rows with a module ' + mine.filter(r => r.product).length + (missing.length ? '\n   no module yet: ' + missing.join(', ') : ''));
+      });
+      o.textContent = out.join('\n\n');
+    } catch (e) { o.textContent = String(e.message || e); }
+  };
 }
+})();
