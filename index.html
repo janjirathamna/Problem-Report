@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="pr-core.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0e1318;--panel:#161d24;--panel2:#1c252e;--line:#26313b;--text:#e6edf3;--muted:#8b98a5;--accent:#2dd4bf;--accent-ink:#04201c}
@@ -115,8 +116,7 @@
       <div class="lbl" id="updated"></div>
     </div>
     <div class="flex flex-wrap items-center gap-1.5">
-      <a class="btn primary" target="_blank" rel="noopener" data-i18n="addData"
-         href="https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?gid=1012980436#gid=1012980436"></a>
+      <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
       <button id="btn-en" class="btn">EN</button>
       <button id="btn-zh" class="btn">中文</button>
       <button id="btn-th" class="btn">ไทย</button>
@@ -284,7 +284,7 @@
 
 
 <div id="report"></div>
-
+<script src="pr-admin.js"></script>
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v35-2026-11-17';
