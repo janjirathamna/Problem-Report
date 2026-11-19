@@ -32,7 +32,7 @@ dialog{padding:0;border:0;border-radius:6px;width:480px;max-width:92vw}
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const MAX = 1000, seen = new Set();
+const MAX = 600, seen = new Set();
 const kindText = (k, v) => k === 'error' ? 'error (ไม่มีเวลาที่คำนวณได้)' : k === 'negative' ? 'ติดลบ ' + v : 'เกิน ' + MAX + ' นาที: ' + v;
 const label = r => {
   const m = rowOf_(r), t = /^\d{4}-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(toLocal_(fv_(m, 'timestamp', 'ts')) || '');
