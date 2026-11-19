@@ -286,7 +286,6 @@
 
 <script>
 /* ================== CONFIG ================== */
-// Paste your deployed Web App URL (…/exec). Leave empty to preview with demo data.
 const APP_VERSION = 'v35-2026-11-17';
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
@@ -417,10 +416,9 @@ const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).
 async function load() {
   $('status').textContent = t('loading');
   try {
-    if (!GAS_URL) { DATA = demoData(); generatedAt = new Date().toISOString(); $('status').textContent = t('demo'); }
+    if (!SUPABASE_URL) { DATA = demoData(); generatedAt = new Date().toISOString(); $('status').textContent = t('demo'); }
     else {
-      const json = await (await fetch(GAS_URL)).json();
-      if (!json.ok) throw new Error(json.error);
+     const json = await fetchPayload();
       DATA = json.data.filter(r => !r.noMachine); NOMACH = json.data.filter(r => r.noMachine); HISTORY = json.moduleHistory || [];   // machine = N/A: Issue Log only
       generatedAt = json.generatedAt; $('status').textContent = '';
     }
