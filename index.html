@@ -59,9 +59,9 @@
   dialog::backdrop{background:rgba(0,0,0,.55)}
   dialog[open]{position:fixed;inset:0;margin:auto;height:fit-content;max-height:92vh;max-width:96vw;overflow:auto}   /* always centred in the visible screen */
   html:has(dialog[open]){overflow:hidden}                                                                          /* page behind does not scroll */
-  #rfDlg{width:min(1800px,96vw)}
+  #rfDlg{width:fit-content;min-width:min(560px,96vw)}
   #rfBox{max-height:calc(92vh - 150px);overflow:auto;background:#fff;border-radius:6px}
-  #rfImg{display:none;width:100%;max-width:100%;height:auto;cursor:zoom-in}   /* fits the window; click = real size */
+  #rfImg{display:none;margin:0 auto;height:auto;cursor:zoom-in}   /* fits the window; click = real size */
   .tbar{border-top:1px solid var(--line)} .tsep{width:1px;height:20px;background:var(--line);margin:0 2px}
   dialog h3{margin:0 0 2px;font-size:14px;font-weight:700;word-break:break-word}
   .go{background:none;border:0;color:var(--muted);padding:0 5px;margin-left:4px;font-size:15px;line-height:1;cursor:pointer;border-radius:4px}
@@ -116,9 +116,21 @@
 <body>
 
 <header class="no-print md:sticky top-0 z-20" style="background:var(--panel);border-bottom:1px solid var(--line)">
-  <div class="max-w-7xl mx-auto px-3 pt-2 min-w-0">
-    <h1 class="font-bold text-sm sm:text-base tracking-wide truncate" data-i18n="title"></h1>
-    <div class="lbl" id="updated"></div>
+  <div class="max-w-7xl mx-auto px-3 pt-2 flex flex-wrap items-start justify-between gap-2">
+    <div class="min-w-0">
+      <h1 class="font-bold text-sm sm:text-base tracking-wide truncate" data-i18n="title"></h1>
+      <div class="lbl" id="updated"></div>
+    </div>
+    <div id="actionBar" class="flex flex-wrap items-center gap-1.5 ml-auto">
+      <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
+      <span class="tsep"></span>
+      <button id="btn-en" class="btn">EN</button>
+      <button id="btn-zh" class="btn">中文</button>
+      <button id="btn-th" class="btn">ไทย</button>
+      <button id="btnTheme" class="btn" title="Theme">◐</button>
+      <span class="tsep"></span>
+      <button id="btnExport" class="btn primary" data-i18n="export"></button>
+    </div>
   </div>
   <div class="max-w-7xl mx-auto px-3 py-1 overflow-x-auto">
     <nav class="flex gap-1 w-max">
@@ -133,7 +145,7 @@
     </nav>
   </div>
   <div class="tbar">
-    <div class="max-w-7xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+    <div class="max-w-7xl mx-auto px-3 py-2">
       <div id="filterBar" class="flex flex-wrap items-center gap-1.5">
         <select id="fFactory" aria-label="Factory"></select>
         <select id="fMachine" aria-label="Machine" style="display:none"></select>   <!-- hidden: only holds the machine picked by clicking a bar -->
@@ -145,16 +157,6 @@
         <input type="date" id="fEnd" aria-label="End">
         <button id="btnToday" class="btn" data-i18n="today"></button>
         <button id="btnReset" class="btn" data-i18n="reset"></button>
-      </div>
-      <div id="actionBar" class="flex flex-wrap items-center gap-1.5 ml-auto">
-        <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
-        <span class="tsep"></span>
-        <button id="btn-en" class="btn">EN</button>
-        <button id="btn-zh" class="btn">中文</button>
-        <button id="btn-th" class="btn">ไทย</button>
-        <button id="btnTheme" class="btn" title="Theme">◐</button>
-        <span class="tsep"></span>
-        <button id="btnExport" class="btn primary" data-i18n="export"></button>
       </div>
     </div>
   </div>
@@ -1626,16 +1628,31 @@ function rfCells(r) {
     [pick(r.issueEn || r.issueRaw, r.issueCn, r.issueTh), pick(r.solutionEn || r.solutionRaw, r.solutionCn, r.solutionTh)].filter(Boolean).join('\n'), rfDT(r.timestamp), rfDT(r.repairStart), rfDT(r.recoveryEnd),
     r.repairMinutes, r.qty, fr === '' ? '' : (RF_PCT ? (fr * 100).toFixed(2) + '%' : fr.toFixed(4)), r.leader, r.technician, r.remark];
 }
-function rfTable(rows) {
-  const b = 'border:1px solid #000;', th = 'position:static;background:#92D050;color:#000;font-weight:700;text-align:center;padding:5px 6px;font-size:12px;line-height:1.35;' + b;
-  const td = i => `${b}padding:4px 6px;font-size:12px;line-height:1.35;color:#000;background:#fff;white-space:pre-wrap;word-break:break-word;text-align:${i === 6 ? 'left' : 'center'};vertical-align:middle;`;
-  return `<table style="border-collapse:collapse;table-layout:fixed;width:${RF_W.reduce((a, b2) => a + b2, 0)}px;font-family:'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif;border:2px solid #000"><colgroup>${RF_W.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr>${RF_HEAD.map(h => `<th style="${th}">${esc(h[rfLi()])}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r => `<tr style="border:0">${rfCells(r).map((v, i) => `<td style="${td(i)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+let rfW = RF_W.slice();
+function rfFit(rows) {                                 // column widths measured from the text: short = 1 line, long = at most 2 lines, never cut
+  const cx = document.createElement('canvas').getContext('2d'), FF = "'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif", PAD = 22;
+  const wd = (t, bold) => { cx.font = (bold ? '700 ' : '400 ') + '12px ' + FF; return cx.measureText(t).width; };
+  const brk = /[\u0E00-\u0E7F\u3400-\u9fff]/, cells = rows.map(rfCells);
+  const fit = (paras, bold, cap) => {
+    let full = 0, word = 0;
+    paras.forEach(p => { full = Math.max(full, wd(p, bold)); p.split(/\s+/).forEach(w => { word = Math.max(word, brk.test(w) ? Math.min(wd(w, bold), 64) : wd(w, bold)); }); });
+    const w = full <= 100 ? full + PAD : Math.max((full / 2) * 1.25 + PAD, word + PAD);
+    return Math.max(46, Math.ceil(Math.min(Math.max(w, word + PAD), cap)));
+  };
+  return RF_HEAD.map((h, i) => Math.max(
+    fit([String(h[rfLi()])], true, 200),
+    fit(cells.flatMap(c => String(c[i] ?? '').split('\n')).filter(Boolean).concat(['']), false, i === 6 ? 560 : 340)));
 }
+function rfTable(rows) {
+  const b = 'border:1px solid #000;', th = 'position:static;background:#92D050;color:#000;font-weight:700;text-align:center;vertical-align:middle;padding:6px 8px;font-size:12px;line-height:1.45;' + b;
+  const td = i => `${b}padding:6px 8px;font-size:12px;line-height:1.5;color:#000;background:#fff;white-space:normal;word-break:normal;text-align:${i === 6 ? 'left' : 'center'};vertical-align:middle;`;
+  return `<table style="border-collapse:collapse;table-layout:fixed;width:${rfW.reduce((a, b2) => a + b2, 0)}px;font-family:'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif;border:2px solid #000"><colgroup>${rfW.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+    <thead><tr>${RF_HEAD.map(h => `<th style="${th}">${esc(h[rfLi()])}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr style="border:0">${rfCells(r).map((v, i) => `<td style="${td(i)}">${esc(v).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function rfFitImg(z) { const i = $('rfImg'); i.dataset.z = z ? '1' : ''; i.style.width = (i.naturalWidth / 2) + 'px'; i.style.maxWidth = z ? 'none' : '100%'; i.style.cursor = z ? 'zoom-out' : 'zoom-in'; }   // shown at its real size, shrunk only if the screen is smaller
 function rfShow() {
-  { const i = $('rfImg'); i.style.width = i.style.maxWidth = ''; i.style.cursor = ''; i.dataset.z = ''; }   // back to fit-to-window
-  $('rfImg').src = rfUrls[rfIdx]; $('rfImg').style.display = 'block'; $('rfPage').textContent = rfBlobs.length > 1 ? `${rfIdx + 1} / ${rfBlobs.length}` : '';
+  $('rfImg').onload = () => rfFitImg(false); $('rfImg').src = rfUrls[rfIdx]; $('rfImg').style.display = 'block'; $('rfPage').textContent = rfBlobs.length > 1 ? `${rfIdx + 1} / ${rfBlobs.length}` : '';
   $('rfPrev').style.display = $('rfNext').style.display = rfBlobs.length > 1 ? '' : 'none';
 }
 async function openReportForm() {
@@ -1645,7 +1662,7 @@ async function openReportForm() {
   if (!rows.length) return;
   let host;
   try {
-    await loadH2C(); rfUrls.forEach(u => URL.revokeObjectURL(u)); rfBlobs = [];
+    await loadH2C(); if (document.fonts && document.fonts.ready) await document.fonts.ready; rfW = rfFit(rows); rfUrls.forEach(u => URL.revokeObjectURL(u)); rfBlobs = [];
     host = document.createElement('div'); host.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;background:#fff;padding:6px;';
     document.body.appendChild(host);
     for (let i = 0; i < rows.length; i += RF_PAGE) {
@@ -1707,7 +1724,7 @@ $('expCsv').onclick = () => { $('exportDlg').close(); exportCSV(); };
 $('expPdf').onclick = () => { $('exportDlg').close(); buildReport().then(() => { reportBuilt = true; window.print(); }); };
 $('exportDlg').addEventListener('click', e => { if (e.target === $('exportDlg')) $('exportDlg').close(); });
 $('rfClose').onclick = () => $('rfDlg').close();
-$('rfImg').onclick = () => { const i = $('rfImg'), z = i.dataset.z !== '1'; i.dataset.z = z ? '1' : ''; i.style.width = z ? (i.naturalWidth / 2) + 'px' : ''; i.style.maxWidth = z ? 'none' : ''; i.style.cursor = z ? 'zoom-out' : ''; };
+$('rfImg').onclick = () => rfFitImg($('rfImg').dataset.z !== '1');
 $('rfPrev').onclick = () => { rfIdx = (rfIdx + rfBlobs.length - 1) % rfBlobs.length; rfShow(); };
 $('rfNext').onclick = () => { rfIdx = (rfIdx + 1) % rfBlobs.length; rfShow(); };
 $('rfDl').onclick = () => rfBlobs[rfIdx] && saveBlob(rfBlobs[rfIdx], 'report-form-' + new Date().toISOString().slice(0, 10) + (rfBlobs.length > 1 ? '-' + (rfIdx + 1) : '') + '.png');
