@@ -1,223 +1,200 @@
-/* pr-admin.js — load AFTER pr-core.js and BEFORE the main <script> of index.html */
-(() => {
-const ADMIN_PIN = '00000';                 // <-- แก้รหัสแอดมินตรงนี้ / change the admin PIN here
-const MAX_MIN = 600, db = supabaseClient;
-const $ = id => document.getElementById(id), V = () => $('prV'), B = () => $('prB');
-const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-const FIELDS = [['factory','Factory','sel'],['ts','Timestamp','dt'],['log_date','Date','date'],['shift','Shift'],['station','Station'],
-  ['machine_raw','Machine'],['machine_no','Machine no.'],['product','Product'],['issue_type','Issue type'],['raw_issue','Issue # Solution','area'],
-  ['repair_start','Repair start','dt'],['recovery_end','Recovery end','dt'],['repair_minutes','Repair min','num'],['qty','Qty','num'],
-  ['fail_rate','Fail rate','num'],['leader','Leader'],['technician','Technician'],['extra','Extra'],['remark','Remark']];
-const ALIAS = { factory:['factory','sheet'], ts:['timestamp','ts'], log_date:['log_date','date','日期'], shift:['shift','班别'], station:['station','站别'],
-  machine_raw:['machine_raw','raw_machine_name','machine'], machine_no:['machine_no','machine_number'], product:['product','机种','機種'],
-  issue_type:['issue_type','设备问题点'], raw_issue:['raw_issue','issue'], repair_start:['repair_start','维修时间'], recovery_end:['recovery_end','复机时间'],
-  repair_minutes:['repair_minutes','维修总时间(min)','维修总时间'], qty:['qty','设备数量'], fail_rate:['fail_rate','设备故障率'],
-  leader:['leader','领班确认'], technician:['technician','维修人员'], extra:['extra'], remark:['remark','备注'] };
-
-/* ---------- styles + dialog ---------- */
-document.head.insertAdjacentHTML('beforeend', `<style>
-#prAdm{width:min(1100px,96vw);max-height:92vh;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text)}
-#prAdm::backdrop{background:rgba(0,0,0,.6)}
-#prAdm .ph{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700}
-#prAdm .pb{padding:12px 14px;overflow:auto;max-height:calc(92vh - 52px)}
-#prAdm input,#prAdm select,#prAdm textarea{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:5px 7px;font-size:13px;max-width:100%}
-#prAdm table{width:100%;border-collapse:collapse;font-size:12px}#prAdm td,#prAdm th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
-#prAdm .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}#prAdm label{font-size:12px;display:block}
-#prAdm .bad{color:#f87171;font-weight:600}#prAdm .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
-</style>`);
-document.body.insertAdjacentHTML('beforeend', '<dialog id="prAdm"><div class="ph"><span>⚙ Data Admin</span><button class="btn" id="prX">✕</button></div><div class="pb" id="prB"></div></dialog>');
-const dlg = $('prAdm');
-$('prX').onclick = () => dlg.close();
-const openBtn = $('btnAdmin');
-if (openBtn) openBtn.onclick = () => { dlg.showModal(); sessionStorage.prAdm === '1' ? main('import') : lock(); };
-
-/* ---------- PIN ---------- */
-function lock() {
-  B().innerHTML = '<div class="row"><input id="prPin" type="password" placeholder="Admin PIN / รหัสแอดมิน"><button class="btn primary" id="prGo">Unlock</button><span class="bad" id="prM"></span></div>';
-  const go = () => { if ($('prPin').value === ADMIN_PIN) { sessionStorage.prAdm = '1'; main('import'); } else $('prM').textContent = 'รหัสไม่ถูกต้อง / Wrong PIN'; };
-  $('prGo').onclick = go; $('prPin').onkeydown = e => { if (e.key === 'Enter') go(); }; $('prPin').focus();
-}
-function main(tab) {
-  const T3 = [['import', '⇪ Import'], ['manage', '✎ Add / Edit / Delete'], ['tools', '🛠 Tools']];
-  B().innerHTML = '<div class="row">' + T3.map(([k, l]) => `<button class="btn${k === tab ? ' primary' : ''}" data-t="${k}">${l}</button>`).join('') + '<span id="prMsg"></span></div><div id="prV"></div>';
-  B().querySelectorAll('[data-t]').forEach(b => b.onclick = () => main(b.dataset.t));
-  ({ import: vImport, manage: vManage, tools: vTools })[tab]();
-}
-const msg = s => { const m = $('prMsg'); if (m) m.textContent = s; };
-
-/* ---------- parsing / normalising ---------- */
-const T = v => { const s = String(v ?? '').trim(); return s || null; };
-const N = v => { const n = numVal_(v); return n === '' ? null : n; };
-const dstr = d => { d = new Date(Math.round(d.getTime() / 1000) * 1000); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
-const loc = v => v instanceof Date ? dstr(v) : (v === '' || v == null ? null : toLocal_(String(v)));   // -> 'yyyy-MM-ddTHH:mm:ss' (Bangkok) | null
-const tsz = v => { const l = loc(v); return l ? l + '+07:00' : null; };
-const sig = r => [r.factory, r.ts ? Date.parse(r.ts) : '', norm_(r.machine_raw), digits_(r.machine_no), norm_(r.raw_issue)].join('|');
-const toObjs = a => { const rows = a.filter(r => r.some(c => String(c ?? '').trim() !== '')); if (rows.length < 2) return [];
-  const h = rows[0].map(x => String(x).trim()); return rows.slice(1).map(r => Object.fromEntries(h.map((k, i) => [k, r[i] ?? '']))); };
-function parseTable(txt) {                                       // CSV or tab-separated (copy from Excel / Sheets)
-  txt = txt.replace(/^\uFEFF/, ''); const sep = (txt.split('\n')[0] || '').includes('\t') ? '\t' : ',', rows = []; let row = [], cell = '', q = false;
-  for (let i = 0; i < txt.length; i++) {
-    const c = txt[i];
-    if (q) { if (c === '"') { if (txt[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
-    else if (c === '"' && cell === '') q = true;
-    else if (c === sep) { row.push(cell); cell = ''; }
-    else if (c === '\n' || c === '\r') { if (c === '\r' && txt[i + 1] === '\n') i++; row.push(cell); cell = ''; rows.push(row); row = []; }
-    else cell += c;
-  }
-  row.push(cell); rows.push(row); return toObjs(rows);
-}
-function norm(o, df) {                                           // any header names -> pr_logs row (null = blank row)
-  const m = rowOf_(o), g = k => fv_(m, ...ALIAS[k]), r = {};
-  r.factory = T(g('factory')) || df; r.ts = tsz(g('ts'));
-  const ld = loc(g('log_date')) || (r.ts && loc(r.ts)); r.log_date = ld ? ld.slice(0, 10) : null;
-  ['shift', 'station', 'machine_raw', 'machine_no', 'product', 'issue_type', 'raw_issue', 'leader', 'technician', 'extra', 'remark'].forEach(k => r[k] = T(g(k)));
-  r.repair_start = tsz(g('repair_start')); r.recovery_end = tsz(g('recovery_end'));
-  ['repair_minutes', 'qty', 'fail_rate'].forEach(k => r[k] = N(g(k)));
-  if (!r.machine_raw && !r.raw_issue) return null;
-  if (r.repair_minutes == null && r.ts && r.recovery_end) r.repair_minutes = Math.round((new Date(r.recovery_end) - new Date(r.ts)) / 60000);   // same rule as dashboard
-  return r;
-}
-function flags(r) {                                              // abnormal-value rules
-  if (isNA_(r.machine_raw) || DROP_ISSUE_RE.test(String(r.raw_issue || '').replace(/\s+/g, ' '))) return [];
-  const f = [], m = r.repair_minutes, st = r.repair_start || r.ts;
-  if (!r.recovery_end) f.push('ไม่มี recovery_end');
-  if (m != null && m < 0) f.push('ติดลบ ' + m);
-  if (m != null && m > MAX_MIN) f.push('เกิน ' + MAX_MIN + ' นาที: ' + m);
-  if (r.recovery_end && st && new Date(r.recovery_end) < new Date(st)) f.push('เวลาจบก่อนเวลาเริ่ม');
-  return f;
-}
-
-/* ---------- IMPORT (file / paste) ---------- */
-function vImport() {
-  V().innerHTML = `<div class="row"><input type="file" id="iF" accept=".xlsx,.xls,.csv"><span>Default factory:</span><select id="iDF">${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select></div>
-  <textarea id="iT" rows="6" style="width:100%" placeholder="วางข้อมูลจาก Excel/Sheets (แถวแรก = หัวคอลัมน์) / paste table here, first row = headers"></textarea>
-  <div class="row"><button class="btn primary" id="iP">Preview</button><span id="iM"></span></div><div id="iO"></div>`;
-  $('iP').onclick = async () => {
-    $('iM').textContent = '…';
-    try {
-      const file = $('iF').files[0], df = $('iDF').value; let groups;
-      if (file && /\.csv$/i.test(file.name)) groups = [{ f: df, rows: parseTable(await file.text()) }];
-      else if (file) { const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });   // sheet named like a factory = that factory
-        groups = wb.SheetNames.map(n => ({ f: FACTORIES.includes(n) ? n : df, rows: toObjs(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' })) })); }
-      else groups = [{ f: df, rows: parseTable($('iT').value) }];
-      const exist = new Set((await fetchAll_('pr_logs')).map(sig)), seen = new Set(), ok = []; let dup = 0, bad = 0;
-      groups.forEach(g => g.rows.forEach(o => {
-        const r = norm(o, g.f); if (!r) return;
-        if (!FACTORIES.includes(r.factory) || (!r.ts && !r.log_date)) { bad++; return; }
-        const s = sig(r); if (exist.has(s) || seen.has(s)) { dup++; return; }
-        seen.add(s); r.row_key = 'web|' + s; r.source = 'web-import'; ok.push(r);
-      }));
-      $('iM').textContent = '';
-      $('iO').innerHTML = `<p>✔ ${ok.length} new · ⏭ ${dup} duplicate · ✖ ${bad} invalid (factory/date) · ⚠ ${ok.filter(r => flags(r).length).length} abnormal</p>
-        <table><tr><th>Factory</th><th>Time</th><th>Machine</th><th>Issue</th><th>Min</th><th></th></tr>${ok.slice(0, 10).map(r => `<tr><td>${E(r.factory)}</td><td>${E((loc(r.ts) || r.log_date || '').slice(0, 16))}</td><td>${E(r.machine_raw)} ${E(r.machine_no)}</td><td>${E((r.raw_issue || '').slice(0, 50))}</td><td>${r.repair_minutes ?? ''}</td><td>${flags(r).length ? '⚠' : ''}</td></tr>`).join('')}</table>
-        ${ok.length > 10 ? `<p>… +${ok.length - 10}</p>` : ''}${ok.length ? '<div class="row"><button class="btn primary" id="iS">Save to pr_logs</button></div>' : ''}`;
-      if (ok.length) $('iS').onclick = () => startSave(ok, 'insert', null, vImport);
-    } catch (e) { $('iM').textContent = ''; $('iO').innerHTML = `<p class="bad">${E(e.message || e)}</p>`; }
+/* ===== pr-admin.js v2 — Add / Edit / Delete / Confirm (admin PIN) -> Supabase RPC (pr_logs) + Google Sheet (GAS doPost) ===== */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxNht563H7COeUnwfF4NUImMsv3bFGoIpiHsE4h1tTrPFemxnskTOBsCw02zQ-ts7G8/exec';                      // <-- paste the GAS Web app /exec URL here ('' = Supabase only, no sheet sync)
+const PRA = (() => {
+  const PIN_KEY = 'pra_pin', TZO = '+07:00', q = id => document.getElementById(id);
+  const TXT = {
+    en: { add: 'Add data', edit: 'Edit data', del: 'Delete', confirm: 'Confirm (value is correct)', unconfirm: 'Remove confirmation', save: 'Save', saveNew: 'Save & add next', cancel: 'Cancel',
+      pinTitle: 'Admin PIN', pinHint: 'Enter the admin PIN (asked once per browser session).', ok: 'OK', badPin: 'Wrong PIN', addNew: 'New value', saving: 'Saving…', saved: 'Saved',
+      sheetFail: 'Saved in Supabase, but the Google Sheet was NOT updated: ', delAsk: 'Delete this record? (also removed from the Google Sheet)', deleted: 'Deleted', confirmed: 'Confirmed',
+      need: 'Required: factory, date/time and machine or issue', badFactory: 'Factory must be one of: ', secWhen: 'When / where', secMachine: 'Machine', secIssue: 'Issue & solution', secRepair: 'Repair',
+      secPeople: 'People', factory: 'Factory', time: 'Reported time 报修时间', shift: 'Shift 班别', station: 'Station 站别', machine: 'Machine name', machineNo: 'Machine no.', product: 'Model 机种',
+      issueType: 'Issue point 设备问题点', issue: 'Issue', solution: 'Solution', repairStart: 'Repair start 维修时间', recoveryEnd: 'Recovery 复机时间', minutes: 'Repair minutes 维修总时间(min)',
+      qty: 'Qty 设备数量', failRate: 'Fail rate 设备故障率 (auto)', leader: 'Leader 领班确认', technician: 'Technician 维修人员', remark: 'Remark 备注', fixed: 'Fixed' },
+    zh: { add: '新增数据', edit: '修改数据', del: '删除', confirm: '确认（数值无误）', unconfirm: '取消确认', save: '保存', saveNew: '保存并继续新增', cancel: '取消', pinTitle: '管理员 PIN', pinHint: '请输入管理员 PIN（每次浏览只需一次）。',
+      ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（同时从 Google 表格删除）', deleted: '已删除',
+      confirmed: '已确认', need: '必填：工厂、日期时间、设备或问题', badFactory: '工厂必须是：', secWhen: '时间 / 地点', secMachine: '设备', secIssue: '问题与解决方法', secRepair: '维修', secPeople: '人员',
+      factory: '工厂', time: '报修时间', shift: '班别', station: '站别', machine: '设备名称', machineNo: '设备编号', product: '机种', issueType: '设备问题点', issue: '问题', solution: '解决方法',
+      repairStart: '维修时间', recoveryEnd: '复机时间', minutes: '维修总时间(min)', qty: '设备数量', failRate: '设备故障率（自动）', leader: '领班确认', technician: '维修人员', remark: '备注', fixed: '已修正' },
+    th: { add: 'เพิ่มข้อมูล', edit: 'แก้ไขข้อมูล', del: 'ลบ', confirm: 'ยืนยัน (ค่าถูกต้อง)', unconfirm: 'ยกเลิกการยืนยัน', save: 'บันทึก', saveNew: 'บันทึกแล้วเพิ่มรายการถัดไป', cancel: 'ยกเลิก', pinTitle: 'PIN แอดมิน',
+      pinHint: 'ใส่ PIN แอดมิน (ถามครั้งเดียวต่อการเปิดเบราว์เซอร์)', ok: 'ตกลง', badPin: 'PIN ไม่ถูกต้อง', addNew: 'ค่าใหม่', saving: 'กำลังบันทึก…', saved: 'บันทึกแล้ว',
+      sheetFail: 'บันทึกใน Supabase แล้ว แต่ Google Sheet ยังไม่ถูกอัปเดต: ', delAsk: 'ลบรายการนี้? (จะลบออกจาก Google Sheet ด้วย)', deleted: 'ลบแล้ว', confirmed: 'ยืนยันแล้ว',
+      need: 'ต้องกรอก: โรงงาน วันเวลา และเครื่องหรือปัญหา', badFactory: 'โรงงานต้องเป็นหนึ่งใน: ', secWhen: 'เมื่อไร / ที่ไหน', secMachine: 'เครื่อง', secIssue: 'ปัญหาและวิธีแก้', secRepair: 'การซ่อม',
+      secPeople: 'บุคลากร', factory: 'โรงงาน', time: 'เวลาแจ้งซ่อม 报修时间', shift: 'กะ 班别', station: 'กระบวนการ 站别', machine: 'ชื่อเครื่อง', machineNo: 'หมายเลขเครื่อง', product: 'โมดูล 机种',
+      issueType: 'จุดปัญหา 设备问题点', issue: 'ปัญหา', solution: 'วิธีแก้', repairStart: 'เวลาซ่อม 维修时间', recoveryEnd: 'เวลาพักฟื้น 复机时间', minutes: 'เวลาซ่อม(นาที) 维修总时间',
+      qty: 'จำนวนเครื่อง 设备数量', failRate: 'อัตราล้มเหลว 设备故障率 (อัตโนมัติ)', leader: 'หัวหน้างาน 领班确认', technician: 'ช่างเทคนิค 维修人员', remark: 'หมายเหตุ 备注', fixed: 'แก้ไขแล้ว' }
   };
-}
+  const T = k => ((TXT[lang] || TXT.en)[k]) || TXT.en[k] || k;
+  const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const all = () => DATA.concat(NOMACH);
+  const nowLocal = () => tzFmt.format(new Date()).replace(' ', 'T').slice(0, 16);
+  const ms = s => Date.parse(s.slice(0, 16) + ':00' + TZO);
+  const nk = s => String(s || '').trim().toLowerCase();
 
-/* ---------- MANAGE (add / edit / delete) ---------- */
-async function vManage() {
-  V().innerHTML = '…'; let rows;
-  try { rows = (await fetchAll_('pr_logs')).sort((a, b) => (a.ts || '') < (b.ts || '') ? 1 : -1); } catch (e) { V().innerHTML = `<p class="bad">${E(e.message)}</p>`; return; }
-  V().innerHTML = `<div class="row"><button class="btn primary" id="mAdd">＋ Add</button><select id="mF"><option value="">All</option>${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select>
-    <input id="mQ" placeholder="search id / machine / issue / technician"><label><input type="checkbox" id="mA"> ⚠ abnormal not confirmed</label></div><div id="mL"></div>`;
-  const draw = () => {
-    const f = $('mF').value, q = norm_($('mQ').value), ab = $('mA').checked;
-    const list = rows.filter(r => (!f || r.factory === f) && (!q || norm_([r.id, r.machine_raw, r.machine_no, r.raw_issue, r.technician].join(' ')).includes(q)) && (!ab || (!r.confirmed && flags(r).length)));
-    $('mL').innerHTML = `<p>${list.length} rows${list.length > 100 ? ' (showing 100)' : ''}</p><table><tr><th>ID</th><th>Factory</th><th>Time</th><th>Machine</th><th>Issue</th><th>Min</th><th></th><th></th></tr>` +
-      list.slice(0, 100).map(r => { const fl = flags(r).length;
-        return `<tr><td>${r.id}</td><td>${E(r.factory)}</td><td>${E((loc(r.ts) || '').slice(5, 16).replace('T', ' '))}</td><td>${E(r.machine_raw)} ${E(r.machine_no)}</td><td>${E((r.raw_issue || '').slice(0, 50))}</td>
-        <td class="${fl && !r.confirmed ? 'bad' : ''}">${r.repair_minutes ?? ''}</td><td>${r.confirmed ? '✔' : fl ? '⚠' : ''}</td><td><button class="btn" data-e="${r.id}">✎</button> <button class="btn" data-d="${r.id}">🗑</button></td></tr>`; }).join('') + '</table>';
-    $('mL').querySelectorAll('[data-e]').forEach(b => b.onclick = () => vForm(rows.find(x => String(x.id) === b.dataset.e)));
-    $('mL').querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
-      if (!confirm('ลบแถว ID ' + b.dataset.d + ' ? / Delete row?')) return;
-      const { error } = await db.from('pr_logs').delete().eq('id', b.dataset.d);
-      if (error) return alert(error.message);
-      if (typeof load === 'function') load(); main('manage'); msg('✔ Deleted');
+  /* ---------- style ---------- */
+  const st = document.createElement('style');
+  st.textContent = `#praDlg{width:min(760px,96vw);max-height:94vh;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text)}
+  #praDlg::backdrop,#praPin::backdrop{background:rgba(0,0,0,.55)} #praPin{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:16px}
+  .pra-head{padding:12px 16px;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .pra-body{padding:12px 16px;overflow:auto;max-height:calc(94vh - 120px)} .pra-sec{font-size:11px;font-weight:700;color:var(--accent);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.04em}
+  .pra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px} .pra-grid .wide{grid-column:1/-1}
+  .pra-f label{display:block;font-size:11px;color:var(--muted);margin-bottom:2px;position:static}
+  .pra-f input,.pra-f textarea,.pra-f select{width:100%;font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);color-scheme:inherit;min-width:0}
+  .pra-f{position:relative} .pra-f input[readonly]{opacity:.7}
+  .pra-dd{display:none;position:absolute;left:0;right:0;top:100%;z-index:60;max-height:210px;overflow:auto;background:var(--panel);border:1px solid var(--accent);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .pra-dd div{padding:6px 9px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line)} .pra-dd div:hover{background:var(--panel2)} .pra-dd .new{color:var(--accent);font-weight:600}
+  .pra-foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .pra-menu{position:fixed;z-index:100;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden}
+  .pra-menu button{display:block;width:100%;text-align:left;padding:9px 12px;font-size:13px;color:var(--text);background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer}
+  .pra-menu button:hover{background:var(--panel2)} .pra-menu .danger{color:#ef4444}
+  .pra-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:200;padding:9px 14px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:600;max-width:92vw}
+  .pra-toast.err{background:#d93025;color:#fff}
+  .kebab{padding:3px 8px !important;font-size:15px !important;line-height:1 !important}`;
+  document.head.appendChild(st);
+
+  const toast = (msg, err) => { const d = document.createElement('div'); d.className = 'pra-toast' + (err ? ' err' : ''); d.textContent = msg; document.body.appendChild(d); setTimeout(() => d.remove(), err ? 7000 : 2400); };
+
+  /* ---------- PIN + RPC ---------- */
+  function askPin() {
+    return new Promise(res => {
+      const d = document.createElement('dialog'); d.id = 'praPin';
+      d.innerHTML = `<div style="font-weight:700;margin-bottom:4px">${T('pinTitle')}</div><div class="lbl" style="margin-bottom:8px">${T('pinHint')}</div>
+        <input type="password" inputmode="numeric" autocomplete="off" style="width:100%;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text)">
+        <div class="flex justify-end gap-2" style="margin-top:10px"><button class="btn" data-x="0">${T('cancel')}</button><button class="btn primary" data-x="1">${T('ok')}</button></div>`;
+      document.body.appendChild(d); const inp = d.querySelector('input'); let done = false;
+      const fin = v => { if (done) return; done = true; d.close(); d.remove(); res(v); };
+      d.querySelector('[data-x="1"]').onclick = () => fin(inp.value.trim() || null); d.querySelector('[data-x="0"]').onclick = () => fin(null);
+      inp.onkeydown = e => { if (e.key === 'Enter') fin(inp.value.trim() || null); }; d.addEventListener('cancel', () => fin(null));
+      d.showModal(); inp.focus();
     });
-  };
-  ['mF', 'mQ', 'mA'].forEach(i => $(i).oninput = draw); $('mAdd').onclick = () => vForm(null); draw();
-}
-function vForm(r) {
-  const v = k => { const x = r?.[k]; if (x == null) return ''; const t = FIELDS.find(f => f[0] === k)[2]; return t === 'dt' ? (loc(x) || '').slice(0, 16) : t === 'date' ? String(x).slice(0, 10) : x; };
-  V().innerHTML = `<div class="g">${FIELDS.map(([k, l, t]) => `<label>${l}${t === 'sel' ? `<select id="f_${k}" style="width:100%">${FACTORIES.map(f => `<option${v(k) === f ? ' selected' : ''}>${E(f)}</option>`).join('')}</select>`
-    : t === 'area' ? `<textarea id="f_${k}" rows="3" style="width:100%">${E(v(k))}</textarea>`
-    : `<input id="f_${k}" style="width:100%" type="${{ dt: 'datetime-local', date: 'date', num: 'number' }[t] || 'text'}"${t === 'num' ? ' step="any"' : ''} value="${E(v(k))}">`}</label>`).join('')}</div>
-    <div class="row"><button class="btn primary" id="fS">Save</button><button class="btn" id="fC">Cancel</button></div>`;
-  $('fC').onclick = () => main('manage');
-  $('fS').onclick = () => {
-    const o = {}; FIELDS.forEach(([k, , t]) => { const x = $('f_' + k).value; o[k] = t === 'dt' ? (x ? x + ':00' : '') : x; });
-    const n = norm(o, o.factory); if (!n) return alert('กรอก Machine หรือ Issue อย่างน้อย 1 อย่าง');
-    if (!r) { n.source = 'web-add'; n.row_key = 'web|' + sig(n); }
-    startSave([n], r ? 'update' : 'insert', r?.id, () => vForm(r ? { ...r, ...n } : n));
-  };
-}
+  }
+  async function rpc(fn, args) {
+    const { data, error } = await supabaseClient.rpc(fn, args);
+    if (error) { if (/bad pin/i.test(error.message)) { sessionStorage.removeItem(PIN_KEY); throw new Error(T('badPin')); } throw new Error(error.message); }
+    return data;
+  }
+  async function ensurePin() {
+    let p = sessionStorage.getItem(PIN_KEY); if (p) return p;
+    p = await askPin(); if (!p) return null;
+    try { await rpc('pr_check_pin', { p_pin: p }); } catch (e) { toast(e.message, true); return null; }
+    sessionStorage.setItem(PIN_KEY, p); return p;
+  }
+  async function gas(body) {
+    const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), redirect: 'follow' });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'GAS error'); return j;
+  }
 
-/* ---------- SAVE + abnormal review ---------- */
-function startSave(rows, mode, id, back) {
-  const bad = rows.filter(r => flags(r).length);
-  bad.length ? vReview(rows, bad, mode, id, back) : commit(rows, mode, id);
-}
-function vReview(rows, bad, mode, id, back) {
-  const dt = (i, k, r) => `<input type="datetime-local" data-i="${i}" data-k="${k}" value="${E((loc(r[k]) || '').slice(0, 16))}">`;
-  V().innerHTML = `<h3 class="bad" style="font-size:16px">⚠ ${bad.length} รายการผิดปกติ / abnormal rows</h3>
-    <p>แก้ค่าในตารางแล้วบันทึก หรือ "ยืนยันเก็บไว้" โดยต้องใส่โน้ตเหตุผล / fix the values, or keep them with a reason (remark).</p>
-    <table><tr><th>Row</th><th>Problem</th><th>Repair start</th><th>Recovery end</th><th>Minutes</th><th>Reason / remark *</th></tr>${bad.map((r, i) =>
-    `<tr><td>${E(r.factory)}<br>${E(r.machine_raw || '')} ${E(r.machine_no || '')}<br>${E((loc(r.ts) || '').slice(0, 16).replace('T', ' '))}</td><td class="bad">${flags(r).map(E).join('<br>')}</td>
-    <td>${dt(i, 'repair_start', r)}</td><td>${dt(i, 'recovery_end', r)}</td>
-    <td><input type="number" step="any" style="width:80px" data-i="${i}" data-k="repair_minutes" value="${r.repair_minutes ?? ''}"></td>
-    <td><input style="width:100%;min-width:200px" data-i="${i}" data-k="note" placeholder="เหตุผล / reason"></td></tr>`).join('')}</table>
-    <div class="row"><button class="btn" id="rB">← กลับไปแก้ไข / Back to edit</button><button class="btn primary" id="rOk">✔ ยืนยันเก็บไว้ & บันทึก / Keep & save</button></div>`;
-  $('rB').onclick = back;
-  $('rOk').onclick = () => {
-    const note = {};
-    V().querySelectorAll('[data-i]').forEach(x => { const r = bad[x.dataset.i], k = x.dataset.k, v = x.value.trim();
-      if (k === 'note') note[x.dataset.i] = v;
-      else if (k === 'repair_minutes') r[k] = v === '' ? null : Number(v);
-      else r[k] = v ? tsz(v + ':00') : null; });
-    const still = bad.filter(r => flags(r).length);
-    if (still.some(r => !note[bad.indexOf(r)])) return alert('กรุณากรอกโน้ตเหตุผลให้ครบทุกแถวที่ยังผิดปกติ / A reason is required for every abnormal row');
-    bad.forEach((r, i) => { r.confirmed = flags(r).length > 0; if (note[i]) r.remark = [r.remark, note[i]].filter(Boolean).join(' | '); });
-    commit(rows, mode, id);
-  };
-}
-async function commit(rows, mode, id) {
-  V().innerHTML = '⏳ Saving…';
-  try {
-    rows.forEach(r => r.confirmed = !!r.confirmed);
-    if (mode === 'update') { const { error } = await db.from('pr_logs').update(rows[0]).eq('id', id); if (error) throw error; }
-    else for (let i = 0; i < rows.length; i += 500) { const { error } = await db.from('pr_logs').insert(rows.slice(i, i + 500)); if (error) throw error; }
-    if (typeof load === 'function') load();                      // refresh the dashboard
-    main('manage'); msg('✔ Saved ' + rows.length + ' row(s)');
-  } catch (e) { alert('Error: ' + (e.message || e)); main('manage'); }
-}
+  /* ---------- row <-> form values ---------- */
+  const prevOf = r => ({ timestamp: r.timestamp, machine: r.machineRaw, machineNo: r.machineNo, rowNo: r.rowNo });
+  const iso16 = s => (/^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(s || '') ? s.slice(0, 16) : '');
+  function toForm(r) {
+    return { factory: r.factory, timestamp: iso16(r.timestamp), shift: r.shift, station: r.station, machine: r.noMachine ? '' : r.machineRaw, machineNo: r.machineNo, product: r.product, issueType: r.issueType,
+      issue: r.issueRaw, solution: r.solutionRaw, repairStart: iso16(r.repairStart), recoveryEnd: iso16(r.recoveryEnd), minutes: r.repairMinutes === '' ? '' : String(r.repairMinutes),
+      qty: r.qty === '' ? '' : String(r.qty), leader: r.leader, technician: r.technician, remark: r.remark };
+  }
+  const autoMin = v => (v.timestamp && v.recoveryEnd) ? String(Math.round((ms(v.recoveryEnd) - ms(v.timestamp)) / 60000)) : '';
+  async function commit(v, editing, again) {                       // validate -> Supabase RPC -> GAS
+    if (!v.factory || !v.timestamp || !(v.machine || v.issue)) { toast(T('need'), true); return false; }
+    if (!FACTORIES.includes(v.factory)) { toast(T('badFactory') + FACTORIES.join(', '), true); return false; }
+    const pin = await ensurePin(); if (!pin) return false;
+    const iso = s => s ? s.slice(0, 16) + ':00' + TZO : null, loc = s => s ? s.slice(0, 16) + ':00' : '';
+    const fr = calcFailRate_(v.minutes, v.qty), num = s => (s === '' || s == null) ? null : Number(s);
+    const row = { id: editing ? Number(editing.pk) : null, factory: v.factory, timestamp: iso(v.timestamp), log_date: v.timestamp.slice(0, 10), raw_machine_name: v.machine || 'N/A', machine_number: v.machineNo || '',
+      raw_issue: v.solution ? `${v.issue} # ${v.solution}` : v.issue, shift: v.shift, station: v.station, product: v.product, issue_type: v.issueType, repair_start: iso(v.repairStart), recovery_end: iso(v.recoveryEnd),
+      repair_minutes: num(v.minutes), qty: num(v.qty), leader: v.leader, technician: v.technician, remark: v.remark };
+    toast(T('saving'));
+    let saved; try { saved = await rpc('pr_save_log', { p_pin: pin, p_row: row }); } catch (e) { toast(e.message, true); return false; }
+    if (GAS_URL) {
+      try {
+        await gas({ action: 'upsert', pin, pk: saved.id, factory: v.factory, prev: editing ? prevOf(editing) : null,
+          row: { timestamp: loc(v.timestamp), date: v.timestamp.slice(0, 10), shift: v.shift, station: v.station, machine: v.machine || 'N/A', machineNo: v.machineNo, product: v.product, issueType: v.issueType,
+                 issue: row.raw_issue, repairStart: loc(v.repairStart), recoveryEnd: loc(v.recoveryEnd), repairMinutes: v.minutes, qty: v.qty, failRate: fr, leader: v.leader, technician: v.technician, remark: v.remark } });
+      } catch (e) { rpc('pr_set_sync', { p_pin: pin, p_id: saved.id, p_ok: false, p_err: e.message }).catch(() => {}); toast(T('sheetFail') + e.message, true); }
+    }
+    toast(T('saved')); await load(); return true;
+  }
 
-/* ---------- TOOLS (old admin.html buttons) ---------- */
-function vTools() {
-  V().innerHTML = `<div class="row">${[['pr_add_new_issues', 'pr_issue_mapping', 'Add new issues to IssueMapping'], ['pr_add_new_machines', 'pr_machine_mapping', 'Add new machines to MachineMapping'], ['pr_add_skill_names', 'pr_skill_map', 'Create SkillWeb names']]
-    .map(([f, t, l]) => `<button class="btn" data-r="${f}|${t}">${l}</button>`).join('')}<button class="btn" id="tC">Check unmatched + module data</button></div><pre id="tO" style="white-space:pre-wrap;font-size:12px"></pre>`;
-  V().querySelectorAll('[data-r]').forEach(b => b.onclick = async () => {
-    const [f, t] = b.dataset.r.split('|'); $('tO').textContent = '…';
-    const { data, error } = await db.rpc(f);
-    $('tO').textContent = error ? error.message : (data ? data + ' new row(s) added to ' + t + ' – fill in the Chinese columns you need.' : 'Nothing new – already in ' + t + '.');
-  });
-  $('tC').onclick = async () => {
-    const o = $('tO'); o.textContent = '…';
-    try {
-      const rows = (await fetchPayload()).data.filter(r => !r.noMachine), out = [], un = {};
-      rows.filter(r => !r.brandEn).forEach(r => un[r.machineRaw] = (un[r.machineRaw] || 0) + 1);
-      out.push(Object.keys(un).length ? 'No keyword row for:\n' + Object.keys(un).map(k => k + '  (' + un[k] + ' rows)').join('\n') : 'All machine names matched.');
-      FACTORIES.forEach(f => {
-        const mine = rows.filter(r => r.factory === f), keys = {}, withMod = {}, missing = [];
-        mine.forEach(r => { keys[r.machineKey] = r; if (r.product) withMod[r.machineKey] = 1; });
-        Object.keys(keys).forEach(k => { if (!withMod[k] && missing.length < 6) missing.push(keys[k].machineRaw + (keys[k].machineNo ? ' ' + keys[k].machineNo : '')); });
-        out.push(f + ': log rows ' + mine.length + ' | machines ' + Object.keys(keys).length + ' | machines with a module ' + Object.keys(withMod).length +
-          ' | rows with a module ' + mine.filter(r => r.product).length + (missing.length ? '\n   no module yet: ' + missing.join(', ') : ''));
-      });
-      o.textContent = out.join('\n\n');
-    } catch (e) { o.textContent = String(e.message || e); }
-  };
-}
+  /* ---------- combo box (pick from existing, or type a new value) ---------- */
+  function combo(inp, getList) {
+    const box = document.createElement('div'); box.className = 'pra-dd'; inp.parentNode.appendChild(box);
+    const show = () => {
+      const list = getList(), k = nk(inp.value), hit = list.filter(x => !k || nk(x).includes(k)).slice(0, 80), exact = list.some(x => nk(x) === k);
+      box.innerHTML = hit.map(x => `<div data-v="${E(x)}">${E(x)}</div>`).join('') + (k && !exact ? `<div class="new" data-v="${E(inp.value.trim())}">＋ ${T('addNew')}: ${E(inp.value.trim())}</div>` : '');
+      box.style.display = box.innerHTML ? 'block' : 'none';
+    };
+    inp.addEventListener('focus', show); inp.addEventListener('input', show);
+    inp.addEventListener('blur', () => setTimeout(() => (box.style.display = 'none'), 120));
+    box.addEventListener('mousedown', e => { const d = e.target.closest('[data-v]'); if (!d) return; e.preventDefault(); inp.value = d.dataset.v; box.style.display = 'none'; inp.dispatchEvent(new Event('change', { bubbles: true })); });
+  }
+  const uniq = (key, filter) => { const c = new Map(); all().forEach(r => { if (filter && !filter(r)) return; const v = String(r[key] ?? '').trim(); if (v) c.set(v, (c.get(v) || 0) + 1); }); return [...c.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]); };
+
+  /* ---------- form ---------- */
+  function open(row) {
+    const old = q('praDlg'); if (old) old.remove();
+    const editing = row || null, d = document.createElement('dialog'); d.id = 'praDlg';
+    const f = (id, type, wide, key = id) => {
+      const lab = `<label for="pra_${key}">${T(id)}</label>`;
+      const ctl = type === 'area' ? `<textarea id="pra_${key}" rows="2" autocomplete="off"></textarea>` : `<input id="pra_${key}" ${type === 'dt' ? 'type="datetime-local"' : type === 'num' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} autocomplete="off" ${id === 'failRate' ? 'readonly' : ''}>`;
+      return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}</div>`;
+    };
+    d.innerHTML = `<div class="pra-head"><span>${editing ? T('edit') : T('add')}</span><button class="btn" id="pra_x">✕</button></div><div class="pra-body">
+      <div class="pra-sec">${T('secWhen')}</div><div class="pra-grid">${f('factory', 'text')}${f('time', 'dt', 0, 'timestamp')}${f('shift', 'text')}${f('station', 'text')}</div>
+      <div class="pra-sec">${T('secMachine')}</div><div class="pra-grid">${f('machine', 'text')}${f('machineNo', 'text')}${f('product', 'text')}${f('issueType', 'text')}</div>
+      <div class="pra-sec">${T('secIssue')}</div><div class="pra-grid">${f('issue', 'area', 1)}${f('solution', 'area', 1)}</div>
+      <div class="pra-sec">${T('secRepair')}</div><div class="pra-grid">${f('repairStart', 'dt')}${f('recoveryEnd', 'dt')}${f('minutes', 'num')}${f('qty', 'num')}${f('failRate', 'text')}</div>
+      <div class="pra-sec">${T('secPeople')}</div><div class="pra-grid">${f('leader', 'text')}${f('technician', 'text')}${f('remark', 'area', 1)}</div></div>
+      <div class="pra-foot"><button class="btn" id="pra_cancel">${T('cancel')}</button>${editing ? '' : `<button class="btn" id="pra_saveNew">${T('saveNew')}</button>`}<button class="btn primary" id="pra_save">${T('save')}</button></div>`;
+    document.body.appendChild(d);
+    const I = {}; ['factory', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'failRate', 'leader', 'technician', 'remark'].forEach(k => (I[k] = q('pra_' + k)));
+    const get = () => { const v = {}; Object.keys(I).forEach(k => (v[k] = (I[k].value || '').trim())); return v; };
+    const set = v => Object.keys(v).forEach(k => { if (I[k]) I[k].value = v[k] ?? ''; });
+    let manual = false;
+    const recalc = () => { if (!manual) I.minutes.value = autoMin(get()); const fr = calcFailRate_(I.minutes.value, I.qty.value); I.failRate.value = fr === '' ? '' : (fr * 100).toFixed(2) + ' %'; };
+    const fac = () => I.factory.value.trim(), mach = () => all().filter(r => (!fac() || r.factory === fac()) && nk(r.machineRaw) === nk(I.machine.value));
+    combo(I.factory, () => FACTORIES); combo(I.shift, () => uniq('shift')); combo(I.station, () => uniq('station')); combo(I.product, () => uniq('product')); combo(I.issueType, () => uniq('issueType'));
+    combo(I.machine, () => uniq('machineRaw', r => !r.noMachine && (!fac() || r.factory === fac()))); combo(I.machineNo, () => [...new Set(mach().map(r => r.machineNo).filter(Boolean))]);
+    combo(I.issue, () => uniq('issueRaw')); combo(I.leader, () => uniq('leader')); combo(I.technician, () => uniq('technician'));
+    combo(I.solution, () => { const own = new Set(all().filter(r => nk(r.issueRaw) === nk(I.issue.value) && r.solutionRaw).map(r => r.solutionRaw)); return [...own, ...uniq('solutionRaw').filter(x => !own.has(x))]; });
+    I.machine.addEventListener('change', () => { const m = mach().sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.product.value) I.product.value = m.product || ''; if (m && !I.machineNo.value) I.machineNo.value = m.machineNo || ''; });
+    I.issue.addEventListener('change', () => { const m = all().filter(r => nk(r.issueRaw) === nk(I.issue.value) && r.solutionRaw).sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.solution.value) I.solution.value = m.solutionRaw; });
+    ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.minutes.addEventListener('input', () => { manual = I.minutes.value !== ''; recalc(); });
+    if (editing) { const v = toForm(editing); set(v); manual = v.minutes !== ''; } else { I.timestamp.value = nowLocal(); I.factory.value = q('fFactory') && q('fFactory').value || ''; }
+    recalc();
+    const close = () => { d.close(); d.remove(); };
+    q('pra_x').onclick = q('pra_cancel').onclick = close;
+    q('pra_save').onclick = async () => { if (await commit(get(), editing)) close(); };
+    if (!editing) q('pra_saveNew').onclick = async () => {
+      const v = get(); if (await commit(v, null)) { ['machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'remark', 'failRate'].forEach(k => (I[k].value = '')); manual = false; I.timestamp.value = nowLocal(); recalc(); I.machine.focus(); }
+    };
+    d.showModal();
+  }
+
+  /* ---------- delete / confirm / quick fix / row menu ---------- */
+  async function del(r) {
+    if (!confirm(T('delAsk') + '\n\n' + r.factory + ' · ' + (r.timestamp || '').replace('T', ' ').slice(0, 16) + ' · ' + r.machineEn)) return;
+    const pin = await ensurePin(); if (!pin) return;
+    try { await rpc('pr_delete_log', { p_pin: pin, p_id: Number(r.pk) }); } catch (e) { toast(e.message, true); return; }
+    if (GAS_URL) { try { await gas({ action: 'delete', pin, pk: r.pk, factory: r.factory, prev: prevOf(r) }); } catch (e) { toast(T('sheetFail') + e.message, true); await load(); return; } }
+    toast(T('deleted')); await load();
+  }
+  async function confirmRow(r, val) {
+    const pin = await ensurePin(); if (!pin) return;
+    try { await rpc('pr_confirm_log', { p_pin: pin, p_id: Number(r.pk), p_val: val !== false }); } catch (e) { toast(e.message, true); return; }
+    toast(T('confirmed')); await load();
+  }
+  async function applyFix(r, a) {                                  // anomalies tab: apply the suggested corrected date / time
+    const v = toForm(r); if (a.fix && ['timestamp', 'repairStart', 'recoveryEnd'].includes(a.f)) v[a.f] = a.fix.slice(0, 16);
+    if (v.timestamp && v.recoveryEnd) v.minutes = autoMin(v);
+    if (await commit(v, r)) toast(T('fixed'));
+  }
+  function menu(btn, r) {
+    document.querySelectorAll('.pra-menu').forEach(m => m.remove());
+    const m = document.createElement('div'); m.className = 'pra-menu';
+    m.innerHTML = `<button data-a="edit">✎ ${T('edit')}</button>${r.anomalies && r.anomalies.length ? `<button data-a="cf">✓ ${r.confirmed ? T('unconfirm') : T('confirm')}</button>` : ''}<button data-a="del" class="danger">🗑 ${T('del')}</button>`;
+    document.body.appendChild(m); const b = btn.getBoundingClientRect();
+    m.style.top = Math.min(b.bottom + 4, window.innerHeight - m.offsetHeight - 8) + 'px'; m.style.left = Math.max(8, Math.min(b.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)) + 'px';
+    m.onclick = e => { const a = e.target.closest('[data-a]'); if (!a) return; m.remove(); if (a.dataset.a === 'edit') open(r); else if (a.dataset.a === 'del') del(r); else confirmRow(r, !r.confirmed); };
+    setTimeout(() => document.addEventListener('click', function h(e) { if (!m.contains(e.target)) { m.remove(); document.removeEventListener('click', h); } }), 0);
+  }
+  if (q('btnAdmin')) q('btnAdmin').onclick = () => open();
+  return { open, menu, del, confirm: confirmRow, applyFix };
 })();
