@@ -365,5 +365,18 @@ const PRA = (() => {
     d.showModal();
   }
   if (q('btnAdmin')) q('btnAdmin').onclick = chooser;
+  /* ---------- toast (shows above open <dialog> top-layer too) ---------- */
+  const toast = (msg, err) => {
+    const host = document.querySelector('dialog[open]') || document.body;
+    const d = document.createElement('div');
+    d.className = 'pra-toast' + (err ? ' err' : '');
+    if (host !== document.body) {
+      d.style.position = 'fixed';
+      d.style.zIndex = '2147483647';
+    }
+    d.textContent = msg;
+    host.appendChild(d);
+    setTimeout(() => d.remove(), err ? 7000 : 2400);
+  };
   return { open, menu, del, confirm: confirmRow, applyFix };
 })();
