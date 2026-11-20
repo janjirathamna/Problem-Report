@@ -9,7 +9,7 @@ const PRA = (() => {
       need: 'Required: factory, date/time and machine or issue', badFactory: 'Factory must be one of: ', secWhen: 'When / where', secMachine: 'Machine', secIssue: 'Issue & solution', secRepair: 'Repair',
       secPeople: 'People', factory: 'Factory', time: 'Reported time 报修时间', shift: 'Shift 班别', station: 'Station 站别', machine: 'Machine name', machineNo: 'Machine no.', product: 'Model 机种',
       issueType: 'Issue point 设备问题点', issue: 'Issue', solution: 'Solution', repairStart: 'Repair start 维修时间', recoveryEnd: 'Recovery 复机时间', minutes: 'Repair minutes 维修总时间(min)',
-      qty: 'Qty 设备数量', failRate: 'Fail rate 设备故障率 (auto)', leader: 'Leader 领班确认', technician: 'Technician 维修人员', remark: 'Remark 备注', fixed: 'Fixed',
+      qty: 'Qty 设备数量', failRate: 'Fail rate 设备故障率 (auto)', leader: 'Leader 领班确认', technician: 'Technician 维修人员', remark: 'Remark 备注', fixed: 'Fixed', negMin: 'Recovery time is before the reported time (minutes would be negative) – check the dates / times',
       viaForm: 'Fill in a form', viaFile: 'Import a file (.xlsx / .csv)', impTitle: 'Import data from file', impPick: 'File (.xlsx, .xls, .csv)', impSheet: 'Sheet', impHdr: 'Header row no.', impDateOrder: 'Order of text dates',
       impDefFactory: 'Factory (if not in file)', impMap: 'Match file columns to fields', impMapHint: 'Guessed from the column names – change anything that is wrong.', impNone: '— not in file —', impSkipDup: 'Skip rows already in the system',
       impPreview: 'Preview', impReady: 'ready to import', impDup: 'duplicates skipped', impErr: 'with errors', impBadDate: 'Date/time not recognised', impStart: 'Import', impBusy: 'Importing', impDone: 'Imported', impFailed: 'failed',
@@ -18,7 +18,7 @@ const PRA = (() => {
       ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（同时从 Google 表格删除）', deleted: '已删除',
       confirmed: '已确认', need: '必填：工厂、日期时间、设备或问题', badFactory: '工厂必须是：', secWhen: '时间 / 地点', secMachine: '设备', secIssue: '问题与解决方法', secRepair: '维修', secPeople: '人员',
       factory: '工厂', time: '报修时间', shift: '班别', station: '站别', machine: '设备名称', machineNo: '设备编号', product: '机种', issueType: '设备问题点', issue: '问题', solution: '解决方法',
-      repairStart: '维修时间', recoveryEnd: '复机时间', minutes: '维修总时间(min)', qty: '设备数量', failRate: '设备故障率（自动）', leader: '领班确认', technician: '维修人员', remark: '备注', fixed: '已修正',
+      repairStart: '维修时间', recoveryEnd: '复机时间', minutes: '维修总时间(min)', qty: '设备数量', failRate: '设备故障率（自动）', leader: '领班确认', technician: '维修人员', remark: '备注', fixed: '已修正', negMin: '复机时间早于报修时间（分钟为负）– 请检查日期和时间',
       viaForm: '通过表单填写', viaFile: '导入文件 (.xlsx / .csv)', impTitle: '从文件导入数据', impPick: '文件 (.xlsx, .xls, .csv)', impSheet: '工作表', impHdr: '表头行号', impDateOrder: '文本日期顺序',
       impDefFactory: '工厂（文件中没有时）', impMap: '将文件列与字段匹配', impMapHint: '已按列名自动匹配 — 如有错误请修改。', impNone: '— 文件中没有 —', impSkipDup: '跳过系统中已有的记录',
       impPreview: '预览', impReady: '可导入', impDup: '重复已跳过', impErr: '有错误', impBadDate: '无法识别日期时间', impStart: '开始导入', impBusy: '导入中', impDone: '已导入', impFailed: '失败',
@@ -29,7 +29,7 @@ const PRA = (() => {
       need: 'ต้องกรอก: โรงงาน วันเวลา และเครื่องหรือปัญหา', badFactory: 'โรงงานต้องเป็นหนึ่งใน: ', secWhen: 'เมื่อไร / ที่ไหน', secMachine: 'เครื่อง', secIssue: 'ปัญหาและวิธีแก้', secRepair: 'การซ่อม',
       secPeople: 'บุคลากร', factory: 'โรงงาน', time: 'เวลาแจ้งซ่อม 报修时间', shift: 'กะ 班别', station: 'กระบวนการ 站别', machine: 'ชื่อเครื่อง', machineNo: 'หมายเลขเครื่อง', product: 'โมดูล 机种',
       issueType: 'จุดปัญหา 设备问题点', issue: 'ปัญหา', solution: 'วิธีแก้', repairStart: 'เวลาซ่อม 维修时间', recoveryEnd: 'เวลาพักฟื้น 复机时间', minutes: 'เวลาซ่อม(นาที) 维修总时间',
-      qty: 'จำนวนเครื่อง 设备数量', failRate: 'อัตราล้มเหลว 设备故障率 (อัตโนมัติ)', leader: 'หัวหน้างาน 领班确认', technician: 'ช่างเทคนิค 维修人员', remark: 'หมายเหตุ 备注', fixed: 'แก้ไขแล้ว',
+      qty: 'จำนวนเครื่อง 设备数量', failRate: 'อัตราล้มเหลว 设备故障率 (อัตโนมัติ)', leader: 'หัวหน้างาน 领班确认', technician: 'ช่างเทคนิค 维修人员', remark: 'หมายเหตุ 备注', fixed: 'แก้ไขแล้ว', negMin: 'เวลาพักฟื้นอยู่ก่อนเวลาแจ้งซ่อม (นาทีติดลบ) – กรุณาตรวจสอบวันที่/เวลา',
       viaForm: 'กรอกผ่านฟอร์ม', viaFile: 'แนบไฟล์ (.xlsx / .csv)', impTitle: 'นำเข้าข้อมูลจากไฟล์', impPick: 'ไฟล์ (.xlsx, .xls, .csv)', impSheet: 'ชีต', impHdr: 'แถวหัวตารางที่', impDateOrder: 'ลำดับวันที่ (แบบข้อความ)',
       impDefFactory: 'โรงงาน (ถ้าไฟล์ไม่มีคอลัมน์)', impMap: 'จับคู่คอลัมน์ในไฟล์กับฟิลด์', impMapHint: 'เดาจากชื่อคอลัมน์ให้อัตโนมัติ — แก้ที่ไม่ตรงได้', impNone: '— ไม่มีในไฟล์ —', impSkipDup: 'ข้ามรายการที่มีอยู่แล้วในระบบ',
       impPreview: 'ตัวอย่าง', impReady: 'พร้อมนำเข้า', impDup: 'ข้ามรายการซ้ำ', impErr: 'มีข้อผิดพลาด', impBadDate: 'อ่านวันที่/เวลาไม่ได้', impStart: 'นำเข้า', impBusy: 'กำลังนำเข้า', impDone: 'นำเข้าแล้ว', impFailed: 'ล้มเหลว',
@@ -125,6 +125,7 @@ const PRA = (() => {
   async function commit(v, editing, again) {                       // validate -> Supabase RPC -> GAS
     if (!v.factory || !v.timestamp || !(v.machine || v.issue)) { toast(T('need'), true); return false; }
     if (!FACTORIES.includes(v.factory)) { toast(T('badFactory') + FACTORIES.join(', '), true); return false; }
+    if (v.minutes !== '' && Number(v.minutes) < 0) { toast(T('negMin'), true); return false; }
     const pin = await ensurePin(); if (!pin) return false;
     toast(T('saving'));
     let r; try { r = await saveOne(pin, v, editing); } catch (e) { toast(e.message, true); return false; }
@@ -164,7 +165,7 @@ const PRA = (() => {
         return `<div class="pra-f${wide ? ' wide' : ''}"><label for="pra_${key}_d">${T(id)}</label><div class="pra-dt"><input type="date" id="pra_${key}_d"><select id="pra_${key}_h">${op(24)}</select><span>:</span><select id="pra_${key}_m">${op(60)}</select></div></div>`; }
       const lab = `<label for="pra_${key}">${T(id)}</label>`;
       const ctl = type === 'area' ? `<textarea id="pra_${key}" rows="2" autocomplete="off"></textarea>` : `<input id="pra_${key}" ${type === 'dt' ? 'type="datetime-local"' : type === 'num' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} autocomplete="off" ${id === 'failRate' ? 'readonly' : ''}>`;
-      return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}${(id === 'issue' || id === 'solution') ? `<div class="lbl" id="pra_${id}_t" style="margin-top:2px"></div>` : ''}</div>`;
+      return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}${(id === 'issue' || id === 'solution' || id === 'minutes') ? `<div class="lbl" id="pra_${id}_t" style="margin-top:2px"></div>` : ''}</div>`;
     };
     d.innerHTML = `<div class="pra-head"><span>${editing ? T('edit') : T('add')}</span><button class="btn" id="pra_x">✕</button></div><div class="pra-body">
       <div class="pra-sec">${T('secWhen')}</div><div class="pra-grid">${f('factory', 'text')}${f('time', 'dt', 0, 'timestamp')}${f('shift', 'text')}${f('station', 'text')}</div>
@@ -178,7 +179,9 @@ const PRA = (() => {
     const get = () => { const v = {}; Object.keys(I).forEach(k => (v[k] = (I[k].value || '').trim())); return v; };
     const set = v => Object.keys(v).forEach(k => { if (I[k]) I[k].value = v[k] ?? ''; });
     let manual = false;
-    const recalc = () => { if (!manual) I.minutes.value = autoMin(get()); const fr = calcFailRate_(I.minutes.value, I.qty.value); I.failRate.value = fr === '' ? '' : (fr * 100).toFixed(2) + ' %'; };
+    const recalc = () => { if (!manual) I.minutes.value = autoMin(get()); const fr = calcFailRate_(I.minutes.value, I.qty.value); I.failRate.value = fr === '' ? '' : (fr * 100).toFixed(2) + ' %'; const w = q('pra_minutes_t'), neg = I.minutes.value !== '' && Number(I.minutes.value) < 0; w.textContent = neg ? '⚠ ' + T('negMin') : ''; w.style.color = neg ? '#ef4444' : ''; };
+    let tsTouched = !!editing;                                        // reported time still the default (= now) -> follows the repair start, so minutes are not negative
+    const syncTs = () => { if (tsTouched) return; const b = I.repairStart.value || I.recoveryEnd.value; if (b && (!I.timestamp.value || I.timestamp.value > b)) I.timestamp.value = b; };
     const fac = () => I.factory.value.trim(), mach = () => all().filter(r => (!fac() || r.factory === fac()) && nk(r.machineRaw) === nk(I.machine.value));
     combo(I.factory, () => FACTORIES); combo(I.shift, () => uniq('shift')); combo(I.station, () => uniq('station')); combo(I.product, () => uniq('product')); combo(I.issueType, () => uniq('issueType'));
     combo(I.machine, () => uniq('machineRaw', r => !r.noMachine && (!fac() || r.factory === fac()))); combo(I.machineNo, () => [...new Set(mach().map(r => r.machineNo).filter(Boolean))]);
@@ -189,14 +192,14 @@ const PRA = (() => {
     ['input', 'change'].forEach(ev => { I.issue.addEventListener(ev, refreshHints); I.solution.addEventListener(ev, refreshHints); });
     I.machine.addEventListener('change', () => { const m = mach().sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.product.value) I.product.value = m.product || ''; if (m && !I.machineNo.value) I.machineNo.value = m.machineNo || ''; });
     I.issue.addEventListener('change', () => { const m = all().filter(r => nk(r.issueRaw) === nk(I.issue.value) && r.solutionRaw).sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.solution.value) I.solution.value = m.solutionRaw; });
-    ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.minutes.addEventListener('input', () => { manual = I.minutes.value !== ''; recalc(); });
+    ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.timestamp.addEventListener('input', () => { tsTouched = true; }); ['repairStart', 'recoveryEnd'].forEach(k => I[k].addEventListener('input', () => { syncTs(); recalc(); })); I.minutes.addEventListener('input', () => { manual = I.minutes.value !== ''; recalc(); });
     if (editing) { const v = toForm(editing); set(v); manual = v.minutes !== ''; } else { I.timestamp.value = nowLocal(); I.factory.value = q('fFactory') && q('fFactory').value || ''; }
     recalc(); refreshHints();
     const close = () => { d.close(); d.remove(); };
     q('pra_x').onclick = q('pra_cancel').onclick = close;
     q('pra_save').onclick = async () => { if (await commit(get(), editing)) close(); };
     if (!editing) q('pra_saveNew').onclick = async () => {
-      const v = get(); if (await commit(v, null)) { ['machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'remark', 'failRate'].forEach(k => (I[k].value = '')); manual = false; I.timestamp.value = nowLocal(); recalc(); refreshHints(); I.machine.focus(); }
+      const v = get(); if (await commit(v, null)) { ['machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'remark', 'failRate'].forEach(k => (I[k].value = '')); manual = false; tsTouched = false; I.timestamp.value = nowLocal(); recalc(); refreshHints(); I.machine.focus(); }
     };
     d.showModal();
   }
@@ -283,7 +286,7 @@ const PRA = (() => {
         issue: txt('issue'), solution: txt('solution'), repairStart: sub('repairStart'), recoveryEnd: sub('recoveryEnd'), minutes: numS('minutes'), qty: numS('qty'), leader: txt('leader'), technician: txt('technician'), remark: txt('remark') };
       if (!v.minutes) v.minutes = autoMin(v);
       let why = '';
-      if (!ts) why = T('impBadDate'); else if (!v.machine && !v.issue) why = T('need'); else if (!FACTORIES.includes(factory)) why = T('badFactory') + FACTORIES.join(', ');
+      if (!ts) why = T('impBadDate'); else if (!v.machine && !v.issue) why = T('need'); else if (!FACTORIES.includes(factory)) why = T('badFactory') + FACTORIES.join(', '); else if (v.minutes !== '' && Number(v.minutes) < 0) why = T('negMin');
       if (why) { errs.push(`${T('impRow')} ${rowNo}: ${why}`); return; }
       if (o.skipDup && have.has([v.factory, ts, nk(v.machine), digits_(v.machineNo), nk(v.issue)].join('|'))) { dup++; return; }
       good.push({ v, rowNo });
