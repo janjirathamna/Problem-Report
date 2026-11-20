@@ -48,11 +48,45 @@ const cleanRemark_ = (v, rawMachine, machineNo) => {
   return (!n || n === norm_(rawMachine) || n === norm_(rawMachine + ' ' + machineNo)) ? '' : t;
 };
 
+/* --- fail rate + anomaly checks (v36) --- */
+const MAX_REPAIR_MIN = 1000;                                              // repair minutes above this = anomaly
+const REQUIRED_FIELDS = ['shift', 'station', 'product', 'recoveryEnd', 'qty', 'technician'];   // empty -> "incomplete data"
+const calcFailRate_ = (min, qty) => {                                      // repair_minutes / qty / 21 / 60 ; '' when minutes empty/0 or qty <= 0
+  if (min === '' || min == null || qty === '' || qty == null) return '';
+  const m = Number(min), q = Number(qty);
+  return (isFinite(m) && isFinite(q) && m > 0 && q > 0) ? m / q / 21 / 60 : '';
+};
+const swapDM_ = s => { const m = /^(\d{4})-(\d\d)-(\d\d)(.*)$/.exec(s || ''); if (!m) return ''; const mo = +m[2], d = +m[3]; return (d > 12 || mo === d) ? '' : `${m[1]}-${p2(d)}-${p2(mo)}${m[4]}`; };
+function detectAnomalies_(r) {                                             // -> [{code, f, v, fix}]  (texts are in index.html)
+  const a = [], nowL = tzFmt.format(new Date()).replace(' ', 'T'), ts = /^\d{4}-\d\d-\d\dT/.test(r.timestamp) ? r.timestamp : '';
+  if (!ts) a.push({ code: 'noTime', v: r.timestamp || '' });
+  else {
+    if (ts > nowL) a.push({ code: 'future', f: 'timestamp', v: ts, fix: swapDM_(ts) });
+    [['date', r.date], ['repairStart', r.repairStart], ['recoveryEnd', r.recoveryEnd]].forEach(([f, v]) => {
+      if (!v || !/^\d{4}-\d\d-\d\d/.test(v) || v.slice(0, 10) === ts.slice(0, 10)) return;
+      const sw = swapDM_(v);
+      if (sw && sw.slice(0, 10) === ts.slice(0, 10)) a.push({ code: 'dateSwap', f, v, fix: sw });
+      else if (f === 'date' && Math.abs(new Date(v.slice(0, 10)) - new Date(ts.slice(0, 10))) > 864e5 * 1.5) a.push({ code: 'dateMismatch', f, v });
+    });
+    if (r.repairStart && r.repairStart < ts) a.push({ code: 'negTime', f: 'repairStart', v: r.repairStart });
+    if (r.recoveryEnd && r.recoveryEnd < ts) a.push({ code: 'negTime', f: 'recoveryEnd', v: r.recoveryEnd });
+    else if (r.recoveryEnd && r.repairStart && r.recoveryEnd < r.repairStart) a.push({ code: 'negTime', f: 'recoveryEnd', v: r.recoveryEnd });
+  }
+  if (typeof r.repairMinutes === 'number') {
+    if (r.repairMinutes < 0 && !a.some(x => x.code === 'negTime')) a.push({ code: 'negMin', v: r.repairMinutes });
+    if (r.repairMinutes > MAX_REPAIR_MIN) a.push({ code: 'overLimit', v: r.repairMinutes });
+  }
+  if (!r.noMachine) { const miss = REQUIRED_FIELDS.filter(k => r[k] === '' || r[k] == null); if (miss.length) a.push({ code: 'incomplete', v: miss.join(', ') }); }
+  return a;
+}
+
 /** Read a whole table (PostgREST returns max 1000 rows per request -> page through). */
-async function fetchAll_(table) {
+async function fetchAll_(table, cols = [ORDER_COL]) {
   const out = [], step = 1000;
   for (let from = 0; ; from += step) {
-    const { data, error } = await supabaseClient.from(table).select('*').order(ORDER_COL, { ascending: true }).range(from, from + step - 1);
+    let q = supabaseClient.from(table).select('*');
+    cols.forEach(c => { q = q.order(c, { ascending: true }); });
+    const { data, error } = await q.range(from, from + step - 1);
     if (error) throw new Error(table + ': ' + error.message);
     out.push(...data);
     if (data.length < step) return out;
@@ -117,7 +151,10 @@ function matchRow_(raw, rows) {
 
 /** pr_logs + mappings -> same JSON the GAS doGet returned: { ok, generatedAt, data, moduleHistory } */
 async function fetchPayload() {
-  const [logs, mmRows, imRows, kwRows] = await Promise.all(['pr_logs', 'pr_machine_mapping', 'pr_issue_mapping', 'pr_keyword'].map(fetchAll_));
+  const [logs, mmRows, imRows, kwRows, trRows] = await Promise.all([...['pr_logs', 'pr_machine_mapping', 'pr_issue_mapping', 'pr_keyword'].map(t => fetchAll_(t)),
+    fetchAll_('pr_translations', ['kind', 'src_key']).catch(() => [])]);   // permanent translation cache (EN / ZH / TH) filled by GAS
+  const tr = { machine: {}, issue: {}, solution: {} };
+  trRows.forEach(x => { if (tr[x.kind]) tr[x.kind][x.src_key] = { zh: x.zh || '', th: x.th || '', en: x.en || '' }; });
   const machineMap = loadMachineMapping_(mmRows), issueMap = loadIssueMapping_(imRows), keywords = loadKeywords_(kwRows), out = [];
   const rows = logs.map(rowOf_).map(m => ({ m, f: String(fv_(m, 'factory', 'sheet')).trim() })).filter(x => FACTORIES.includes(x.f));
   rows.sort((a, b) => FACTORIES.indexOf(a.f) - FACTORIES.indexOf(b.f));                      // stable: factory order, then sheet order
@@ -134,7 +171,8 @@ async function fetchPayload() {
     const im = issueMap.byIssue[key_(split.issue)], sm = split.solution ? issueMap.bySolution[key_(split.solution)] : null;
     const kr = matchRow_(rawMachine, keywords), no = digits_(machineNo);
     const modelNameEn = kr ? (kr.en || [kr.brand, kr.model, kr.fn].filter(Boolean).join(' ')) : '', modelNameCn = kr ? kr.cn : '';
-    let machineCn = mm && mm.chinese ? mm.chinese : '';
+    const trI = tr.issue[key_(split.issue)] || {}, trS = (split.solution && tr.solution[key_(split.solution)]) || {}, trM = tr.machine[norm_(rawMachine) + '|' + no] || tr.machine[norm_(rawMachine)] || {};
+    let machineCn = mm && mm.chinese ? mm.chinese : trM.zh || '';
     if (!machineCn && modelNameCn) machineCn = modelNameCn + (no ? ' ' + no + '#' : '');
     let rm = numVal_(fv_(m, 'repair_minutes', '维修总时间(min)', '维修总时间'));
     if (rm === '' && tsL && reL) rm = Math.round((new Date(reL) - new Date(tsL)) / 60000);   // = sheet formula (復机 - timestamp) in minutes
@@ -151,9 +189,10 @@ async function fetchPayload() {
       model: kr ? kr.model : '', modelNameEn, modelNameCn,
       extra: extra === '' || extra == null ? '' : String(extra),
       issueRaw: split.issue,
-      issueEn: im && im.issueEn ? im.issueEn : split.issue, issueCn: im ? im.issueCn : '',
+      issueEn: im && im.issueEn ? im.issueEn : (trI.en || split.issue), issueCn: (im && im.issueCn) || trI.zh || '', issueTh: trI.th || '',
       solutionRaw: split.solution,
-      solutionEn: sm && sm.solutionEn ? sm.solutionEn : split.solution, solutionCn: sm ? sm.solutionCn : '',
+      solutionEn: sm && sm.solutionEn ? sm.solutionEn : (trS.en || split.solution), solutionCn: (sm && sm.solutionCn) || trS.zh || '', solutionTh: trS.th || '', machineTh: trM.th || '',
+      pk: fv_(m, 'id'), rowNo: fv_(m, 'row_no', 'sheet_row'), confirmed: [true, 'true', 't', 1, '1'].includes(fv_(m, 'confirmed')), sheetSynced: fv_(m, 'sheet_synced') !== false,
       category: im ? im.category : '',
       date: dL ? dL.slice(0, 10) : sv_(fv_(m, 'log_date', 'date', '日期')),
       shift: sv_(fv_(m, 'shift', '班别')), station: sv_(fv_(m, 'station', '站别')),
@@ -163,6 +202,7 @@ async function fetchPayload() {
       leader: sv_(fv_(m, 'leader', '领班确认')), technician: sv_(fv_(m, 'technician', '维修人员')),
       remark: cleanRemark_(fv_(m, 'remark', '备注'), rawMachine, machineNo)
     });
+    const last = out[out.length - 1]; last.anomalies = detectAnomalies_(last);
   });
   out.sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
   return { ok: true, generatedAt: new Date().toISOString(), data: out, moduleHistory: buildModuleHistory_(out) };
