@@ -9,19 +9,31 @@ const PRA = (() => {
       need: 'Required: factory, date/time and machine or issue', badFactory: 'Factory must be one of: ', secWhen: 'When / where', secMachine: 'Machine', secIssue: 'Issue & solution', secRepair: 'Repair',
       secPeople: 'People', factory: 'Factory', time: 'Reported time 报修时间', shift: 'Shift 班别', station: 'Station 站别', machine: 'Machine name', machineNo: 'Machine no.', product: 'Model 机种',
       issueType: 'Issue point 设备问题点', issue: 'Issue', solution: 'Solution', repairStart: 'Repair start 维修时间', recoveryEnd: 'Recovery 复机时间', minutes: 'Repair minutes 维修总时间(min)',
-      qty: 'Qty 设备数量', failRate: 'Fail rate 设备故障率 (auto)', leader: 'Leader 领班确认', technician: 'Technician 维修人员', remark: 'Remark 备注', fixed: 'Fixed' },
+      qty: 'Qty 设备数量', failRate: 'Fail rate 设备故障率 (auto)', leader: 'Leader 领班确认', technician: 'Technician 维修人员', remark: 'Remark 备注', fixed: 'Fixed',
+      viaForm: 'Fill in a form', viaFile: 'Import a file (.xlsx / .csv)', impTitle: 'Import data from file', impPick: 'File (.xlsx, .xls, .csv)', impSheet: 'Sheet', impHdr: 'Header row no.', impDateOrder: 'Order of text dates',
+      impDefFactory: 'Factory (if not in file)', impMap: 'Match file columns to fields', impMapHint: 'Guessed from the column names – change anything that is wrong.', impNone: '— not in file —', impSkipDup: 'Skip rows already in the system',
+      impPreview: 'Preview', impReady: 'ready to import', impDup: 'duplicates skipped', impErr: 'with errors', impBadDate: 'Date/time not recognised', impStart: 'Import', impBusy: 'Importing', impDone: 'Imported', impFailed: 'failed',
+      impRow: 'Row', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)' },
     zh: { add: '新增数据', edit: '修改数据', del: '删除', confirm: '确认（数值无误）', unconfirm: '取消确认', save: '保存', saveNew: '保存并继续新增', cancel: '取消', pinTitle: '管理员 PIN', pinHint: '请输入管理员 PIN（每次浏览只需一次）。',
       ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（同时从 Google 表格删除）', deleted: '已删除',
       confirmed: '已确认', need: '必填：工厂、日期时间、设备或问题', badFactory: '工厂必须是：', secWhen: '时间 / 地点', secMachine: '设备', secIssue: '问题与解决方法', secRepair: '维修', secPeople: '人员',
       factory: '工厂', time: '报修时间', shift: '班别', station: '站别', machine: '设备名称', machineNo: '设备编号', product: '机种', issueType: '设备问题点', issue: '问题', solution: '解决方法',
-      repairStart: '维修时间', recoveryEnd: '复机时间', minutes: '维修总时间(min)', qty: '设备数量', failRate: '设备故障率（自动）', leader: '领班确认', technician: '维修人员', remark: '备注', fixed: '已修正' },
+      repairStart: '维修时间', recoveryEnd: '复机时间', minutes: '维修总时间(min)', qty: '设备数量', failRate: '设备故障率（自动）', leader: '领班确认', technician: '维修人员', remark: '备注', fixed: '已修正',
+      viaForm: '通过表单填写', viaFile: '导入文件 (.xlsx / .csv)', impTitle: '从文件导入数据', impPick: '文件 (.xlsx, .xls, .csv)', impSheet: '工作表', impHdr: '表头行号', impDateOrder: '文本日期顺序',
+      impDefFactory: '工厂（文件中没有时）', impMap: '将文件列与字段匹配', impMapHint: '已按列名自动匹配 — 如有错误请修改。', impNone: '— 文件中没有 —', impSkipDup: '跳过系统中已有的记录',
+      impPreview: '预览', impReady: '可导入', impDup: '重复已跳过', impErr: '有错误', impBadDate: '无法识别日期时间', impStart: '开始导入', impBusy: '导入中', impDone: '已导入', impFailed: '失败',
+      impRow: '行', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）' },
     th: { add: 'เพิ่มข้อมูล', edit: 'แก้ไขข้อมูล', del: 'ลบ', confirm: 'ยืนยัน (ค่าถูกต้อง)', unconfirm: 'ยกเลิกการยืนยัน', save: 'บันทึก', saveNew: 'บันทึกแล้วเพิ่มรายการถัดไป', cancel: 'ยกเลิก', pinTitle: 'PIN แอดมิน',
       pinHint: 'ใส่ PIN แอดมิน (ถามครั้งเดียวต่อการเปิดเบราว์เซอร์)', ok: 'ตกลง', badPin: 'PIN ไม่ถูกต้อง', addNew: 'ค่าใหม่', saving: 'กำลังบันทึก…', saved: 'บันทึกแล้ว',
       sheetFail: 'บันทึกใน Supabase แล้ว แต่ Google Sheet ยังไม่ถูกอัปเดต: ', delAsk: 'ลบรายการนี้? (จะลบออกจาก Google Sheet ด้วย)', deleted: 'ลบแล้ว', confirmed: 'ยืนยันแล้ว',
       need: 'ต้องกรอก: โรงงาน วันเวลา และเครื่องหรือปัญหา', badFactory: 'โรงงานต้องเป็นหนึ่งใน: ', secWhen: 'เมื่อไร / ที่ไหน', secMachine: 'เครื่อง', secIssue: 'ปัญหาและวิธีแก้', secRepair: 'การซ่อม',
       secPeople: 'บุคลากร', factory: 'โรงงาน', time: 'เวลาแจ้งซ่อม 报修时间', shift: 'กะ 班别', station: 'กระบวนการ 站别', machine: 'ชื่อเครื่อง', machineNo: 'หมายเลขเครื่อง', product: 'โมดูล 机种',
       issueType: 'จุดปัญหา 设备问题点', issue: 'ปัญหา', solution: 'วิธีแก้', repairStart: 'เวลาซ่อม 维修时间', recoveryEnd: 'เวลาพักฟื้น 复机时间', minutes: 'เวลาซ่อม(นาที) 维修总时间',
-      qty: 'จำนวนเครื่อง 设备数量', failRate: 'อัตราล้มเหลว 设备故障率 (อัตโนมัติ)', leader: 'หัวหน้างาน 领班确认', technician: 'ช่างเทคนิค 维修人员', remark: 'หมายเหตุ 备注', fixed: 'แก้ไขแล้ว' }
+      qty: 'จำนวนเครื่อง 设备数量', failRate: 'อัตราล้มเหลว 设备故障率 (อัตโนมัติ)', leader: 'หัวหน้างาน 领班确认', technician: 'ช่างเทคนิค 维修人员', remark: 'หมายเหตุ 备注', fixed: 'แก้ไขแล้ว',
+      viaForm: 'กรอกผ่านฟอร์ม', viaFile: 'แนบไฟล์ (.xlsx / .csv)', impTitle: 'นำเข้าข้อมูลจากไฟล์', impPick: 'ไฟล์ (.xlsx, .xls, .csv)', impSheet: 'ชีต', impHdr: 'แถวหัวตารางที่', impDateOrder: 'ลำดับวันที่ (แบบข้อความ)',
+      impDefFactory: 'โรงงาน (ถ้าไฟล์ไม่มีคอลัมน์)', impMap: 'จับคู่คอลัมน์ในไฟล์กับฟิลด์', impMapHint: 'เดาจากชื่อคอลัมน์ให้อัตโนมัติ — แก้ที่ไม่ตรงได้', impNone: '— ไม่มีในไฟล์ —', impSkipDup: 'ข้ามรายการที่มีอยู่แล้วในระบบ',
+      impPreview: 'ตัวอย่าง', impReady: 'พร้อมนำเข้า', impDup: 'ข้ามรายการซ้ำ', impErr: 'มีข้อผิดพลาด', impBadDate: 'อ่านวันที่/เวลาไม่ได้', impStart: 'นำเข้า', impBusy: 'กำลังนำเข้า', impDone: 'นำเข้าแล้ว', impFailed: 'ล้มเหลว',
+      impRow: 'แถว', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)' }
   };
   const T = k => ((TXT[lang] || TXT.en)[k]) || TXT.en[k] || k;
   const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,8 +44,8 @@ const PRA = (() => {
 
   /* ---------- style ---------- */
   const st = document.createElement('style');
-  st.textContent = `#praDlg{width:min(760px,96vw);max-height:94vh;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text)}
-  #praDlg::backdrop,#praPin::backdrop{background:rgba(0,0,0,.55)} #praPin{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:16px}
+  st.textContent = `#praDlg,#praImp{width:min(760px,96vw);max-height:94vh;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text)}
+  #praDlg::backdrop,#praPin::backdrop,#praImp::backdrop,#praChoose::backdrop{background:rgba(0,0,0,.55)} #praPin,#praChoose{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:16px}
   .pra-head{padding:12px 16px;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
   .pra-body{padding:12px 16px;overflow:auto;max-height:calc(94vh - 120px)} .pra-sec{font-size:11px;font-weight:700;color:var(--accent);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.04em}
   .pra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px} .pra-grid .wide{grid-column:1/-1}
@@ -92,24 +104,30 @@ const PRA = (() => {
       qty: r.qty === '' ? '' : String(r.qty), leader: r.leader, technician: r.technician, remark: r.remark };
   }
   const autoMin = v => (v.timestamp && v.recoveryEnd) ? String(Math.round((ms(v.recoveryEnd) - ms(v.timestamp)) / 60000)) : '';
-  async function commit(v, editing, again) {                       // validate -> Supabase RPC -> GAS
-    if (!v.factory || !v.timestamp || !(v.machine || v.issue)) { toast(T('need'), true); return false; }
-    if (!FACTORIES.includes(v.factory)) { toast(T('badFactory') + FACTORIES.join(', '), true); return false; }
-    const pin = await ensurePin(); if (!pin) return false;
+  async function saveOne(pin, v, editing) {                         // Supabase RPC first (throws on failure), then GAS (error returned, not thrown)
     const iso = s => s ? s.slice(0, 16) + ':00' + TZO : null, loc = s => s ? s.slice(0, 16) + ':00' : '';
     const fr = calcFailRate_(v.minutes, v.qty), num = s => (s === '' || s == null) ? null : Number(s);
     const row = { id: editing ? Number(editing.pk) : null, factory: v.factory, timestamp: iso(v.timestamp), log_date: v.timestamp.slice(0, 10), raw_machine_name: v.machine || 'N/A', machine_number: v.machineNo || '',
       raw_issue: v.solution ? `${v.issue} # ${v.solution}` : v.issue, shift: v.shift, station: v.station, product: v.product, issue_type: v.issueType, repair_start: iso(v.repairStart), recovery_end: iso(v.recoveryEnd),
       repair_minutes: num(v.minutes), qty: num(v.qty), leader: v.leader, technician: v.technician, remark: v.remark };
-    toast(T('saving'));
-    let saved; try { saved = await rpc('pr_save_log', { p_pin: pin, p_row: row }); } catch (e) { toast(e.message, true); return false; }
+    const saved = await rpc('pr_save_log', { p_pin: pin, p_row: row });
+    let gasErr = '';
     if (GAS_URL) {
       try {
         await gas({ action: 'upsert', pin, pk: saved.id, factory: v.factory, prev: editing ? prevOf(editing) : null,
           row: { timestamp: loc(v.timestamp), date: v.timestamp.slice(0, 10), shift: v.shift, station: v.station, machine: v.machine || 'N/A', machineNo: v.machineNo, product: v.product, issueType: v.issueType,
                  issue: row.raw_issue, repairStart: loc(v.repairStart), recoveryEnd: loc(v.recoveryEnd), repairMinutes: v.minutes, qty: v.qty, failRate: fr, leader: v.leader, technician: v.technician, remark: v.remark } });
-      } catch (e) { rpc('pr_set_sync', { p_pin: pin, p_id: saved.id, p_ok: false, p_err: e.message }).catch(() => {}); toast(T('sheetFail') + e.message, true); }
+      } catch (e) { gasErr = e.message; rpc('pr_set_sync', { p_pin: pin, p_id: saved.id, p_ok: false, p_err: e.message }).catch(() => {}); }
     }
+    return { id: saved.id, gasErr };
+  }
+  async function commit(v, editing, again) {                       // validate -> Supabase RPC -> GAS
+    if (!v.factory || !v.timestamp || !(v.machine || v.issue)) { toast(T('need'), true); return false; }
+    if (!FACTORIES.includes(v.factory)) { toast(T('badFactory') + FACTORIES.join(', '), true); return false; }
+    const pin = await ensurePin(); if (!pin) return false;
+    toast(T('saving'));
+    let r; try { r = await saveOne(pin, v, editing); } catch (e) { toast(e.message, true); return false; }
+    if (r.gasErr) toast(T('sheetFail') + r.gasErr, true);
     toast(T('saved')); await load(); return true;
   }
 
@@ -195,6 +213,139 @@ const PRA = (() => {
     m.onclick = e => { const a = e.target.closest('[data-a]'); if (!a) return; m.remove(); if (a.dataset.a === 'edit') open(r); else if (a.dataset.a === 'del') del(r); else confirmRow(r, !r.confirmed); };
     setTimeout(() => document.addEventListener('click', function h(e) { if (!m.contains(e.target)) { m.remove(); document.removeEventListener('click', h); } }), 0);
   }
-  if (q('btnAdmin')) q('btnAdmin').onclick = () => open();
+  /* ---------- import from a file (.xlsx / .csv) with manual column -> field mapping ---------- */
+  const IMP_FIELDS = ['factory', 'date', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'leader', 'technician', 'remark'];
+  const IMP_SYN = { factory: ['factory', 'plant', '工厂', 'โรงงาน'], date: ['date', 'logdate', '日期', 'วันที่'], timestamp: ['timestamp', 'time', 'reportedtime', 'reporttime', '报修时间', 'เวลาแจ้งซ่อม', 'เวลาที่แจ้งซ่อม'],
+    shift: ['shift', '班别', 'กะ'], station: ['station', '站别', 'กระบวนการ'], machine: ['machine', 'machinename', 'rawmachinename', 'equipment', '设备名称', 'ชื่ออุปกรณ์', 'ชื่อเครื่อง'], machineNo: ['machineno', 'machinenumber', 'no', '设备编号', 'หมายเลขเครื่อง'],
+    product: ['product', 'model', 'module', '机种', 'โมดูล'], issueType: ['issuetype', 'issuepoint', '设备问题点', 'เครื่องมีปัญหา', 'จุดปัญหา'], issue: ['issue', 'rawissue', 'problem', '故障原因', 'สาเหตุ', 'ปัญหา'],
+    solution: ['solution', '解决办法', '解决方法', 'วิธีแก้'], repairStart: ['repairstart', 'startrepair', '维修时间', 'เวลาซ่อม'], recoveryEnd: ['recoveryend', 'recovery', '复机时间', 'เวลาพักฟื้น'],
+    minutes: ['repairminutes', 'minutes', 'totalrepairtime', '维修总时间', 'เวลาทั้งหมด'], qty: ['qty', 'quantity', '设备数量', 'จำนวนเครื่อง'], leader: ['leader', '领班确认', 'หัวหน้า'], technician: ['technician', '维修人员', 'ช่างเทคนิค'], remark: ['remark', 'remarks', 'note', '备注', 'หมายเหตุ'] };
+  const IMP_ORDER = ['repairStart', 'recoveryEnd', 'minutes', 'timestamp', 'issueType', 'solution', 'issue', 'machineNo', 'machine', 'factory', 'date', 'shift', 'station', 'product', 'qty', 'leader', 'technician', 'remark'];   // specific names before general ones
+  const hn = s => String(s ?? '').toLowerCase().replace(/[\s_\-().:：（）\/#]/g, '');
+  const colL = n => { let r = ''; for (n++; n > 0; n = Math.floor((n - 1) / 26)) r = String.fromCharCode(65 + (n - 1) % 26) + r; return r; };
+  const serialStr = v => {                                          // Excel serial -> wall-clock text (no time-zone shift)
+    const dt = new Date(Math.round((v - 25569) * 864e5 / 6e4) * 6e4), tm = p2(dt.getUTCHours()) + ':' + p2(dt.getUTCMinutes());
+    return v < 1 ? tm : `${dt.getUTCFullYear()}-${p2(dt.getUTCMonth() + 1)}-${p2(dt.getUTCDate())}T${tm}`;
+  };
+  const cellVal = c => {
+    if (!c || c.v == null) return '';
+    if (c.t === 'n') return (c.z && XLSX.SSF.is_date(c.z)) ? serialStr(c.v) : c.v;
+    if (c.t === 'd' && c.v instanceof Date) return serialStr(c.v.getTime() / 864e5 + 25569);
+    return String(c.v).trim();
+  };
+  function readGrid(ws) {
+    if (!ws || !ws['!ref']) return [];
+    const rg = XLSX.utils.decode_range(ws['!ref']), out = [];
+    for (let r = rg.s.r; r <= rg.e.r; r++) { const row = []; for (let c = rg.s.c; c <= rg.e.c; c++) row.push(cellVal(ws[XLSX.utils.encode_cell({ r, c })])); out.push(row); }
+    return out;
+  }
+  function autoMap(heads) {                                         // field -> column index (or -1)
+    const H = heads.map(hn), map = {}, used = new Set(); IMP_FIELDS.forEach(f => (map[f] = -1));
+    const pass = (test) => IMP_ORDER.forEach(f => { if (map[f] >= 0) return; const i = H.findIndex((h, k) => h && !used.has(k) && IMP_SYN[f].some(sy => test(h, hn(sy)))); if (i >= 0) { map[f] = i; used.add(i); } });
+    pass((h, sy) => h === sy);
+    pass((h, sy) => (/[a-z]/.test(sy) ? sy.length >= 4 : sy.length >= 2) && h.includes(sy));
+    return map;
+  }
+  const dayPlus = (ts, n) => { const d = new Date(Date.UTC(+ts.slice(0, 4), +ts.slice(5, 7) - 1, +ts.slice(8, 10) + n)); return `${d.getUTCFullYear()}-${p2(d.getUTCMonth() + 1)}-${p2(d.getUTCDate())}${ts.slice(10)}`; };
+  function impRows(grid, hdr, map, o) {                             // -> { good:[{v,rowNo}], errs:[], dup:n }
+    const cell = (r, f) => (map[f] >= 0 ? r[map[f]] : ''), toTs = x => {
+      if (x == null || x === '') return '';
+      let t = String(x).trim(); if (o.mdy) t = t.replace(/^(\d{1,2})([\/.\-])(\d{1,2})([\/.\-])(\d{2,4})/, '$3$2$1$4$5');
+      const r = toLocal_(t); return r ? r.slice(0, 16) : '';
+    }, tOnly = x => { const m = /^\s*(\d{1,2})[:.](\d{2})/.exec(String(x ?? '')); return m ? p2(+m[1]) + ':' + m[2] : ''; };
+    const have = new Set(all().map(r => [r.factory, (r.timestamp || '').slice(0, 16), nk(r.machineRaw), digits_(r.machineNo), nk(r.issueRaw)].join('|')));
+    const good = [], errs = []; let dup = 0;
+    grid.slice(hdr).forEach((r, i) => {
+      if (!r.some(x => String(x).trim() !== '')) return;
+      const rowNo = hdr + 1 + i, dt = toTs(cell(r, 'date')), rawT = cell(r, 'timestamp');
+      let ts = toTs(rawT);
+      if (!ts && tOnly(rawT) && dt) ts = dt.slice(0, 10) + 'T' + tOnly(rawT);
+      if (!ts && dt && !String(rawT).trim()) ts = dt;
+      const sub = f => { const x = cell(r, f); let y = toTs(x); if (!y && ts && tOnly(x)) { y = ts.slice(0, 10) + 'T' + tOnly(x); if (y < ts) y = dayPlus(ts, 1).slice(0, 10) + y.slice(10); } return y; };
+      const fx = String(cell(r, 'factory') || o.factory || '').trim(), factory = FACTORIES.find(f => nk(f) === nk(fx)) || fx;
+      const txt = f => sv_(cell(r, f)), numS = f => { const n = numVal_(cell(r, f)); return n === '' ? '' : String(n); };
+      const v = { factory, timestamp: ts, shift: txt('shift'), station: txt('station'), machine: txt('machine'), machineNo: txt('machineNo'), product: txt('product'), issueType: txt('issueType'),
+        issue: txt('issue'), solution: txt('solution'), repairStart: sub('repairStart'), recoveryEnd: sub('recoveryEnd'), minutes: numS('minutes'), qty: numS('qty'), leader: txt('leader'), technician: txt('technician'), remark: txt('remark') };
+      if (!v.minutes) v.minutes = autoMin(v);
+      let why = '';
+      if (!ts) why = T('impBadDate'); else if (!v.machine && !v.issue) why = T('need'); else if (!FACTORIES.includes(factory)) why = T('badFactory') + FACTORIES.join(', ');
+      if (why) { errs.push(`${T('impRow')} ${rowNo}: ${why}`); return; }
+      if (o.skipDup && have.has([v.factory, ts, nk(v.machine), digits_(v.machineNo), nk(v.issue)].join('|'))) { dup++; return; }
+      good.push({ v, rowNo });
+    });
+    return { good, errs, dup };
+  }
+  function importDlg() {
+    const old = q('praImp'); if (old) old.remove();
+    const d = document.createElement('dialog'); d.id = 'praImp';
+    d.innerHTML = `<div class="pra-head"><span>${T('impTitle')}</span><button class="btn" id="imp_x">✕</button></div><div class="pra-body">
+      <div class="pra-f"><label>${T('impPick')}</label><input type="file" id="imp_file" accept=".xlsx,.xls,.csv,.txt"></div>
+      <div id="imp_cfg" style="display:none">
+        <div class="pra-grid" style="margin-top:8px">
+          <div class="pra-f"><label>${T('impSheet')}</label><select id="imp_sheet"></select></div>
+          <div class="pra-f"><label>${T('impHdr')}</label><input type="number" id="imp_hdr" min="1" value="1"></div>
+          <div class="pra-f"><label>${T('impDateOrder')}</label><select id="imp_ord"><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></div>
+          <div class="pra-f"><label>${T('impDefFactory')}</label><select id="imp_fac"><option value=""></option>${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select></div>
+        </div>
+        <div class="pra-sec">${T('impMap')}</div><div class="lbl" style="margin-bottom:6px">${T('impMapHint')}</div><div class="pra-grid" id="imp_map"></div>
+        <label class="lbl" style="display:flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" id="imp_dup" checked>${T('impSkipDup')}</label>
+        <div class="pra-sec">${T('impPreview')}</div><div id="imp_sum" style="font-weight:600"></div>
+        <div style="overflow:auto;max-height:190px;margin-top:6px;border:1px solid var(--line);border-radius:6px"><table id="imp_tbl" style="font-size:12px;width:100%"></table></div>
+        <div id="imp_err" class="lbl" style="max-height:90px;overflow:auto;margin-top:6px;color:#ef4444"></div>
+      </div></div>
+      <div class="pra-foot"><span class="lbl" id="imp_prog" style="margin-right:auto"></span><button class="btn" id="imp_cancel">${T('cancel')}</button><button class="btn primary" id="imp_go" disabled>${T('impStart')}</button></div>`;
+    document.body.appendChild(d);
+    let wb = null, grid = [], good = [], busy = false;
+    const hdrIdx = () => Math.max(0, (+q('imp_hdr').value || 1) - 1);
+    const opts = () => ({ mdy: q('imp_ord').value === 'mdy', factory: q('imp_fac').value, skipDup: q('imp_dup').checked });
+    const mapNow = () => { const m = {}; IMP_FIELDS.forEach(f => (m[f] = +q('imp_m_' + f).value)); return m; };
+    const preview = () => {
+      const r = impRows(grid, hdrIdx() + 1, mapNow(), opts()); good = r.good;
+      q('imp_sum').textContent = `${r.good.length} ${T('impReady')} · ${r.dup} ${T('impDup')} · ${r.errs.length} ${T('impErr')}`;
+      q('imp_tbl').innerHTML = '<tr>' + ['factory', 'time', 'machine', 'issue', 'minutes', 'qty'].map(k => `<th style="position:static;padding:4px 8px">${T(k)}</th>`).join('') + '</tr>' +
+        r.good.slice(0, 5).map(({ v }) => `<tr>${[v.factory, v.timestamp.replace('T', ' '), (v.machine + ' ' + v.machineNo).trim(), v.issue.slice(0, 50), v.minutes, v.qty].map(x => `<td style="padding:4px 8px">${E(x)}</td>`).join('')}</tr>`).join('');
+      q('imp_err').innerHTML = r.errs.slice(0, 30).map(E).join('<br>') + (r.errs.length > 30 ? '<br>…' : '');
+      q('imp_go').disabled = busy || !r.good.length;
+    };
+    const buildMap = () => {
+      grid = readGrid(wb.Sheets[q('imp_sheet').value]); const heads = grid[hdrIdx()] || [], am = autoMap(heads);
+      const op = `<option value="-1">${T('impNone')}</option>` + heads.map((h, i) => `<option value="${i}">${colL(i)} · ${E(String(h).replace(/\s+/g, ' ').slice(0, 40))}</option>`).join('');
+      q('imp_map').innerHTML = IMP_FIELDS.map(f => `<div class="pra-f"><label>${f === 'timestamp' ? T('time') : f === 'date' ? T('fDate') : T(f)}</label><select id="imp_m_${f}">${op}</select></div>`).join('');
+      IMP_FIELDS.forEach(f => { q('imp_m_' + f).value = String(am[f]); q('imp_m_' + f).onchange = preview; });
+      preview();
+    };
+    q('imp_file').onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        wb = /\.(csv|txt)$/i.test(f.name) ? XLSX.read((await f.text()).replace(/^\uFEFF/, ''), { type: 'string', raw: true }) : XLSX.read(await f.arrayBuffer(), { type: 'array', cellNF: true });
+        q('imp_sheet').innerHTML = wb.SheetNames.map(n => `<option>${E(n)}</option>`).join(''); q('imp_cfg').style.display = ''; buildMap();
+      } catch (err) { console.error(err); toast(T('impBadFile'), true); }
+    };
+    q('imp_sheet').onchange = buildMap; q('imp_hdr').oninput = buildMap; ['imp_ord', 'imp_fac', 'imp_dup'].forEach(id => (q(id).onchange = preview));
+    const close = () => { if (busy) return; d.close(); d.remove(); };
+    q('imp_x').onclick = q('imp_cancel').onclick = close; d.addEventListener('cancel', e => { if (busy) e.preventDefault(); else d.remove(); });
+    q('imp_go').onclick = async () => {
+      const pin = await ensurePin(); if (!pin || !good.length) return;
+      busy = true; q('imp_go').disabled = q('imp_cancel').disabled = q('imp_x').disabled = true; let ok = 0, fail = 0, gasFail = 0; const errs = [];
+      for (let i = 0; i < good.length; i++) {
+        q('imp_prog').textContent = `${T('impBusy')} ${i + 1} / ${good.length}`;
+        try { const r = await saveOne(pin, good[i].v, null); ok++; if (r.gasErr) gasFail++; }
+        catch (e) { fail++; errs.push(`${T('impRow')} ${good[i].rowNo}: ${e.message}`); if (e.message === T('badPin')) break; }
+      }
+      busy = false; toast(`${T('impDone')} ${ok}` + (fail ? ` · ${T('impFailed')} ${fail}` : '') + (gasFail ? ` · ${T('sheetFail')}${gasFail}` : ''), !!(fail || gasFail));
+      await load(); if (fail) { q('imp_err').innerHTML = errs.slice(0, 30).map(E).join('<br>'); q('imp_prog').textContent = ''; q('imp_cancel').disabled = q('imp_x').disabled = false; good = []; } else { q('imp_cancel').disabled = q('imp_x').disabled = false; close(); }
+    };
+    d.showModal();
+  }
+  function chooser() {
+    const old = q('praChoose'); if (old) old.remove();
+    const d = document.createElement('dialog'); d.id = 'praChoose';
+    d.innerHTML = `<div style="font-weight:700;margin-bottom:10px">${T('add')}</div><div class="flex flex-col gap-2" style="min-width:250px"><button class="btn primary" data-c="form">✎ ${T('viaForm')}</button><button class="btn primary" data-c="file">⇪ ${T('viaFile')}</button><button class="btn" data-c="x">${T('cancel')}</button></div>`;
+    document.body.appendChild(d);
+    d.onclick = e => { const b = e.target.closest('[data-c]'); if (!b && e.target !== d) return; const c = b ? b.dataset.c : 'x'; d.close(); d.remove(); if (c === 'form') open(); else if (c === 'file') importDlg(); };
+    d.addEventListener('cancel', () => setTimeout(() => d.remove()));
+    d.showModal();
+  }
+  if (q('btnAdmin')) q('btnAdmin').onclick = chooser;
   return { open, menu, del, confirm: confirmRow, applyFix };
 })();
