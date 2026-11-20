@@ -1,1778 +1,278 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Non-Standard Problem Report</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="pr-core.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root{--bg:#0e1318;--panel:#161d24;--panel2:#1c252e;--line:#26313b;--text:#e6edf3;--muted:#8b98a5;--accent:#2dd4bf;--accent-ink:#04201c}
-  [data-theme=light]{--bg:#eef1f3;--panel:#fff;--panel2:#f3f5f7;--line:#d9dfe4;--text:#18222b;--muted:#617080;--accent:#0f766e;--accent-ink:#fff}
-  body{font-family:'IBM Plex Sans','Noto Sans Thai','Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px}
-  .btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:1;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);white-space:nowrap}
-  .btn:hover{border-color:var(--accent)}
-  .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
-  .tab{font-size:12px;padding:6px 12px;border-radius:6px;color:var(--muted);border:1px solid transparent}
-  .tab.on{background:var(--panel2);color:var(--text);border-color:var(--line);font-weight:600}
-  select,input[type=date]{font-size:12px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);min-width:0;color-scheme:dark}
-  [data-theme=light] select,[data-theme=light] input[type=date]{color-scheme:light}
-  .btn:focus-visible,select:focus-visible,input:focus-visible,.tab:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  table{border-collapse:collapse}
-  th{font-weight:600;text-align:left;background:var(--panel2);color:var(--muted);position:sticky;top:0;font-size:12px}
-  td,th{padding:6px 10px}
-  tbody tr{border-top:1px solid var(--line)}
-  tbody tr:hover{background:var(--panel2)}
-  #tblDt tr.grp td{border-top:2px solid var(--muted)}
-  #tblDt tr.alt{background:color-mix(in srgb,var(--panel2) 55%,transparent)}
-  #tblDt td.gname{font-weight:600;vertical-align:top;width:30%}
-  #tblTop tr.grp td{border-top:2px solid var(--muted)}   /* divider where a new machine starts */
-  #tblTop tr.alt{background:color-mix(in srgb,var(--panel2) 55%,transparent)}   /* every other machine is tinted */
-  .scroll{overflow-x:auto}                      /* no height cap: the whole page scrolls instead of a small box */
-  #tblModel tr.grp td{border-top:2px solid var(--muted)}
-  #tblModel td.gname{font-weight:600;background:var(--panel2);vertical-align:top;width:28%}
-  #tblModel td.cnt{text-align:right;font-weight:700;width:90px}
-  .lbl{font-size:11px;color:var(--muted)}
-  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:10px}
-  .mgrid.mcols{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
-  .mcol{display:flex;flex-direction:column;gap:8px;flex:1 1 170px;min-width:170px;max-width:260px}
-  .mcard{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--text);cursor:pointer;display:block;width:100%}
-  .mcard:hover,.mcard.on{border-color:var(--accent)}
-  .mcard .mt{font-weight:600;font-size:13px;margin-bottom:2px;word-break:break-word}
-  .mcard .ms{font-size:11px;color:var(--muted)}
-  .mcard .mcur{margin-top:6px;font-size:12px}
-  .mcard .mcur b,.mdet .mcur b{color:var(--accent)}
-  .mdet{border:1px solid var(--accent);border-radius:8px;padding:12px;background:var(--panel2)}
-  .mdet .mcur{font-size:14px;margin:6px 0 10px}
-  .mtl{margin:6px 0 0 6px;padding:0;list-style:none;border-left:2px solid var(--line)}
-  .mtl li{position:relative;padding:3px 0 9px 14px;font-size:12px}
-  .mtl li:before{content:"";position:absolute;left:-6px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--line)}
-  .mtl li.cur:before{background:var(--accent)}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-  dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:16px;width:min(460px,92vw)}
-  #imgDlg{width:min(980px,96vw)}
-  dialog::backdrop{background:rgba(0,0,0,.55)}
-  dialog[open]{position:fixed;inset:0;margin:auto;height:fit-content;max-height:92vh;max-width:96vw;overflow:auto}   /* always centred in the visible screen */
-  html:has(dialog[open]){overflow:hidden}                                                                          /* page behind does not scroll */
-  #rfDlg{width:fit-content;min-width:min(560px,96vw)}
-  #rfBox{max-height:calc(92vh - 150px);overflow:auto;background:#fff;border-radius:6px}
-  #rfImg{display:none;margin:0 auto;height:auto;cursor:zoom-in}   /* fits the window; click = real size */
-  .tbar{border-top:1px solid var(--line)} .tsep{width:1px;height:20px;background:var(--line);margin:0 2px}
-  dialog h3{margin:0 0 2px;font-size:14px;font-weight:700;word-break:break-word}
-  .go{background:none;border:0;color:var(--muted);padding:0 5px;margin-left:4px;font-size:15px;line-height:1;cursor:pointer;border-radius:4px}
-  .go:hover{color:var(--accent);background:var(--panel2)}
-  #tblWhen tr.band td{background:var(--panel2);font-weight:600;color:var(--text);width:auto}
-  #whenBody{max-height:60vh;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:6px}
-  #tblWhen td:first-child{color:var(--muted);width:44px}
-  #tblTop td.gname{font-weight:600;vertical-align:top;width:26%}
-  #tblTop td.gname.wide{width:38%}
-  #tblTop td.c{text-align:center}
-  #tblTop tr.tot td{font-weight:700;background:var(--panel2);border-top:1px dashed var(--line)}
-  #tblTop tr.tot td.lbl{font-weight:600}
-  .cellgo{background:none;border:0;border-bottom:1px dotted var(--muted);padding:0 3px;font:inherit;font-weight:700;color:var(--text);cursor:pointer}
-  .cellgo:hover{color:var(--accent);border-bottom-color:var(--accent)}
-  .lnk{background:none;border:0;border-bottom:1px dashed var(--muted);padding:0;font:inherit;font-weight:600;color:var(--text);cursor:pointer;text-align:left}
-  .lnk:hover{color:var(--accent);border-bottom-color:var(--accent)}
-  .chip{display:inline-flex;align-items:center;gap:2px;padding:1px 8px;margin:2px 4px 2px 0;border:1px solid var(--line);border-radius:10px;font-size:11px;white-space:nowrap}
-  .chip .dot{margin-right:4px}
-  #imgPrev{display:block;max-width:100%;max-height:68vh;margin:10px auto 0;border:1px solid var(--line);border-radius:6px}
-  #report{display:none}
-  @page{size:A4;margin:12mm}
-  @media print{
-    body{background:#fff!important;color:#111!important;font-size:10.5px}
-    body>header,main,dialog{display:none!important}
-    #report{display:block;color:#111;font-family:'IBM Plex Sans','Noto Sans Thai','Noto Sans SC',sans-serif}
-    #report h1{font-size:18px;font-weight:700;margin:0}
-    #report h2{font-size:13px;font-weight:700;margin:14px 0 6px;padding-bottom:3px;border-bottom:1.5px solid #111}
-    #report .meta{color:#444;font-size:10px;margin-top:2px}
-    #report .kpis{display:flex;gap:8px;margin-top:8px}
-    #report .kpi{border:1px solid #bbb;border-radius:4px;padding:4px 10px}
-    #report .kpi b{font-size:15px;display:block}
-    #report img{width:100%;height:auto;display:block;break-inside:avoid}
-    #report img.c{width:auto;max-width:100%;max-height:230mm;margin:4px auto}
-    #report h2.pg{break-before:page;font-size:15px}
-    #report h3{font-size:11px;font-weight:700;margin:10px 0 4px}
-    #report .sec1{break-before:auto!important}
-    #report table{width:100%;border-collapse:collapse;font-size:9.5px}
-    #report th{background:#e9ecef!important;color:#111;position:static;border:1px solid #bbb;padding:3px 5px}
-    #report td{border:1px solid #ccc;padding:3px 5px;vertical-align:top}
-    #report tr{break-inside:avoid}
-    #report thead{display:table-header-group}
-    #report tr.band td{background:#222!important;color:#fff!important;font-weight:700;font-size:10px;border-color:#222}
-    #report tr.band.one td{background:#6b7280!important;border-color:#6b7280}
-    #report .sub{color:#555;font-size:9px}
-    #report td.n{text-align:center;font-weight:700}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  }
+/* ================== SUPABASE (replaces GAS) ================== */
+const SUPABASE_URL = 'https://pqfhjxpijmqaaoxpmshv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DSt6DloT95NQGoOwlLLSiQ_wLurwO0C';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const TZ = 'Asia/Bangkok';        // = spreadsheet time zone
+const ORDER_COL = 'id';           // sort column = original sheet order (first match wins in mappings)
+const DELIMITERS = ['#', ';', '/'];
+const DROP_ISSUE_RE = /^there were no problems or disruptions throughout the day/i;
 
-.dwarn td{background:#fff2b3!important;color:#222!important}.dwarn .lbl{color:#7a5a00!important}
-</style>
-</head>
-<body>
+/* --- helpers (ported 1:1 from GAS) --- */
+const norm_ = s => String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+const key_ = s => norm_(s).replace(/[\s.。;；]+$/, '');
+const digits_ = s => String(s ?? '').replace(/[^0-9]/g, '');
+const isNA_ = v => { const s = norm_(v); return s === '' || s === 'n/a' || s === 'na' || s === '-'; };
+const sv_ = v => isNA_(v) ? '' : String(v).trim();
+const numVal_ = v => { const n = (typeof v === 'string' && v.trim() !== '') ? Number(v) : v; return (typeof n === 'number' && isFinite(n)) ? n : ''; };
+const nk_ = s => String(s).toLowerCase().replace(/[\s_\-]/g, '');
+const rowOf_ = o => { const m = {}; for (const k in o) m[nk_(k)] = o[k]; return m; };           // column names: case / _ / - ignored
+const fv_ = (m, ...names) => { for (const n of names) { const v = m[nk_(n)]; if (v !== undefined && v !== null) return v; } return ''; };
+const p2 = n => ('0' + n).slice(-2);
+const tzFmt = new Intl.DateTimeFormat('sv-SE', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-<header class="no-print md:sticky top-0 z-20" style="background:var(--panel);border-bottom:1px solid var(--line)">
-  <div class="max-w-7xl mx-auto px-3 pt-2 flex flex-wrap items-start justify-between gap-2">
-    <div class="min-w-0">
-      <h1 class="font-bold text-sm sm:text-base tracking-wide truncate" data-i18n="title"></h1>
-      <div class="lbl" id="updated"></div>
-    </div>
-    <div id="actionBar" class="flex flex-wrap items-center gap-1.5 ml-auto">
-      <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
-      <span class="tsep"></span>
-      <button id="btn-en" class="btn">EN</button>
-      <button id="btn-zh" class="btn">中文</button>
-      <button id="btn-th" class="btn">ไทย</button>
-      <button id="btnTheme" class="btn" title="Theme">◐</button>
-      <span class="tsep"></span>
-      <button id="btnExport" class="btn primary" data-i18n="export"></button>
-    </div>
-  </div>
-  <div class="max-w-7xl mx-auto px-3 py-1 overflow-x-auto">
-    <nav class="flex gap-1 w-max">
-      <button class="tab" data-tab="model" data-i18n="tabModel"></button>
-      <button class="tab on" data-tab="overview" data-i18n="tabOverview"></button>
-      <button class="tab" data-tab="top" data-i18n="tabTop"></button>
-      <button class="tab" data-tab="downtime" data-i18n="tabDowntime"></button>
-      <button class="tab" data-tab="modules" data-i18n="tabModules"></button>
-      <button class="tab" data-tab="remarks" data-i18n="tabRemarks"></button>
-      <button class="tab" data-tab="log" data-i18n="tabLog"></button>
-      <button class="tab" data-tab="anom" data-i18n="tabAnom"></button>
-    </nav>
-  </div>
-  <div class="tbar">
-    <div class="max-w-7xl mx-auto px-3 py-2">
-      <div id="filterBar" class="flex flex-wrap items-center gap-1.5">
-        <select id="fFactory" aria-label="Factory"></select>
-        <select id="fMachine" aria-label="Machine" style="display:none"></select>   <!-- hidden: only holds the machine picked by clicking a bar -->
-        <select id="fBrand" aria-label="Brand" class="max-w-[130px]"></select>
-        <select id="fModel" aria-label="Model" class="max-w-[120px]"></select>
-        <span class="tsep"></span>
-        <input type="date" id="fStart" aria-label="Start">
-        <span class="lbl">–</span>
-        <input type="date" id="fEnd" aria-label="End">
-        <button id="btnToday" class="btn" data-i18n="today"></button>
-        <button id="btnReset" class="btn" data-i18n="reset"></button>
-      </div>
-    </div>
-  </div>
-</header>
-
-<main class="max-w-7xl mx-auto px-3 py-3 space-y-3">
-
-  <section class="view" data-view="overview">
-    <div id="cards" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"></div>
-    <div class="panel p-3">
-      <div class="flex items-center justify-between gap-2 mb-2">
-        <div class="font-semibold min-w-0" id="chartTitle"></div>
-        <button id="btnBack" class="btn no-print hidden" data-i18n="back"></button>
-      </div>
-      <div class="lbl mb-1 no-print" id="chartHint"></div>
-      <div id="chartWrap" class="relative w-full"><canvas id="detailChart"></canvas></div>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="top">
-    <div class="flex items-center gap-2 flex-wrap mb-2">
-      <button id="tBack" class="btn" style="display:none"></button>
-      <div id="topCrumb" class="flex items-center gap-1 flex-wrap text-xs"></div>
-    </div>
-    <div class="font-semibold" id="topChartTitle"></div>
-    <div class="lbl mb-1" id="topChartHint"></div>
-    <div id="topChartWrap" class="relative w-full mb-3"><canvas id="topChart"></canvas></div>
-    <p class="lbl mb-2" id="topNoteTxt"></p>
-    <div class="scroll">
-      <table class="w-full" id="tblTop"><thead></thead><tbody></tbody></table>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="model">
-    <div class="flex items-center gap-2 flex-wrap mb-2">
-      <button id="mBack" class="btn" style="display:none"></button>
-      <div id="modelCrumb" class="flex items-center gap-1 flex-wrap text-xs"></div>
-    </div>
-    <div class="font-semibold" id="modelChartTitle"></div>
-    <div class="lbl mb-1" id="modelHint"></div>
-    <div id="modelChartWrap" class="relative w-full mb-3"><canvas id="modelChart"></canvas></div>
-    <p class="lbl mb-2" id="modelNote"></p>
-    <div class="scroll">
-      <table class="w-full" id="tblModel">
-        <thead><tr><th id="thModel"></th><th data-i18n="issue"></th><th class="text-right" data-i18n="times"></th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="downtime">
-    <div class="flex items-center gap-2 flex-wrap mb-2">
-      <button id="dBack" class="btn" style="display:none"></button>
-      <div id="dtCrumb" class="flex items-center gap-1 flex-wrap text-xs"></div>
-    </div>
-    <div id="dtCards" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"></div>
-    <div class="font-semibold" id="dtTitle"></div>
-    <div class="lbl mb-1" id="dtHint"></div>
-    <div id="dtWrap" class="relative w-full mb-3"><canvas id="dtChart"></canvas></div>
-    <div class="font-semibold" id="dtTitle2"></div>
-    <div id="dtWrap2" class="relative w-full mb-3"><canvas id="dtChart2"></canvas></div>
-    <div class="font-semibold mb-1" id="dtTblTitle"></div>
-    <div class="scroll">
-      <table class="w-full" id="tblDt">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="modules">
-    <div class="flex items-center justify-between mb-1 gap-2"><div class="font-semibold" data-i18n="modTitle"></div><span id="modCount" class="lbl"></span></div>
-    <p class="lbl mb-2" data-i18n="modNote"></p>
-    <div class="flex items-center gap-2 mb-2">
-      <button class="btn primary" id="modVCards" data-i18n="modViewCards"></button>
-      <button class="btn" id="modVTable" data-i18n="modViewTable"></button>
-    </div>
-    <div id="modCardsWrap">
-      <div class="flex items-center gap-1 flex-wrap text-xs mb-2"><button class="btn" id="modBack" style="display:none"></button><div id="modCrumb" class="flex items-center gap-1 flex-wrap"></div></div>
-      <div class="lbl mb-2" id="modHint"></div>
-      <div id="modGrid" class="mgrid"></div>
-      <div id="modDetail"></div>
-    </div>
-    <div class="scroll" id="modTableWrap" style="display:none">
-      <table class="w-full" id="tblMod">
-        <thead><tr><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="colModule"></th><th data-i18n="colFirst"></th><th data-i18n="colLast"></th><th class="text-right" data-i18n="colEvents"></th><th data-i18n="colStatus"></th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="remarks">
-    <div class="flex items-center justify-between mb-1 gap-2"><div class="font-semibold" data-i18n="remTitle"></div><span id="remCount" class="lbl"></span></div>
-    <p class="lbl mb-2" data-i18n="remNote"></p>
-    <div class="scroll">
-      <table class="w-full" id="tblRem">
-        <thead><tr><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="time"></th><th data-i18n="issue"></th><th data-i18n="colRemark"></th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="log">
-    <div class="flex items-center justify-between mb-2">
-      <div class="font-semibold" data-i18n="logTitle"></div><span id="logCount" class="lbl"></span>
-    </div>
-    <div class="scroll">
-      <table class="w-full" id="tblLog">
-        <thead><tr><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="issue"></th><th data-i18n="solution"></th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="view panel p-3 hidden" data-view="anom">
-    <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
-      <div class="font-semibold" data-i18n="anomTitle"></div>
-      <div class="flex items-center gap-3"><label class="lbl flex items-center gap-1"><input type="checkbox" id="anomShowOk"><span data-i18n="anomShowOk"></span></label><span id="anomCount" class="lbl"></span></div>
-    </div>
-    <div class="lbl mb-2" data-i18n="anomNote"></div>
-    <div class="scroll">
-      <table class="w-full" id="tblAnom">
-        <thead><tr><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="anomReason"></th><th data-i18n="anomValue"></th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <div id="status" class="text-center lbl no-print"></div>
-</main>
-
-<dialog id="whenDlg">
-  <h3 id="whenTitle"></h3>
-  <div class="lbl" id="whenSub"></div>
-  <div id="whenBody"><table class="w-full" id="tblWhen"><thead><tr><th data-i18n="colNo"></th><th data-i18n="colDate"></th><th data-i18n="colClock"></th><th data-i18n="machine"></th></tr></thead><tbody></tbody></table></div>
-  <div class="flex justify-end mt-3"><button class="btn" id="whenClose" data-i18n="close"></button></div>
-</dialog>
-
-<dialog id="imgDlg">
-  <h3 id="imgTitle"></h3>
-  <div class="lbl" id="imgHint" style="line-height:1.5"></div>
-  <img id="imgPrev" alt="">
-  <div class="flex justify-end gap-2 mt-3"><a id="imgDl" class="btn primary" download="report.png" style="display:none" data-i18n="dlPng"></a><button class="btn" id="imgClose" data-i18n="close"></button></div>
-</dialog>
-
-<dialog id="exportDlg">
-  <div style="font-weight:600;font-size:13px;margin-bottom:10px" data-i18n="expTitle"></div>
-  <div class="flex flex-col gap-2" style="min-width:240px">
-    <button class="btn primary" id="expPng" data-i18n="expPng"></button>
-    <button class="btn primary" id="expForm" data-i18n="expForm"></button>
-    <button class="btn" id="expCsv" data-i18n="expCsv"></button>
-    <button class="btn" id="expPdf" data-i18n="expPdf"></button>
-    <button class="btn" id="expNo" data-i18n="exit"></button>
-  </div>
-</dialog>
-
-<dialog id="rfDlg">
-  <h3 id="rfTitle"></h3>
-  <div class="lbl" id="rfHint" style="margin:2px 0 8px"></div>
-  <div id="rfBox"><img id="rfImg" alt=""></div>
-  <div class="flex flex-wrap items-center justify-end gap-2 mt-3">
-    <button class="btn" id="rfPrev">‹</button><span class="lbl" id="rfPage"></span><button class="btn" id="rfNext">›</button>
-    <button class="btn primary" id="rfCopy" data-i18n="rfCopy"></button><button class="btn primary" id="rfDl" data-i18n="rfDl"></button><button class="btn" id="rfClose" data-i18n="close"></button>
-  </div>
-</dialog>
-
-<dialog id="saveDlg">
-  <div style="font-weight:600;font-size:13px;margin-bottom:10px" data-i18n="saveTitle"></div>
-  <div class="flex flex-col gap-2" style="min-width:210px">
-    <button class="btn primary" id="saveChart" data-i18n="saveChart"></button>
-    <button class="btn primary" id="saveBoth" data-i18n="saveBoth"></button>
-    <button class="btn" id="saveNo" data-i18n="exit"></button>
-  </div>
-</dialog>
-
-
-<div id="report"></div>
-<script src="pr-admin.js"></script>
-<script>
-/* ================== CONFIG ================== */
-const APP_VERSION = 'v36-2026-11-20';
-const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
-const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
-const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': '#a78bfa' };
-
-/* ================== i18n ================== */
-const I18N = {
-  en: { export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
- rfTitle:'Report form', rfBusy:'Building the picture…', rfFail:'Could not build the picture (try fewer rows)', rfCopy:'Copy image', rfDl:'Download PNG', rfCopied:'Image copied to clipboard', rfCopyFail:'Copy not allowed here – use Download PNG',
- anomTitle:'Data check – records with problems', anomNote:'Fix the record (✎), apply the suggested date (→), or confirm it if the value is really correct (✓).', anomShowOk:'Show confirmed', anomNone:'No problems found 👍',
- anomReason:'Reason', anomValue:'Values', anomEdit:'Edit', anomConfirm:'Confirm', anomUndo:'Undo confirm',
- a_noTime:'No valid report time', a_future:'Report time is in the future (day / month swapped?)', a_dateSwap:'{f}: day and month look swapped', a_dateMismatch:'{f} is far from the report time',
- a_negTime:'{f} is earlier than the report / repair time (negative time)', a_negMin:'Repair minutes are negative', a_overLimit:'Repair minutes are over the limit (> 1000)', a_incomplete:'Missing: {v}',
- fl_timestamp:'Report time', fl_date:'Date', fl_repairStart:'Repair start', fl_recoveryEnd:'Recovery', title:'Non-Standard Problem Report', addData:'＋ Add Data', factory:'Factory', machine:'Machine', reset:'Reset',
-    all:'All factories', allM:'All machines', cases:'cases', chartTitle:'Issues per machine',
-    tabOverview:'Overview', saveImg:'▧ Save image', imgTitle:'Save this page as an image',
-    imgHint:'Right-click the picture below, then choose “Save image as…” (on a phone: press and hold the picture, then “Save image”).',
-    imgNone:'This page has no chart to save. Open Overview, Top 3 or Model Summary and try again.',
-    tT1:'Cases per model', tT2a:'Top 5 issues of', tT2b:'Machines of', tT3:'Top 5 issues of machine',
-    tH1:'Click a bar to see the model’s top 5 issues, or click a model name (on the axis or in the table) to see its machines.',
-    tH2a:'Top 5 issues of this model. The table splits every issue by machine number and factory; click a number to see that machine’s top 5 issues; › shows the dates and times.',
-    tH2b:'Cases per machine. Click a bar or a machine name to see that machine’s top 5 issues.',
-    tH3:'Top 5 issues of this machine. The table lists every issue; › shows the dates and times.',
-    tMachines:'Machines', colMachines:'Machines', colNum:'#', topNoteM:'Rank 1 = most frequent. Only issues that happened 2+ times on the same model are listed; ties share a rank.', topChartTitle:'Recurring issues per machine', topChartHint:'One bar per machine (cases of issues that repeat). Click a bar, or the › next to an issue in the table, to see the dates and times.', whenTip:'Show when it happened', colNo:'#', colDate:'Date', colClock:'Time of day', close:'Close', tabModel:'Model Summary', mAll:'All models', mBack:'← Back', mChart1:'Issues per model', mChart2:'Recurring issues in', mNoRec:'No issue occurred 2+ times in this model.', mChart3:'Issues on', mHint1:'Click a bar to see which issues keep repeating in that model.', mHint2:'Chart: issues that occurred 2+ times. Table: every issue, split by machine.', colMachine:'Machine', brand:'Brand', model:'Model', allB:'All brands', allMod:'All models', modelTitle:'Issues grouped by Brand + Model', modelNote:'All machines with the same brand and model are combined.', machinesWord:'machines', modelSortAsc:'Sorted ascending: fewest → most', modelSortDesc:'Sorted descending: most → fewest', repTitle:'Non-Standard Problem Report', repLog:'Issue log', rec:'Recurring issues (2+ times)', one:'One-off issues', generated:'Generated', nRec:'Recurring issue types', nOne:'One-off issues', dateRange:'Date', back:'← All machines', rankCol:'Rank', chartMachine:'Issues on', hintAll:'Click a bar to see the issues of that machine.', tabTop:'Top 3 Recurring', tabLog:'Issue Log',
-    tabDowntime:'Downtime', tabModules:'Machine Modules', tabRemarks:'Remarks',
-    dtTotal:'Total downtime', dtColTotal:'Total (min)', dtColAvg:'Avg (min)', dtColCases:'Cases',
-    dtPick1:'Click a bar or a model name to see its machines.', dtPick2:'Click a bar or a machine name to see that machine’s top 5 downtime issues.',
-    dtPick3:'Top 5 issues by downtime. Click a bar to list only its cases; click again to clear.',
-    dtT2:'Downtime per machine', dtT3:'Top 5 downtime issues', dtTblT2:'Top 5 downtime issues of each machine', dtTblT3:'Downtime events (longest first)', dtEvents:'Downtime events', dtAvg:'Average per event', dtLongest:'Longest event',
-    dtByModel:'Downtime by model (minutes)', dtByDay:'Downtime per day (minutes)', dtTblTitle:'Longest downtime events', colMin:'Minutes', colReported:'Reported', colFinished:'Finished',
-    dtHint:'From the 维修总时间(min) column. Bars are split by factory. Rows with an error or a negative value are left out.',
-    dtEmpty:'No downtime data. Check that the 维修总时间(min) column has numbers.', dtSkipped:'rows left out (error / negative)',
-    modTitle:'Machine module history', modNote:'Built from the logged problems: a module runs from the first time it is logged on the machine until the last log before the next module. The date filter is not applied here.',
-    colModule:'Module', colFirst:'First logged', colLast:'Last logged', colEvents:'Events', colStatus:'Status', stCurrent:'Current', stChangedTo:'Changed to',
-    modMachines:'machines', modChanges:'module changes', modNotSet:'Not set', modNotRec:'Not recorded', modNoModNote:'No module (机种) was written in the problem logs of this machine, so what it produces is unknown. Fill the 机种 column in the sheet.', modViewCards:'Cards', modViewTable:'Table', modLvB:'brand', modLvM:'model', modLvV:'version', modLvK:'machine', modPick:'Choose', modNow:'Running now', modSince:'since', modLastLog:'last logged', modLogs:'logs', modFirst:'first logged', modTlTitle:'Module changes', modNoChange:'No module change logged yet.', modDateNote:'Dates come from the repair logs: a module is dated from the first log that mentions it, so the real change may be a little earlier.', modEmpty:'No module data yet (column 机种 / module).',
-    remTitle:'Remarks per machine', remNote:'Machines whose 备注 (remark) column has text. Text that only repeats the machine name is ignored.', remEmpty:'No remarks in this period.', colRemark:'Remark',
-    topTitle:'Top 3 most recurring issues per machine', topNote:'Rank 1 = most frequent. Only issues that occurred 2+ times are listed; tied issues share the same rank.',
-    issue:'Issue', times:'Times', logTitle:'Full issue log', time:'Time', solution:'Solution',
-    saveTitle:'Save as image', saveChart:'Chart only', saveBoth:'Chart + table', yes:'Yes', exit:'Exit', imgBusy:'Creating the image…', imgFail:'Could not create the image. Try CSV or PDF instead.', dlPng:'⇩ Download PNG',
-    loading:'Loading data…', demo:'Demo data shown. Set GAS_URL in index.html to load your sheets.',
-    error:'Could not load data: ', empty:'No records match the current filters.', updated:'Updated', total:'Total' },
-  zh: { export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
- rfTitle:'报告表单', rfBusy:'正在生成图片…', rfFail:'无法生成图片（请减少行数）', rfCopy:'复制图片', rfDl:'下载 PNG', rfCopied:'图片已复制到剪贴板', rfCopyFail:'此处不允许复制 – 请下载 PNG',
- anomTitle:'数据检查 – 有问题的记录', anomNote:'请修改记录（✎）、采用建议日期（→），或在数值确实正确时确认（✓）。', anomShowOk:'显示已确认', anomNone:'未发现问题 👍',
- anomReason:'原因', anomValue:'数值', anomEdit:'修改', anomConfirm:'确认', anomUndo:'取消确认',
- a_noTime:'报修时间缺失或无效', a_future:'报修时间在未来（日/月颠倒？）', a_dateSwap:'{f}：日和月似乎颠倒', a_dateMismatch:'{f} 与报修时间相差太大',
- a_negTime:'{f} 早于报修/维修时间（时间为负）', a_negMin:'维修总时间为负数', a_overLimit:'维修总时间超过上限（> 1000）', a_incomplete:'缺少：{v}',
- fl_timestamp:'报修时间', fl_date:'日期', fl_repairStart:'维修时间', fl_recoveryEnd:'复机时间', title:'非标准问题报告', addData:'＋ 添加数据', factory:'工厂', machine:'机器', reset:'重置',
-    all:'全部工厂', allM:'全部机器', cases:'起', chartTitle:'各机器问题统计',
-    tabOverview:'概览', saveImg:'▧ 保存图片', imgTitle:'将此页面保存为图片',
-    imgHint:'请在下方图片上点击右键，选择“图片另存为…”（手机：长按图片，选择“保存图片”）。',
-    imgNone:'此页面没有可保存的图表。请打开概览、前3名或机型排行后重试。',
-    tT1:'各机型起数', tT2a:'前5大问题：', tT2b:'机器：', tT3:'该机器前5大问题：',
-    tH1:'点击柱子查看该机型的前5大问题；点击机型名称（坐标轴或表格中）查看该机型的机器。',
-    tH2a:'该机型的前5大问题。表格按机器编号和工厂列出每个问题的次数；点击数字查看该机器的前5大问题；点击 › 查看日期和时间。',
-    tH2b:'各机器的起数。点击柱子或机器名称，查看该机器的前5大问题。',
-    tH3:'该机器的前5大问题。表格列出全部问题；点击 › 查看日期和时间。',
-    tMachines:'机器', colMachines:'机器', colNum:'#', topNoteM:'名次1 = 发生最多。仅列出同一机型发生2次及以上的问题；并列的名次相同。', topChartTitle:'各机器的重复问题', topChartHint:'每台机器一根柱子（重复问题的起数）。点击柱子，或表格中问题旁的 ›，查看发生的日期和时间。', whenTip:'查看发生时间', colNo:'#', colDate:'日期', colClock:'时间', close:'关闭', tabModel:'机型排行', mAll:'全部机型', mBack:'← 返回', mChart1:'各机型问题数', mChart2:'重复问题：', mNoRec:'该机型没有发生2次及以上的问题。', mChart3:'问题统计：', mHint1:'点击柱子查看该机型的重复问题。', mHint2:'图表：发生2次及以上的问题。表格：全部问题，按机器分开。', colMachine:'机器', brand:'品牌', model:'机型', allB:'全部品牌', allMod:'全部机型', modelTitle:'按品牌 + 机型汇总的问题', modelNote:'相同品牌和机型的所有机器合并统计。', machinesWord:'台机器', modelSortAsc:'升序排列：由少到多', modelSortDesc:'降序排列：由多到少', repTitle:'非标准问题报告', repLog:'问题记录', rec:'重复发生的问题（2次及以上）', one:'仅发生一次的问题', generated:'生成时间', nRec:'重复问题种类', nOne:'单次问题', dateRange:'日期', back:'← 全部机器', rankCol:'名次', chartMachine:'问题统计：', hintAll:'点击柱子可查看该机器的问题。', tabTop:'重复问题前3', tabLog:'问题记录',
-    tabDowntime:'停机时间', tabModules:'机种履历', tabRemarks:'备注',
-    dtTotal:'停机总时间', dtColTotal:'合计(分钟)', dtColAvg:'平均(分钟)', dtColCases:'次数',
-    dtPick1:'点击柱子或机型名称，查看该机型的机器。', dtPick2:'点击柱子或机器名称，查看该机器停机时间最长的前5个问题。',
-    dtPick3:'停机时间最长的前5个问题。点击柱子只看该问题的记录；再点一次取消。',
-    dtT2:'各机器停机时间', dtT3:'停机时间最长的前5个问题', dtTblT2:'各机器停机时间最长的前5个问题', dtTblT3:'停机记录（时间最长在前）', dtEvents:'停机次数', dtAvg:'平均每次', dtLongest:'最长一次',
-    dtByModel:'各机型停机时间（分钟）', dtByDay:'每日停机时间（分钟）', dtTblTitle:'停机时间最长的记录', colMin:'分钟', colReported:'报修时间', colFinished:'修复完成',
-    dtHint:'来自“维修总时间(min)”列。柱子按工厂分色。出错或为负数的行不计入。',
-    dtEmpty:'没有停机数据。请检查“维修总时间(min)”列是否有数字。', dtSkipped:'行未计入（错误/负数）',
-    modTitle:'机器机种履历', modNote:'根据问题记录推算：某机种从该机器第一次出现记录起，到下一个机种出现前的最后一次记录为止。此处不使用日期筛选。',
-    colModule:'机种', colFirst:'首次记录', colLast:'最后记录', colEvents:'记录数', colStatus:'状态', stCurrent:'当前', stChangedTo:'改为',
-    modMachines:'台机器', modChanges:'次机种更换', modNotSet:'未设置', modNotRec:'未记录', modNoModNote:'该机器的问题记录中没有填写机种，因此不知道它在生产什么。请在表格的机种列补充。', modViewCards:'卡片', modViewTable:'表格', modLvB:'品牌', modLvM:'机型', modLvV:'版本', modLvK:'机台', modPick:'请选择', modNow:'当前机种', modSince:'自', modLastLog:'最后记录', modLogs:'条记录', modFirst:'首次记录', modTlTitle:'机种更换记录', modNoChange:'暂无机种更换记录。', modDateNote:'日期来自维修记录：机种以首次出现该机种的记录日期为准，实际更换可能稍早。', modEmpty:'暂无机种数据（机种列）。',
-    remTitle:'各机器备注', remNote:'“备注”列有内容的机器。仅重复机器名称的内容会被忽略。', remEmpty:'本期间没有备注。', colRemark:'备注',
-    topTitle:'各机器重复发生最多的前3大问题', topNote:'名次1 = 发生最多。仅列出发生2次及以上的问题，并列的问题名次相同。',
-    issue:'问题', times:'次数', logTitle:'完整问题记录', time:'时间', solution:'解决方法',
-    saveTitle:'保存为图片', saveChart:'仅图表', saveBoth:'图表 + 表格', yes:'是', exit:'退出', imgBusy:'正在生成图片…', imgFail:'无法生成图片，请改用 CSV 或 PDF。', dlPng:'⇩ 下载 PNG',
-    loading:'数据加载中…', demo:'当前为演示数据。请在 index.html 中设置 GAS_URL 以加载表格数据。',
-    error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' },
-  th:{ export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
- rfTitle:'ฟอร์มรายงาน', rfBusy:'กำลังสร้างรูปภาพ…', rfFail:'สร้างรูปไม่ได้ (ลองลดจำนวนแถว)', rfCopy:'คัดลอกรูปภาพ', rfDl:'ดาวน์โหลดรูป (PNG)', rfCopied:'คัดลอกรูปไปคลิปบอร์ดแล้ว', rfCopyFail:'คัดลอกไม่ได้ที่นี่ – ใช้ดาวน์โหลด PNG แทน',
- anomTitle:'ตรวจข้อมูล – รายการที่มีปัญหา', anomNote:'แก้ไขรายการ (✎) ใช้วันที่ที่แนะนำ (→) หรือกดยืนยัน (✓) ถ้าค่าถูกต้องจริง', anomShowOk:'แสดงที่ยืนยันแล้ว', anomNone:'ไม่พบความผิดปกติ 👍',
- anomReason:'สาเหตุ', anomValue:'ค่า', anomEdit:'แก้ไข', anomConfirm:'ยืนยัน', anomUndo:'ยกเลิกยืนยัน',
- a_noTime:'ไม่มีเวลาแจ้งซ่อมที่ถูกต้อง', a_future:'เวลาแจ้งซ่อมอยู่ในอนาคต (สลับวัน/เดือน?)', a_dateSwap:'{f}: วันและเดือนน่าจะสลับกัน', a_dateMismatch:'{f} ห่างจากเวลาแจ้งซ่อมมากผิดปกติ',
- a_negTime:'{f} เร็วกว่าเวลาแจ้งซ่อม/เวลาซ่อม (เวลาติดลบ)', a_negMin:'เวลาซ่อมติดลบ', a_overLimit:'เวลาซ่อมเกินเกณฑ์ (> 1000 นาที)', a_incomplete:'ข้อมูลไม่ครบ: {v}',
- fl_timestamp:'เวลาแจ้งซ่อม', fl_date:'วันที่', fl_repairStart:'เวลาซ่อม', fl_recoveryEnd:'เวลาพักฟื้น', title:'รายงานปัญหาที่ไม่เป็นมาตรฐาน', addData:'＋ เพิ่มข้อมูล', factory:'โรงงาน', machine:'เครื่อง', reset:'รีเซ็ต',
-    all:'ทุกโรงงาน', allM:'ทุกเครื่อง', cases:'รายการ', chartTitle:'ปัญหาต่อเครื่อง',
-    tabOverview:'ภาพรวม', saveImg:'▧ บันทึกรูป', imgTitle:'บันทึกหน้านี้เป็นรูปภาพ',
-    imgHint:'คลิกขวาที่รูปด้านล่าง แล้วเลือก “บันทึกรูปภาพเป็น…” (บนมือถือ: กดค้างที่รูป แล้วเลือก “บันทึกรูปภาพ”)',
-    imgNone:'หน้านี้ไม่มีกราฟให้บันทึก ให้เปิดภาพรวม, Top 3 หรือสรุปตามรุ่น แล้วลองอีกครั้ง',
-    tT1:'จำนวนต่อรุ่น', tT2a:'5 ปัญหาอันดับต้นของ', tT2b:'เครื่องของ', tT3:'5 ปัญหาอันดับต้นของเครื่อง',
-    tH1:'คลิกแท่งกราฟเพื่อดู 5 ปัญหาอันดับต้นของรุ่น หรือคลิกชื่อรุ่น (บนแกนหรือในตาราง) เพื่อดูเครื่องของรุ่นนั้น',
-    tH2a:'5 ปัญหาอันดับต้นของรุ่นนี้ ตารางแยกทุกปัญหาตามหมายเลขเครื่องและโรงงาน คลิกหมายเลขเพื่อดู 5 ปัญหาอันดับต้นของเครื่องนั้น › แสดงวันและเวลา',
-    tH2b:'จำนวนต่อเครื่อง คลิกแท่งกราฟหรือชื่อเครื่องเพื่อดู 5 ปัญหาอันดับต้นของเครื่องนั้น',
-    tH3:'5 ปัญหาอันดับต้นของเครื่องนี้ ตารางแสดงทุกปัญหา › แสดงวันและเวลา',
-    tMachines:'เครื่อง', colMachines:'เครื่อง', colNum:'#',
-    topNoteM:'อันดับ 1 = เกิดบ่อยที่สุด แสดงเฉพาะปัญหาที่เกิด 2 ครั้งขึ้นไปในรุ่นเดียวกัน ปัญหาที่เท่ากันได้อันดับเดียวกัน',
-    topChartTitle:'ปัญหาที่เกิดซ้ำต่อเครื่อง',
-    topChartHint:'หนึ่งแท่งต่อหนึ่งเครื่อง (จำนวนปัญหาที่เกิดซ้ำ) คลิกแท่งกราฟ หรือ › ข้างปัญหาในตาราง เพื่อดูวันและเวลา',
-    whenTip:'แสดงว่าเกิดเมื่อไร', colNo:'#', colDate:'วันที่', colClock:'เวลา', close:'ปิด',
-    tabModel:'สรุปตามรุ่น', mAll:'ทุกรุ่น', mBack:'← ย้อนกลับ', mChart1:'ปัญหาต่อรุ่น', mChart2:'ปัญหาที่เกิดซ้ำใน', mNoRec:'ไม่มีปัญหาที่เกิด 2 ครั้งขึ้นไปในรุ่นนี้',
-    mChart3:'ปัญหาของ', mHint1:'คลิกแท่งกราฟเพื่อดูว่าปัญหาใดเกิดซ้ำในรุ่นนั้น',
-    mHint2:'กราฟ: ปัญหาที่เกิด 2 ครั้งขึ้นไป ตาราง: ทุกปัญหา แยกตามเครื่อง',
-    colMachine:'เครื่อง', brand:'ยี่ห้อ', model:'รุ่น', allB:'ทุกยี่ห้อ', allMod:'ทุกรุ่น',
-    modelTitle:'ปัญหาจัดกลุ่มตามยี่ห้อ + รุ่น', modelNote:'รวมเครื่องทั้งหมดที่ยี่ห้อและรุ่นเดียวกัน', machinesWord:'เครื่อง',
-    modelSortAsc:'เรียงจากน้อยไปมาก', modelSortDesc:'เรียงจากมากไปน้อย',
-    repTitle:'รายงานปัญหาที่ไม่เป็นมาตรฐาน', repLog:'บันทึกปัญหา', rec:'ปัญหาที่เกิดซ้ำ (2 ครั้งขึ้นไป)', one:'ปัญหาที่เกิดครั้งเดียว', generated:'สร้างเมื่อ',
-    nRec:'ประเภทปัญหาที่เกิดซ้ำ', nOne:'ปัญหาที่เกิดครั้งเดียว', dateRange:'วันที่', back:'← ทุกเครื่อง', rankCol:'อันดับ',
-    chartMachine:'ปัญหาของ', hintAll:'คลิกแท่งกราฟเพื่อดูปัญหาของเครื่องนั้น',
-    tabTop:'Top 3 ที่เกิดซ้ำ', tabLog:'บันทึกปัญหา', tabDowntime:'เวลาหยุดเครื่อง', tabModules:'โมดูลของเครื่อง', tabRemarks:'หมายเหตุ',
-    dtTotal:'เวลาหยุดเครื่องรวม', dtColTotal:'รวม (นาที)', dtColAvg:'เฉลี่ย (นาที)', dtColCases:'ครั้ง',
-    dtPick1:'คลิกแท่งกราฟหรือชื่อรุ่นเพื่อดูเครื่องของรุ่นนั้น', dtPick2:'คลิกแท่งกราฟหรือชื่อเครื่องเพื่อดู 5 ปัญหาที่หยุดเครื่องนานที่สุดของเครื่องนั้น',
-    dtPick3:'5 ปัญหาที่หยุดเครื่องนานที่สุด คลิกแท่งกราฟเพื่อแสดงเฉพาะรายการของปัญหานั้น คลิกอีกครั้งเพื่อยกเลิก',
-    dtT2:'เวลาหยุดเครื่องต่อเครื่อง', dtT3:'5 ปัญหาที่หยุดเครื่องนานที่สุด', dtTblT2:'5 ปัญหาที่หยุดเครื่องนานที่สุดของแต่ละเครื่อง', dtTblT3:'เหตุการณ์หยุดเครื่อง (นานที่สุดก่อน)',
-    dtEvents:'เหตุการณ์หยุดเครื่อง', dtAvg:'เฉลี่ยต่อเหตุการณ์', dtLongest:'เหตุการณ์ที่นานที่สุด', dtByModel:'เวลาหยุดเครื่องตามรุ่น (นาที)', dtByDay:'เวลาหยุดเครื่องต่อวัน (นาที)',
-    dtTblTitle:'เหตุการณ์หยุดเครื่องที่นานที่สุด', colMin:'นาที', colReported:'แจ้ง', colFinished:'เสร็จ',
-    dtHint:'จากคอลัมน์ 维修总时间(min) แท่งกราฟแบ่งตามโรงงาน แถวที่เป็นค่า error หรือติดลบจะไม่ถูกนับ',
-    dtEmpty:'ไม่มีข้อมูลเวลาหยุดเครื่อง ตรวจสอบว่าคอลัมน์ 维修总时间(min) มีตัวเลข', dtSkipped:'แถวที่ไม่ถูกนับ (error / ติดลบ)',
-    modTitle:'ประวัติโมดูลของเครื่อง',
-    modNote:'สร้างจากบันทึกปัญหา: โมดูลหนึ่งนับตั้งแต่ครั้งแรกที่บันทึกบนเครื่องนั้น จนถึงบันทึกสุดท้ายก่อนโมดูลถัดไป ส่วนนี้ไม่ใช้ตัวกรองวันที่',
-    colModule:'โมดูล', colFirst:'บันทึกครั้งแรก', colLast:'บันทึกล่าสุด', colEvents:'จำนวนครั้ง', colStatus:'สถานะ', stCurrent:'ปัจจุบัน', stChangedTo:'เปลี่ยนเป็น',
-    modMachines:'เครื่อง', modChanges:'ครั้งที่เปลี่ยนโมดูล', modNotSet:'ไม่ได้ตั้งค่า', modNotRec:'ไม่มีบันทึก',
-    modNoModNote:'ไม่มีการระบุโมดูล (机种) ในบันทึกปัญหาของเครื่องนี้ จึงไม่ทราบว่าผลิตอะไรอยู่ กรุณากรอกคอลัมน์ 机种 ในชีต',
-    modViewCards:'การ์ด', modViewTable:'ตาราง', modLvB:'ยี่ห้อ', modLvM:'รุ่น', modLvV:'เวอร์ชัน', modLvK:'เครื่อง', modPick:'เลือก', modNow:'กำลังผลิต', modSince:'ตั้งแต่',
-    modLastLog:'บันทึกล่าสุด', modLogs:'บันทึก', modFirst:'บันทึกครั้งแรก', modTlTitle:'การเปลี่ยนโมดูล', modNoChange:'ยังไม่มีบันทึกการเปลี่ยนโมดูล',
-    modDateNote:'วันที่มาจากบันทึกการซ่อม: โมดูลนับจากบันทึกแรกที่กล่าวถึง วันที่เปลี่ยนจริงอาจเร็วกว่านี้เล็กน้อย',
-    modEmpty:'ยังไม่มีข้อมูลโมดูล (คอลัมน์ 机种 / module)',
-    remTitle:'หมายเหตุของแต่ละเครื่อง', remNote:'เครื่องที่คอลัมน์ 备注 (หมายเหตุ) มีข้อความ ข้อความที่ซ้ำกับชื่อเครื่องจะถูกข้าม', remEmpty:'ไม่มีหมายเหตุในช่วงนี้', colRemark:'หมายเหตุ',
-    topTitle:'Top 3 ปัญหาที่เกิดซ้ำมากที่สุดของแต่ละเครื่อง', topNote:'อันดับ 1 = เกิดบ่อยที่สุด แสดงเฉพาะปัญหาที่เกิด 2 ครั้งขึ้นไป ปัญหาที่เท่ากันได้อันดับเดียวกัน',
-    issue:'ปัญหา', times:'จำนวนครั้ง', logTitle:'บันทึกปัญหาทั้งหมด', time:'เวลา', solution:'วิธีแก้ไข',
-    saveTitle:'บันทึกเป็นรูปภาพ', saveChart:'เฉพาะกราฟ', saveBoth:'กราฟ + ตาราง', yes:'ใช่', exit:'ออก', imgBusy:'กำลังสร้างรูปภาพ…', imgFail:'สร้างรูปภาพไม่ได้ ลองใช้ CSV หรือ PDF แทน', dlPng:'⇩ ดาวน์โหลด PNG',
-    loading:'กำลังโหลดข้อมูล…', demo:'กำลังแสดงข้อมูลตัวอย่าง ตั้งค่า GAS_URL ใน index.html เพื่อโหลดข้อมูลจากชีต',
-    error:'โหลดข้อมูลไม่สำเร็จ: ', empty:'ไม่มีรายการที่ตรงกับตัวกรองปัจจุบัน', updated:'อัปเดต', total:'รวม' }
+/** timestamptz / ISO / text (d/M/yyyy H.mm, d-M-yyyy, 12 h am/pm, Buddhist year) -> 'yyyy-MM-ddTHH:mm:ss' (local TZ) or null. Day first. */
+function toLocal_(v) {
+  if (v instanceof Date) return tzFmt.format(v).replace(' ', 'T');
+  if (typeof v !== 'string') return null;
+  const s = v.trim().replace(/\s+/g, ' ').replace(/\s*น\.?$/, '');
+  if (/^\d{4}-\d\d-\d\d[T ]\d\d:\d\d(:\d\d)?(\.\d+)?(Z|[+-]\d\d(:?\d\d)?)$/.test(s)) return tzFmt.format(new Date(s.replace(' ', 'T'))).replace(' ', 'T');
+  const m = s.match(/^(\d{1,4})[\/\-.](\d{1,2})[\/\-.](\d{1,4})(?:[ T,]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?(?:\s*([AaPp])\.?[Mm]\.?)?)?(?:\.\d+)?$/);
+  if (!m) return null;
+  let d, mo, y;
+  if (m[1].length === 4) { y = +m[1]; mo = +m[2]; d = +m[3]; } else { d = +m[1]; mo = +m[2]; y = +m[3]; }
+  if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; }
+  if (y < 100) y += 2000; else if (y > 2400) y -= 543;
+  let h = m[4] ? +m[4] : 0; const mi = m[5] ? +m[5] : 0, sec = m[6] ? +m[6] : 0;
+  if (m[7]) { const pm = /p/i.test(m[7]); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || sec > 59 || y < 1990 || y > 2100) return null;
+  const chk = new Date(y, mo - 1, d); if (chk.getDate() !== d) return null;                     // 31/02 -> reject
+  return `${y}-${p2(mo)}-${p2(d)}T${p2(h)}:${p2(mi)}:${p2(sec)}`;
+}
+const splitIssue_ = raw => {
+  const t = String(raw || '').trim();
+  for (const dl of DELIMITERS) { const i = t.indexOf(dl); if (i > 0) return { issue: t.slice(0, i).trim(), solution: t.slice(i + 1).trim() }; }
+  return { issue: t, solution: '' };
 };
-let lang = localStorage.getItem('lang') || 'en';
-let theme = localStorage.getItem('theme') || 'dark';
-const t = k => I18N[lang][k] || k;
-const loc = () => lang === 'zh' ? 'zh-CN' : lang === 'th' ? 'th-TH-u-ca-gregory' : 'en-GB';   // Thai: Christian-era years
+const cleanRemark_ = (v, rawMachine, machineNo) => {
+  const t = sv_(v), n = norm_(t);
+  return (!n || n === norm_(rawMachine) || n === norm_(rawMachine + ' ' + machineNo)) ? '' : t;
+};
 
-/* ================== STATE ================== */
-let DATA = [], NOMACH = [], HISTORY = [], dtChartInst = null, dtChart2Inst = null, chart = null, generatedAt = null, tab = 'overview';
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const mName = r => (lang === 'zh' && r.machineCn) ? r.machineCn : r.machineEn;
-const pick = (en, cn, th) => (lang === 'zh' && cn) ? cn : (lang === 'th' && th) ? th : en;   // en / zh / th text of an issue or solution
-const byTimeAsc = (a, b) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0);   // oldest first
-const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-
-/* ================== LOAD ================== */
-async function load() {
-  $('status').textContent = t('loading');
-  try {
-    if (!SUPABASE_URL) { DATA = demoData(); generatedAt = new Date().toISOString(); $('status').textContent = t('demo'); }
-    else {
-     const json = await fetchPayload();
-      DATA = json.data.filter(r => !r.noMachine); NOMACH = json.data.filter(r => r.noMachine); HISTORY = json.moduleHistory || [];   // machine = N/A: Issue Log only
-      generatedAt = json.generatedAt; $('status').textContent = '';
-    }
-  } catch (e) { DATA = []; NOMACH = []; HISTORY = []; $('status').textContent = t('error') + e.message; }
-  buildFilters(); render();
-}
-
-/* ================== FILTERS ================== */
-function buildFilters() {
-  const fSel = $('fFactory'), cur = fSel.value;
-  fSel.innerHTML = `<option value="">${t('all')}</option>` + FACTORIES.map(f => `<option>${esc(f)}</option>`).join('');
-  fSel.value = cur; buildMachineOptions();
-}
-function buildMachineOptions() {
-  const f = $('fFactory').value, cur = $('fMachine').value, seen = new Map();
-  DATA.filter(r => !f || r.factory === f).forEach(r => seen.set(r.machineKey, mName(r)));
-  const opts = [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  $('fMachine').innerHTML = `<option value="">${t('allM')}</option>` + opts.map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('');
-  $('fMachine').value = seen.has(cur) ? cur : '';
-  buildKeywordOptions();
-}
-function buildKeywordOptions() {                     // brand / model lists come from the keyword sheet match
-  const f = $('fFactory').value, rows = DATA.filter(r => !f || r.factory === f), b = new Map(), m = new Map();
-  rows.forEach(r => {
-    if (r.brandEn) b.set(r.brandEn, (lang === 'zh' && r.brandCn) ? r.brandCn : r.brandEn);
-    if (r.model) m.set(r.model, r.model);
-  });
-  const fill = (id, allKey, map) => {
-    const cur = $(id).value, opts = [...map.entries()].sort((x, y) => x[1].localeCompare(y[1], undefined, { numeric: true }));
-    $(id).innerHTML = `<option value="">${t(allKey)}</option>` + opts.map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('');
-    $(id).value = map.has(cur) ? cur : '';
-  };
-  fill('fBrand', 'allB', b); fill('fModel', 'allMod', m);
-}
-function filtered(withNoMachine) {                   // withNoMachine: also the rows whose machine is N/A (Issue Log only)
-  const f = $('fFactory').value, m = $('fMachine').value, br = $('fBrand').value, mo = $('fModel').value, s = $('fStart').value, e = $('fEnd').value;
-  return (withNoMachine ? DATA.concat(NOMACH) : DATA).filter(r => {
-    const d = (r.timestamp || '').slice(0, 10);
-    return (!f || r.factory === f) && (!m || r.machineKey === m) && (!br || r.brandEn === br) && (!mo || r.model === mo) && (!s || d >= s) && (!e || d <= e);
-  });
-}
-
-/* ================== RENDER ================== */
-function render() {
-  applyChrome();
-  const rows = filtered();
-  renderCards(rows); renderChart(rows); renderTop(rows); renderModelTab(rows); renderDowntime(rows); renderModules(); renderModuleCards(); renderRemarks(rows); renderLog(filtered(true)); renderAnomalies();
-}
-function applyChrome() {
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
-  document.documentElement.dataset.theme = theme;
-  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
-  $('btn-en').classList.toggle('primary', lang === 'en');
-  $('btn-zh').classList.toggle('primary', lang === 'zh');
-  $('btn-th').classList.toggle('primary', lang === 'th');
-  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.dataset.view !== tab));
-  $('updated').textContent = (generatedAt ? `${t('updated')}: ${new Date(generatedAt).toLocaleString(loc())}` : '') + ' · ' + APP_VERSION;
-  $('fFactory').options[0].textContent = t('all');
-  $('fMachine').options[0].textContent = t('allM');
-  $('fBrand').options[0].textContent = t('allB');
-  $('fModel').options[0].textContent = t('allMod');
-  $('thModel').textContent = t('brand') + ' + ' + t('model');
-  $('modelNote').textContent = t('modelNote') + '  ·  ' + t(MODEL_SORT_ASC ? 'modelSortAsc' : 'modelSortDesc');
-}
-
-function renderCards(rows) {
-  const card = (name, n, color) => `<div class="panel px-3 py-2" style="border-left:4px solid ${color}">
-    <div class="lbl">${esc(name)}</div><div class="text-2xl font-bold leading-tight">${n}<span class="lbl ml-1">${t('cases')}</span></div></div>`;
-  $('cards').innerHTML = FACTORIES.map(f => card(f, rows.filter(r => r.factory === f).length, FCOLOR[f])).join('') + card(t('total'), rows.length, css('--muted'));
-}
-
-/* In-bar numbers + a total at the end only when the bar has 2+ factory colours.
-   A single-colour bar shows its number once (inside the bar; at the end if the bar is too short to hold it). */
-function drawBarLabels(c, items, horizontal, txt) {
-  const x = c.ctx; x.save(); x.textBaseline = 'middle';
-  items.forEach((it, i) => {
-    const segs = [];
-    c.data.datasets.forEach((ds, di) => { const v = ds.data[i]; if (v) segs.push({ v, bar: c.getDatasetMeta(di).data[i] }); });
-    if (!segs.length) return;
-    const multi = segs.length > 1;
-    let needEnd = multi;
-    segs.forEach(({ v, bar }) => {
-      const size = horizontal ? Math.abs(bar.x - bar.base) : Math.abs(bar.base - bar.y);
-      if (size >= 16) { x.fillStyle = '#0b1320'; x.font = '600 11px IBM Plex Sans, sans-serif'; x.textAlign = 'center'; x.fillText(v, horizontal ? (bar.x + bar.base) / 2 : bar.x, horizontal ? bar.y : (bar.y + bar.base) / 2); }
-      else if (!multi) needEnd = true;                                       // too short: show the number outside instead
+/* --- fail rate + anomaly checks (v36) --- */
+const MAX_REPAIR_MIN = 1000;                                              // repair minutes above this = anomaly
+const REQUIRED_FIELDS = ['shift', 'station', 'product', 'recoveryEnd', 'qty', 'technician'];   // empty -> "incomplete data"
+const calcFailRate_ = (min, qty) => {                                      // repair_minutes / qty / 21 / 60 ; '' when minutes empty/0 or qty <= 0
+  if (min === '' || min == null || qty === '' || qty == null) return '';
+  const m = Number(min), q = Number(qty);
+  return (isFinite(m) && isFinite(q) && m > 0 && q > 0) ? m / q / 21 / 60 : '';
+};
+const swapDM_ = s => { const m = /^(\d{4})-(\d\d)-(\d\d)(.*)$/.exec(s || ''); if (!m) return ''; const mo = +m[2], d = +m[3]; return (d > 12 || mo === d) ? '' : `${m[1]}-${p2(d)}-${p2(mo)}${m[4]}`; };
+function detectAnomalies_(r) {                                             // -> [{code, f, v, fix}]  (texts are in index.html)
+  const a = [], nowL = tzFmt.format(new Date()).replace(' ', 'T'), ts = /^\d{4}-\d\d-\d\dT/.test(r.timestamp) ? r.timestamp : '';
+  if (!ts) a.push({ code: 'noTime', v: r.timestamp || '' });
+  else {
+    if (ts > nowL) a.push({ code: 'future', f: 'timestamp', v: ts, fix: swapDM_(ts) });
+    [['date', r.date], ['repairStart', r.repairStart], ['recoveryEnd', r.recoveryEnd]].forEach(([f, v]) => {
+      if (!v || !/^\d{4}-\d\d-\d\d/.test(v) || v.slice(0, 10) === ts.slice(0, 10)) return;
+      const sw = swapDM_(v);
+      if (sw && sw.slice(0, 10) === ts.slice(0, 10)) a.push({ code: 'dateSwap', f, v, fix: sw });
+      else if (f === 'date' && Math.abs(new Date(v.slice(0, 10)) - new Date(ts.slice(0, 10))) > 864e5 * 1.5) a.push({ code: 'dateMismatch', f, v });
     });
-    if (!needEnd) return;
-    x.fillStyle = txt; x.font = '700 12px IBM Plex Sans, sans-serif';
-    if (horizontal) { x.textAlign = 'left'; x.fillText(it.n, Math.max(...segs.map(g => g.bar.x)) + 6, segs[0].bar.y); }
-    else { x.textAlign = 'center'; x.fillText(it.n, segs[0].bar.x, Math.min(...segs.map(g => g.bar.y)) - 9); }
-  });
-  x.restore();
-}
-
-function wrap(str, n = 34) {                       // split long labels into lines for the axis
-  const out = []; let line = '';
-  String(str).split(' ').forEach(w => {
-    while (w.length > n) { if (line) { out.push(line); line = ''; } out.push(w.slice(0, n)); w = w.slice(n); }
-    if ((line + ' ' + w).trim().length > n && line) { out.push(line); line = w; } else line = (line + ' ' + w).trim();
-  });
-  if (line) out.push(line);
-  return out.length ? out : [''];
-}
-
-function chartModel(rows) {
-  const sel = $('fMachine').value;                 // a machine is selected -> show its issues
-  const agg = new Map();
-  if (sel) {
-    rows.forEach(r => {
-      const key = r.issueEn || r.issueRaw || '-';
-      const a = agg.get(key) || { label: pick(key, r.issueCn), factory: r.factory, n: 0 };
-      a.n++; agg.set(key, a);
-    });
-  } else {
-    rows.forEach(r => { const a = agg.get(r.machineKey) || { key: r.machineKey, label: mName(r), factory: r.factory, n: 0 }; a.n++; agg.set(r.machineKey, a); });
+    if (r.repairStart && r.repairStart < ts) a.push({ code: 'negTime', f: 'repairStart', v: r.repairStart });
+    if (r.recoveryEnd && r.recoveryEnd < ts) a.push({ code: 'negTime', f: 'recoveryEnd', v: r.recoveryEnd });
+    else if (r.recoveryEnd && r.repairStart && r.recoveryEnd < r.repairStart) a.push({ code: 'negTime', f: 'recoveryEnd', v: r.recoveryEnd });
   }
-  const items = [...agg.values()].sort((a, b) => b.n - a.n);
-  const machineName = sel && rows.length ? mName(rows[0]) : '';
-  return { sel, items, maxN: items.length ? items[0].n : 0,
-           title: sel ? `${t('chartMachine')} ${machineName}` : t('chartTitle') };
+  if (typeof r.repairMinutes === 'number') {
+    if (r.repairMinutes < 0 && !a.some(x => x.code === 'negTime')) a.push({ code: 'negMin', v: r.repairMinutes });
+    if (r.repairMinutes > MAX_REPAIR_MIN) a.push({ code: 'overLimit', v: r.repairMinutes });
+  }
+  if (!r.noMachine) { const miss = REQUIRED_FIELDS.filter(k => r[k] === '' || r[k] == null); if (miss.length) a.push({ code: 'incomplete', v: miss.join(', ') }); }
+  return a;
 }
 
-function chartConfig(m, pal, live) {
-  const { sel, items, maxN } = m;
-  return {
-    type: 'bar',
-    data: { labels: items.map(i => sel ? wrap(i.label) : i.label),
-      datasets: [{ label: t('cases'), data: items.map(i => i.n), backgroundColor: items.map(i => FCOLOR[i.factory]), borderRadius: 4, barThickness: live ? 26 : 18 }] },
-    options: Object.assign({
-      indexAxis: 'y', color: pal.txt,
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { title: c => items[c[0].dataIndex].label, afterLabel: c => items[c.dataIndex].factory } } },
-      scales: { x: { beginAtZero: true, suggestedMax: Math.max(6, maxN + 1), ticks: { precision: 0, color: pal.txt }, grid: { color: pal.grid } },
-                y: { ticks: { autoSkip: false, color: pal.txt }, grid: { display: false } } }
-    }, live ? {
-      responsive: true, maintainAspectRatio: false,
-      onHover: (e, els) => { e.native.target.style.cursor = (!sel && els.length) ? 'pointer' : 'default'; },
-      onClick: (e, els) => {                        // click a machine bar -> drill into that machine
-        if (sel || !els.length) return;
-        const it = items[els[0].index];
-        const first = DATA.find(r => r.machineKey === it.key);
-        $('fFactory').value = first.factory; buildMachineOptions();
-        $('fMachine').value = it.key; render();
+/** Read a whole table (PostgREST returns max 1000 rows per request -> page through). */
+async function fetchAll_(table, cols = [ORDER_COL]) {
+  const out = [], step = 1000;
+  for (let from = 0; ; from += step) {
+    let q = supabaseClient.from(table).select('*');
+    cols.forEach(c => { q = q.order(c, { ascending: true }); });
+    const { data, error } = await q.range(from, from + step - 1);
+    if (error) throw new Error(table + ': ' + error.message);
+    out.push(...data);
+    if (data.length < step) return out;
+  }
+}
+
+/* --- mapping tables --- */
+function loadMachineMapping_(rows) {                  // pr_machine_mapping: raw_machine_name | machine_number | chinese
+  const res = { byKey: {}, byName: {} };
+  rows.map(rowOf_).forEach(m => {
+    const raw = norm_(fv_(m, 'raw_machine_name', 'machine_raw', 'machine'));
+    if (!raw) return;
+    const item = { chinese: String(fv_(m, 'chinese', 'machine_cn', 'chinese_name') || '').trim() };
+    res.byKey[raw + '|' + digits_(fv_(m, 'machine_number', 'machine_no'))] = item;
+    if (!res.byName[raw]) res.byName[raw] = item;
+  });
+  return res;
+}
+function loadIssueMapping_(rows) {                    // pr_issue_mapping: issue | english_issue | chinese_issue | solution | english_solution | chinese_solution | category
+  const res = { byIssue: {}, bySolution: {} };
+  rows.map(rowOf_).forEach(m => {
+    const g = (...n) => String(fv_(m, ...n) || '').trim();
+    const raw = [g('issue', 'raw_issue'), g('english_issue', 'issue_en'), g('chinese_issue', 'issue_cn')];
+    const sRaw = [g('solution', 'raw_solution'), g('english_solution', 'solution_en'), g('chinese_solution', 'solution_cn')];
+    const iss = { issueEn: raw[1], issueCn: raw[2], category: g('category') }, sol = { solutionEn: sRaw[1], solutionCn: sRaw[2] };
+    raw.forEach(k => { const key = key_(k); if (key && !res.byIssue[key]) res.byIssue[key] = iss; });
+    sRaw.forEach(k => { const key = key_(k); if (key && !res.bySolution[key]) res.bySolution[key] = sol; });
+  });
+  return res;
+}
+function loadKeywords_(rows) {                        // pr_keyword: keyword1 | model | keyword2 | keyword1_chinese | keyword2_chinese | chinese | english | brand(optional)
+  const list = [];
+  rows.map(rowOf_).forEach(m => {
+    const g = (...n) => String(fv_(m, ...n) ?? '').trim(), kw1 = g('keyword1');
+    const x = { brand: g('brand') || kw1, model: g('model'), fn: g('keyword2'), brandCn: g('keyword1_chinese'), fnCn: g('keyword2_chinese'), cn: g('chinese'), en: g('english') };
+    if (!kw1 || !x.fn) return;
+    x.k1 = norm_(kw1); x.k2 = norm_(x.fn);
+    list.push(x);
+  });
+  return list;
+}
+function hasWord_(h, needle) {
+  if (!needle) return false;
+  const esc = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^a-z0-9])' + esc + '([^a-z0-9]|$)').test(h);
+}
+function modelHit_(r, raw, n) {
+  if (!r.model) return false;
+  if (/^[0-9.]+$/.test(r.model)) { const want = parseFloat(r.model), toks = n.match(/\d+(?:\.\d+)?/g) || []; return toks.some(t => parseFloat(t) === want); }
+  return hasWord_(n, norm_(r.model));
+}
+function matchRow_(raw, rows) {
+  const n = norm_(raw), cands = rows.filter(r => hasWord_(n, r.k1) && hasWord_(n, r.k2));
+  if (!cands.length) return null;
+  const withModel = cands.filter(r => modelHit_(r, raw, n));
+  if (withModel.length) return withModel.sort((a, b) => (b.k1.length + b.k2.length) - (a.k1.length + a.k2.length))[0];
+  const blank = cands.filter(r => !r.model);
+  if (blank.length) return blank[0];
+  const nameHasModel = /\(([^)]*)\)/.test(raw) || /\d+(\.\d+)?/.test(raw);
+  return (!nameHasModel && cands.length === 1) ? cands[0] : null;
+}
+
+/** pr_logs + mappings -> same JSON the GAS doGet returned: { ok, generatedAt, data, moduleHistory } */
+async function fetchPayload() {
+  const [logs, mmRows, imRows, kwRows, trRows] = await Promise.all([...['pr_logs', 'pr_machine_mapping', 'pr_issue_mapping', 'pr_keyword'].map(t => fetchAll_(t)),
+    fetchAll_('pr_translations', ['kind', 'src_key']).catch(() => [])]);   // permanent translation cache (EN / ZH / TH) filled by GAS
+  const tr = { machine: {}, issue: {}, solution: {} };
+  trRows.forEach(x => { if (tr[x.kind]) tr[x.kind][x.src_key] = { zh: x.zh || '', th: x.th || '', en: x.en || '' }; });
+  const machineMap = loadMachineMapping_(mmRows), issueMap = loadIssueMapping_(imRows), keywords = loadKeywords_(kwRows), out = [];
+  const rows = logs.map(rowOf_).map(m => ({ m, f: String(fv_(m, 'factory', 'sheet')).trim() })).filter(x => FACTORIES.includes(x.f));
+  rows.sort((a, b) => FACTORIES.indexOf(a.f) - FACTORIES.indexOf(b.f));                      // stable: factory order, then sheet order
+  rows.forEach(({ m, f: name }) => {
+    const rawMachine = String(fv_(m, 'raw_machine_name', 'machine_raw') || '').trim(), machineNo = String(fv_(m, 'machine_number', 'machine_no') || '').trim();
+    const rawIssue = String(fv_(m, 'raw_issue', 'issue') || '').trim(), extra = fv_(m, 'extra');
+    if (!rawMachine && !rawIssue) return;
+    if (DROP_ISSUE_RE.test(rawIssue.replace(/\s+/g, ' '))) return;
+    const noMachine = isNA_(rawMachine);
+    const tsRaw = fv_(m, 'timestamp', 'ts'), tsL = toLocal_(tsRaw), dL = toLocal_(fv_(m, 'log_date', 'date', '日期'));
+    const rsL = toLocal_(fv_(m, 'repair_start', '维修时间')), reL = toLocal_(fv_(m, 'recovery_end', '复机时间'));
+    const split = splitIssue_(rawIssue);
+    const mm = machineMap.byKey[norm_(rawMachine) + '|' + digits_(machineNo)] || machineMap.byName[norm_(rawMachine)];
+    const im = issueMap.byIssue[key_(split.issue)], sm = split.solution ? issueMap.bySolution[key_(split.solution)] : null;
+    const kr = matchRow_(rawMachine, keywords), no = digits_(machineNo);
+    const modelNameEn = kr ? (kr.en || [kr.brand, kr.model, kr.fn].filter(Boolean).join(' ')) : '', modelNameCn = kr ? kr.cn : '';
+    const trI = tr.issue[key_(split.issue)] || {}, trS = (split.solution && tr.solution[key_(split.solution)]) || {}, trM = tr.machine[norm_(rawMachine) + '|' + no] || tr.machine[norm_(rawMachine)] || {};
+    let machineCn = mm && mm.chinese ? mm.chinese : trM.zh || '';
+    if (!machineCn && modelNameCn) machineCn = modelNameCn + (no ? ' ' + no + '#' : '');
+    let rm = numVal_(fv_(m, 'repair_minutes', '维修总时间(min)', '维修总时间'));
+    if (rm === '' && tsL && reL) rm = Math.round((new Date(reL) - new Date(tsL)) / 60000);   // = sheet formula (復机 - timestamp) in minutes
+    out.push({
+      id: name + '-' + (fv_(m, 'row_no', 'sheet_row') || fv_(m, 'id')),
+      factory: name,
+      timestamp: tsL || (isNA_(tsRaw) ? '' : String(tsRaw)) || (dL ? dL.slice(0, 10) + 'T00:00:00' : ''),
+      noMachine, machineRaw: rawMachine, machineNo,
+      machineKey: name + '|' + norm_(rawMachine) + '|' + no,
+      machineEn: noMachine ? 'N/A' : rawMachine + (machineNo ? ' ' + machineNo : ''),
+      machineCn,
+      brandEn: kr ? kr.brand : '', brandCn: kr ? kr.brandCn : '',
+      functionEn: kr ? kr.fn : '', functionCn: kr ? kr.fnCn : '',
+      model: kr ? kr.model : '', modelNameEn, modelNameCn,
+      extra: extra === '' || extra == null ? '' : String(extra),
+      issueRaw: split.issue,
+      issueEn: im && im.issueEn ? im.issueEn : (trI.en || split.issue), issueCn: (im && im.issueCn) || trI.zh || '', issueTh: trI.th || '',
+      solutionRaw: split.solution,
+      solutionEn: sm && sm.solutionEn ? sm.solutionEn : (trS.en || split.solution), solutionCn: (sm && sm.solutionCn) || trS.zh || '', solutionTh: trS.th || '', machineTh: trM.th || '',
+      pk: fv_(m, 'id'), rowNo: fv_(m, 'row_no', 'sheet_row'), confirmed: [true, 'true', 't', 1, '1'].includes(fv_(m, 'confirmed')), sheetSynced: fv_(m, 'sheet_synced') !== false,
+      category: im ? im.category : '',
+      date: dL ? dL.slice(0, 10) : sv_(fv_(m, 'log_date', 'date', '日期')),
+      shift: sv_(fv_(m, 'shift', '班别')), station: sv_(fv_(m, 'station', '站别')),
+      product: sv_(fv_(m, 'product', '机种', '機種')), issueType: sv_(fv_(m, 'issue_type', '设备问题点')),
+      repairStart: rsL || sv_(fv_(m, 'repair_start', '维修时间')), recoveryEnd: reL || sv_(fv_(m, 'recovery_end', '复机时间')),
+      repairMinutes: rm, qty: numVal_(fv_(m, 'qty', '设备数量')), failRate: numVal_(fv_(m, 'fail_rate', '设备故障率')),
+      leader: sv_(fv_(m, 'leader', '领班确认')), technician: sv_(fv_(m, 'technician', '维修人员')),
+      remark: cleanRemark_(fv_(m, 'remark', '备注'), rawMachine, machineNo)
+    });
+    const last = out[out.length - 1]; last.anomalies = detectAnomalies_(last);
+  });
+  out.sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
+  return { ok: true, generatedAt: new Date().toISOString(), data: out, moduleHistory: buildModuleHistory_(out) };
+}
+
+/** Which module (机种) every machine ran and when it changed (periods of consecutive logs with the same module). */
+function buildModuleHistory_(rows) {
+  const by = {}, out = [], noMod = {}, asc = (a, b) => a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0;
+  rows.forEach(r => {
+    if (r.noMachine || !r.timestamp) return;
+    if (!r.product) { (noMod[r.machineKey] = noMod[r.machineKey] || []).push(r); return; }
+    (by[r.machineKey] = by[r.machineKey] || []).push(r);
+  });
+  Object.keys(by).forEach(k => {
+    const list = by[k].sort(asc), periods = []; let cur = null;
+    list.forEach(r => {
+      if (!cur || norm_(cur.product) !== norm_(r.product)) {
+        cur = { factory: r.factory, machineKey: k, machineRaw: r.machineRaw, machineNo: r.machineNo, brandEn: r.brandEn, brandCn: r.brandCn,
+                modelNameEn: r.modelNameEn, modelNameCn: r.modelNameCn, model: r.model, product: r.product,
+                from: r.timestamp, to: r.timestamp, events: 0, current: false, nextProduct: '', changedAt: '' };
+        periods.push(cur);
       }
-    } : { responsive: false, animation: false, devicePixelRatio: 2 }),
-    plugins: [{ id: 'val', afterDatasetsDraw(c) { const x = c.ctx; x.save(); x.fillStyle = pal.txt; x.font = '600 12px IBM Plex Sans, sans-serif'; x.textBaseline = 'middle';
-      c.getDatasetMeta(0).data.forEach((bar, i) => x.fillText(items[i].n, bar.x + 6, bar.y)); x.restore(); } },
-      { id: 'bg', beforeDraw(c) { const x = c.ctx; x.save(); x.globalCompositeOperation = 'destination-over'; x.fillStyle = pal.bg; x.fillRect(0, 0, c.width, c.height); x.restore(); } }]
-  };
-}
-
-function renderChart(rows) {
-  const m = chartModel(rows);
-  $('chartTitle').textContent = m.title;
-  $('chartHint').textContent = m.sel ? '' : t('hintAll');
-  $('btnBack').classList.toggle('hidden', !m.sel);
-  $('chartWrap').style.height = Math.max(280, m.items.length * (m.sel ? 54 : 42) + 70) + 'px';   // auto height
-  if (chart) chart.destroy();
-  chart = new Chart($('detailChart'), chartConfig(m, { txt: css('--text'), grid: css('--line'), bg: css('--panel') }, true));
-}
-
-/* ---------- PDF report (separate print layout, light theme) ---------- */
-function chartImage(rows) {                          // render the current chart offscreen with print colours
-  const m = chartModel(rows);
-  if (!m.items.length) return { url: '', title: m.title };
-  const cv = document.createElement('canvas');
-  cv.width = 900; cv.height = Math.max(180, m.items.length * (m.sel ? 44 : 28) + 60);
-  cv.style.cssText = 'position:fixed;left:-9999px;top:0';
-  document.body.appendChild(cv);
-  const c = new Chart(cv, chartConfig(m, { txt: '#111', grid: '#ddd', bg: '#fff' }, false));
-  const url = c.toBase64Image('image/png', 1);
-  c.destroy(); cv.remove();
-  return { url, title: m.title };
-}
-
-const PDF_TABS = ['overview', 'top', 'model', 'downtime', 'modules', 'remarks'];     // Overview exports all of these + the issue log
-const PDF_TBL = { top: 'tblTop', model: 'tblModel', downtime: 'tblDt', modules: 'tblMod', remarks: 'tblRem' };
-const PDF_NAME = { overview: 'tabOverview', top: 'tabTop', model: 'tabModel', downtime: 'tabDowntime', modules: 'tabModules', remarks: 'tabRemarks', log: 'tabLog' };
-function gridHtml(tb) {                              // a page table -> clean print table (header rows kept, merged cells repeated)
-  const g = tableRows(tb).map(r => r.map(c => String(c).replace(/^\s*\|\s*/, '').replace(/\s\|\s/g, ' · ')));
-  const hn = tb.tHead ? tb.tHead.rows.length : 0;
-  if (g.length <= hn) return '';
-  const row = (r, tag) => '<tr>' + r.map(c => `<${tag}>${esc(c)}</${tag}>`).join('') + '</tr>';
-  return '<table><thead>' + g.slice(0, hn).map(r => row(r, 'th')).join('') + '</thead><tbody>' + g.slice(hn).map(r => row(r, 'td')).join('') + '</tbody></table>';
-}
-function snapTab(name) {                             // show one page (light theme, no animation), grab its chart(s) + table
-  tab = name; render();
-  [modelChartInst, topChartInst, dtChartInst, dtChart2Inst].forEach(c => { if (c && c.resize) c.resize(); });
-  const { c, title } = activeChart(), imgs = [];
-  if (c) imgs.push({ title, url: c.toBase64Image('image/png', 1) });
-  if (name === 'downtime' && dtChart2Inst && $('dtWrap2').style.display !== 'none') imgs.push({ title: $('dtTitle2').textContent, url: dtChart2Inst.toBase64Image('image/png', 1) });
-  return { name, imgs, table: PDF_TBL[name] ? gridHtml($(PDF_TBL[name])) : '' };
-}
-
-function buildReport() {
-  const prevTab = tab, prevTheme = theme, prevAnim = Chart.defaults.animation;
-  const names = prevTab === 'overview' ? PDF_TABS.filter(n => n !== 'overview') : (PDF_TBL[prevTab] ? [prevTab] : []);
-  let snaps = [];
-  Chart.defaults.animation = false; theme = 'light';   // charts are drawn with dark text for paper
-  try { snaps = names.map(snapTab); } catch (e) { console.error(e); }
-  theme = prevTheme; tab = prevTab; Chart.defaults.animation = prevAnim; render();
-  [modelChartInst, topChartInst, dtChartInst, dtChart2Inst].forEach(c => { if (c && c.resize) c.resize(); });
-
-  const rows = filtered();
-  const cnt = new Map();                              // recurrence = same machine + same issue, 2+ times
-  const kOf = r => r.machineKey + '||' + (r.issueEn || r.issueRaw || '-');
-  rows.forEach(r => cnt.set(kOf(r), (cnt.get(kOf(r)) || 0) + 1));
-  const byTime = (a, b) => (a.timestamp < b.timestamp ? 1 : -1);
-  const rec = rows.filter(r => cnt.get(kOf(r)) >= 2).sort((a, b) =>
-    cnt.get(kOf(b)) - cnt.get(kOf(a)) || FACTORIES.indexOf(a.factory) - FACTORIES.indexOf(b.factory) ||
-    a.machineKey.localeCompare(b.machineKey) || kOf(a).localeCompare(kOf(b)) || byTime(a, b));
-  const one = rows.filter(r => cnt.get(kOf(r)) === 1).sort((a, b) =>
-    FACTORIES.indexOf(a.factory) - FACTORIES.indexOf(b.factory) || a.machineKey.localeCompare(b.machineKey) || byTime(a, b));
-  const recTypes = new Set(rec.map(kOf)).size;
-
-  const f = $('fFactory').value, mk = $('fMachine').value, s = $('fStart').value, e = $('fEnd').value;
-  const mLabel = mk ? mName(rows[0] || { machineEn: '', machineCn: '' }) : t('allM');
-  const filt = [`${t('factory')}: ${f || t('all')}`, `${t('machine')}: ${mLabel}`, `${t('brand')}: ${$('fBrand').selectedOptions[0].textContent}`, `${t('model')}: ${$('fModel').selectedOptions[0].textContent}`, `${t('dateRange')}: ${xd(s) || '…'} – ${xd(e) || '…'}`].join('  |  ');
-
-  const sub = v => (lang !== 'en' && v) ? `<div class="sub">${esc(v)}</div>` : '';
-  const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
-  const tr = r => `<tr><td style="white-space:nowrap">${esc(xd((r.timestamp || '').replace('T', ' ').slice(0, 16)))}</td>
-    <td>${esc(r.factory)}</td><td>${esc(mName(r))}</td>
-    <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
-    <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td>
-    <td class="n">${cnt.get(kOf(r))}</td></tr>`;
-  const band = (cls, label, n) => n ? `<tr class="band ${cls}"><td colspan="6">${esc(label)} — ${n} ${t('cases')}</td></tr>` : '';
-
-
-  const showLog = prevTab === 'overview' || prevTab === 'log';        // issue log: on Overview (everything) and on its own page
-  const img = chartImage(rows);
-  const snapHtml = (sn, first) => `<h2 class="pg${first ? ' sec1' : ''}">${esc(t(PDF_NAME[sn.name]))}</h2>` +
-    sn.imgs.map(i => `<h3>${esc(i.title)}</h3><img class="c" src="${i.url}" alt="">`).join('') + (sn.table || `<div class="meta">${esc(t('empty'))}</div>`);
-  const logHtml = `<h2 class="${prevTab === 'overview' ? 'pg' : ''}">${esc(t('repLog'))}</h2>
-    <table><thead><tr><th>${esc(t('time'))}</th><th>${esc(t('factory'))}</th><th>${esc(t('machine'))}</th>
-      <th>${esc(t('issue'))}</th><th>${esc(t('solution'))}</th><th>${esc(t('times'))}</th></tr></thead>
-      <tbody>${band('rec', t('rec'), rec.length)}${rec.map(tr).join('')}${band('one', t('one'), one.length)}${one.map(tr).join('')}</tbody></table>`;
-  const kpis = `<div class="kpis">
-      <div class="kpi"><b>${rows.length}</b>${esc(t('total'))}</div>
-      <div class="kpi"><b>${recTypes}</b>${esc(t('nRec'))}</div>
-      <div class="kpi"><b>${one.length}</b>${esc(t('nOne'))}</div>
-    </div>`;
-  let body = '';
-  if (prevTab === 'overview') body = `<h2>${esc(img.title)}</h2>` + (img.url ? `<img id="repImg" class="c" src="${img.url}" alt="">` : `<div class="meta">${esc(t('empty'))}</div>`) +
-    snaps.map(sn => snapHtml(sn, false)).join('') + logHtml;
-  else if (prevTab === 'log') body = logHtml;
-  else body = snaps.map(sn => snapHtml(sn, true)).join('');
-  $('report').innerHTML = `
-    <h1>${esc(t('repTitle'))}${prevTab === 'overview' ? '' : ' – ' + esc(t(PDF_NAME[prevTab]))}</h1>
-    <div class="meta">${esc(filt)}</div>
-    <div class="meta">${esc(t('generated'))}: ${xd(tzFmt.format(new Date()).slice(0, 16))}</div>
-    ${showLog ? kpis : ''}${body}`;
-  const im = $('repImg');
-  return im && im.decode ? im.decode().catch(() => {}) : Promise.resolve();
-}
-
-let topChartInst = null, whenList = [], topNav = { model: null, mode: null, machine: null };
-// level 1: all models | 2a: one model -> its top issues | 2b: one model -> its machines | 3: one machine -> its top issues
-const numOf = no => { const d = String(no || '').match(/\d+/); return d ? d[0] : ''; };      // '2#' -> '2'
-function fmtDT(ts) { const v = String(ts || ''); return { d: v.slice(0, 10), tm: v.length > 10 ? v.slice(11, 16) : '—' }; }
-function openWhen(idx) {                             // dates + times, oldest first, with the machine it happened on
-  const w = whenList[idx]; if (!w) return;
-  let total = 0, html = '';
-  w.groups.forEach(g => {
-    const times = [...g.times].sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0)); total += times.length;
-    if (g.label) html += `<tr class="band"><td colspan="4">${esc(g.label)} — ${times.length}</td></tr>`;
-    html += times.map((x, k) => { const d = fmtDT(x.ts); return `<tr><td>${k + 1}</td><td>${esc(d.d)}</td><td>${esc(d.tm)}</td><td>${esc((x.no || x.label || '') + (w.multi ? ' · ' + x.factory : ''))}</td></tr>`; }).join('');
-  });
-  $('whenTitle').textContent = w.title; $('whenSub').textContent = `${total} ${t('cases')}`;
-  $('tblWhen').tBodies[0].innerHTML = html; $('whenDlg').showModal();
-}
-
-function buildModels(rows) {                         // model -> machines + issues (with per-factory counts and every timestamp)
-  const map = new Map();
-  rows.forEach(r => {
-    const k = modelKeyOf(r);
-    const g = map.get(k) || { key: k, label: modelLabel(r), n: 0, byF: {}, machines: new Map(), issues: new Map() };
-    g.n++; g.byF[r.factory] = (g.byF[r.factory] || 0) + 1;
-    const ik = r.issueEn || r.issueRaw || '-', txt = pick(ik, r.issueCn, r.issueTh);
-    const occ = { ts: r.timestamp || '', no: r.machineNo || '', label: r.machineEn, factory: r.factory };
-    const m = g.machines.get(r.machineKey) || { key: r.machineKey, no: r.machineNo || '', label: mName(r), factory: r.factory, n: 0, issues: new Map() };
-    m.n++; const mi = m.issues.get(ik) || { label: txt, n: 0, times: [] }; mi.n++; mi.times.push(occ); m.issues.set(ik, mi); g.machines.set(r.machineKey, m);
-    const i = g.issues.get(ik) || { label: txt, n: 0, byF: {}, machines: new Map(), times: [] };
-    i.n++; i.byF[r.factory] = (i.byF[r.factory] || 0) + 1; i.times.push(occ);
-    const im = i.machines.get(r.machineKey) || { no: r.machineNo || '', label: mName(r), factory: r.factory, n: 0 }; im.n++; i.machines.set(r.machineKey, im);
-    g.issues.set(ik, i); map.set(k, g);
-  });
-  return [...map.values()];
-}
-
-let topCtx = { items: [], o: {}, horizontal: false };
-function topHit(ev) {                                // what is under the pointer: a bar, or a name on the axis
-  const ch = topChartInst; if (!ch) return null;
-  const { items, o, horizontal } = topCtx, r = ch.canvas.getBoundingClientRect(), a = ch.chartArea;
-  const x = ev.clientX - r.left, y = ev.clientY - r.top;
-  if (o.onLabel) {                                   // Chart.js only fires onClick inside the plot area, so axis names are hit-tested here
-    let i = -1;
-    if (horizontal && x < a.left && y >= a.top && y <= a.bottom) i = ch.scales.y.getValueForPixel(y);
-    else if (!horizontal && y > a.bottom && x >= a.left && x <= a.right) i = ch.scales.x.getValueForPixel(x);
-    if (i >= 0 && i < items.length) return { item: items[i], kind: 'label' };
-  }
-  if (o.onBar) {
-    const els = ch.getElementsAtEventForMode(ev, 'nearest', { intersect: true }, false);
-    if (els.length) return { item: items[els[0].index], kind: 'bar' };
-  }
-  return null;
-}
-$('topChart').addEventListener('click', ev => { const h = topHit(ev); if (h) (h.kind === 'label' ? topCtx.o.onLabel : topCtx.o.onBar)(h.item); });
-$('topChart').addEventListener('mousemove', ev => { $('topChart').style.cursor = topHit(ev) ? 'pointer' : 'default'; });
-
-function drawTopChart(items, o) {                    // o = { horizontal, onBar(item), onLabel(item) }
-  topCtx = { items, o, horizontal: !!o.horizontal };
-  if (topChartInst) { topChartInst.destroy(); topChartInst = null; }
-  $('topChartWrap').style.display = items.length ? '' : 'none';
-  if (!items.length) return;
-  const horizontal = !!o.horizontal;
-  $('topChartWrap').style.height = horizontal ? Math.max(220, items.length * 34 + 80) + 'px' : '440px';
-  const txt = css('--text'), grid = css('--line'), maxN = Math.max(...items.map(i => i.n));
-  const facs = FACTORIES.filter(f => items.some(i => i.byF[f]));
-  const cat = { stacked: true, ticks: { autoSkip: false, color: o.onLabel ? css('--accent') : txt, maxRotation: 0, minRotation: 0 }, grid: { display: false } };
-  const val = { stacked: true, beginAtZero: true, suggestedMax: Math.max(6, maxN + 1), ticks: { precision: 0, color: txt }, grid: { color: grid } };
-  topChartInst = new Chart($('topChart'), {
-    type: 'bar',
-    data: { labels: items.map(i => i.label),
-      datasets: facs.map(f => ({ label: f, data: items.map(i => i.byF[f] || 0), backgroundColor: FCOLOR[f], barThickness: horizontal ? 22 : undefined, maxBarThickness: 64, stack: 'cases' })) },
-    options: {
-      indexAxis: horizontal ? 'y' : 'x', responsive: true, maintainAspectRatio: false, color: txt,
-      plugins: { legend: { display: true, position: 'top', labels: { color: txt, boxWidth: 12, boxHeight: 12 } },
-        tooltip: { callbacks: { title: c => items[c[0].dataIndex].full || [].concat(items[c[0].dataIndex].label).join(' '),
-          afterBody: c => Object.keys(items[c[0].dataIndex].byF).length > 1 ? t('total') + ': ' + items[c[0].dataIndex].n : '' } } },
-      scales: horizontal ? { x: val, y: cat } : { x: cat, y: val }
-    },
-    plugins: [{ id: 'val', afterDatasetsDraw(c) { drawBarLabels(c, items, horizontal, txt); } },
-      { id: 'bg', beforeDraw(c) { const x = c.ctx; x.save(); x.globalCompositeOperation = 'destination-over'; x.fillStyle = css('--panel'); x.fillRect(0, 0, c.width, c.height); x.restore(); } }]
-  });
-}
-
-function renderTop(rows) {
-  whenList = [];
-  const models = buildModels(rows).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
-  let mg = topNav.model ? models.find(g => g.key === topNav.model) : null;
-  if (!mg) topNav = { model: null, mode: null, machine: null };
-  const mm = new Map();                                // machines of the model, same machine number in different factories merged into one
-  if (mg) mg.machines.forEach(m => {
-    const n = numOf(m.no), k = n || ('x|' + m.label);
-    const g = mm.get(k) || { key: k, label: n ? `${mg.label} #${n}` : m.label, n: 0, byF: {}, issues: new Map() };
-    g.n += m.n; g.byF[m.factory] = (g.byF[m.factory] || 0) + m.n;
-    m.issues.forEach((i, ik) => { const x = g.issues.get(ik) || { label: i.label, n: 0, byF: {}, times: [] };
-      x.n += i.n; x.byF[m.factory] = (x.byF[m.factory] || 0) + i.n; x.times.push(...i.times); g.issues.set(ik, x); });
-    mm.set(k, g);
-  });
-  if (mg && topNav.mode === 'machines' && topNav.machine && !mm.has(topNav.machine)) topNav.machine = null;
-  const level = !mg ? '1' : topNav.mode === 'issues' ? '2a' : topNav.machine ? '3' : '2b';
-  const multi = mg ? Object.keys(mg.byF).length > 1 : false;            // does this model run in more than one factory?
-  const byN = (a, b) => b.n - a.n || a.label.localeCompare(b.label, undefined, { numeric: true });
-  const go = (title, times, mu) => { const w = whenList.push({ title, groups: [{ label: '', times }], multi: mu }) - 1;
-    return `<button class="go" data-when="${w}" title="${esc(t('whenTip'))}" aria-label="${esc(t('whenTip'))}">›</button>`; };
-  const goto = nav => { topNav = nav; renderTop(filtered()); };
-  const facDot = f => `<span class="dot" style="background:${FCOLOR[f]}"></span>`;
-  let head = '', body = '', items = [], opts = {}, title = '', hint = '', note = '', crumb = '';
-  const root = `<button class="btn" data-nav="root">${esc(t('mAll'))}</button>`, sep = '<span class="lbl">›</span>';
-
-  if (level === '1') {
-    title = t('tT1'); hint = t('tH1'); note = t('topNoteM');
-    items = models.map(g => ({ key: g.key, label: g.label, n: g.n, byF: g.byF }));
-    opts = { horizontal: true, onBar: it => goto({ model: it.key, mode: 'issues', machine: null }), onLabel: it => goto({ model: it.key, mode: 'machines', machine: null }) };
-    head = `<tr><th>${esc(t('model'))}</th><th>${esc(t('rankCol'))}</th><th>${esc(t('issue'))}</th><th class="text-right">${esc(t('times'))}</th></tr>`;
-    let gi = 0;
-    models.forEach(g => {
-      const rec = [...g.issues.values()].filter(i => i.n >= 2).sort(byN);                // recurring only
-      if (!rec.length) return; gi++;
-      const cut = rec[Math.min(2, rec.length - 1)].n, top = rec.filter(i => i.n >= cut);   // top 3, ties with 3rd place kept
-      const lv = [...new Set(top.map(i => i.n))], mu = Object.keys(g.byF).length > 1;
-      top.forEach((i, idx) => {
-        body += `<tr class="${idx === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}">` +
-          (idx === 0 ? `<td class="gname" rowspan="${top.length}"><button class="lnk" data-go="machines" data-model="${esc(g.key)}">${esc(g.label)}</button>
-            <div class="lbl" style="font-weight:400">${g.n} ${t('cases')} · ${g.machines.size} ${t('machinesWord')}</div></td>` : '') +
-          `<td><b>${lv.indexOf(i.n) + 1}</b></td><td>${esc(i.label)}${go(`${g.label} — ${i.label}`, i.times, mu)}</td><td class="text-right font-semibold">${i.n}</td></tr>`;
-      });
+      cur.to = r.timestamp; cur.events++;
     });
-    crumb = root;
-  } else if (level === '2a') {
-    const iss = [...mg.issues.values()].sort(byN);
-    title = `${t('tT2a')} ${mg.label}`; hint = t('tH2a');
-    items = iss.slice(0, 5).map(i => ({ label: wrap(i.label, 18), full: i.label, n: i.n, byF: i.byF }));
-    opts = { horizontal: false };
-    const facCols = FACTORIES.filter(f => mg.byF[f]);
-    head = `<tr><th>${esc(t('colNum'))}</th><th>${esc(t('issue'))}</th><th>${esc(t('machine'))}</th>` +
-      facCols.map(f => `<th class="text-center">${facDot(f)}${esc(f)}</th>`).join('') + `</tr>`;
-    iss.forEach((i, k) => {
-      const byNo = new Map();                                            // one row per machine number, one column per factory
-      i.machines.forEach((m, key) => {
-        const n = numOf(m.no), rk = n || ('x|' + m.label);
-        const r = byNo.get(rk) || { n: n ? +n : Infinity, label: n ? `${mg.label} #${n}` : m.label, cells: {}, total: 0 };
-        const c = r.cells[m.factory] || (r.cells[m.factory] = { n: 0, key: rk });
-        c.n += m.n; r.total += m.n; byNo.set(rk, r);
-      });
-      const rowsM = [...byNo.values()].sort((a, b) => a.n - b.n || a.label.localeCompare(b.label, undefined, { numeric: true }));
-      const showTot = rowsM.length > 1, span = rowsM.length + (showTot ? 1 : 0), alt = k % 2 ? 'alt' : '';
-      rowsM.forEach((r, idx) => {
-        body += `<tr class="${idx === 0 ? 'grp' : ''} ${alt}">` +
-          (idx === 0 ? `<td class="lbl" rowspan="${span}" style="vertical-align:top">${k + 1}</td>
-            <td class="gname wide" rowspan="${span}">${esc(i.label)}${go(`${mg.label} — ${i.label}`, i.times, multi)}
-              <div class="lbl" style="font-weight:400">${i.n} ${t('cases')}</div></td>` : '') +
-          `<td>${esc(r.label)}</td>` +
-          facCols.map(f => { const c = r.cells[f];
-            return `<td class="c">${c ? `<button class="cellgo" data-go="machine" data-machine="${esc(c.key)}" title="${esc(r.label + ' · ' + f)}">${c.n}</button>` : '<span class="lbl">-</span>'}</td>`; }).join('') +
-          `</tr>`;
-      });
-      if (showTot) body += `<tr class="tot ${alt}"><td class="lbl">${esc(t('total'))}</td>` +
-        facCols.map(f => `<td class="c">${i.byF[f] || '-'}</td>`).join('') + `</tr>`;
+    periods.forEach((p, i) => {
+      if (i < periods.length - 1) { p.nextProduct = periods[i + 1].product; p.changedAt = periods[i + 1].from; } else p.current = true;
+      out.push(p);
     });
-    crumb = `${root}${sep}<span class="font-semibold px-1">${esc(mg.label)}</span>`;
-  } else if (level === '2b') {
-    const ms = [...mm.values()].sort(byN);
-    title = `${t('tT2b')} ${mg.label}`; hint = t('tH2b');
-    items = ms.map(m => ({ key: m.key, label: wrap(m.label, 14), full: m.label, n: m.n, byF: m.byF }));
-    const pickM = it => goto({ model: mg.key, mode: 'machines', machine: it.key });
-    opts = { horizontal: false, onBar: pickM, onLabel: pickM };
-    head = `<tr><th>${esc(t('machine'))}</th><th>${esc(t('issue'))}</th><th class="text-right">${esc(t('times'))}</th></tr>`;
-    ms.forEach((m, gi) => {
-      const iss = [...m.issues.values()].sort(byN), mu = Object.keys(m.byF).length > 1;
-      const facs = FACTORIES.filter(f => m.byF[f]).map(f => `${facDot(f)}${esc(f)}${mu ? ' ' + m.byF[f] : ''}`).join(' &nbsp; ');
-      iss.forEach((i, idx) => {
-        body += `<tr class="${idx === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}">` +
-          (idx === 0 ? `<td class="gname" rowspan="${iss.length}"><button class="lnk" data-go="machine" data-machine="${esc(m.key)}">${esc(m.label)}</button>
-            <div class="lbl" style="font-weight:400">${facs} · ${m.n} ${t('cases')}</div></td>` : '') +
-          `<td>${esc(i.label)}${go(`${m.label} — ${i.label}`, i.times, mu)}</td><td class="text-right font-semibold">${i.n}</td></tr>`;
-      });
-    });
-    crumb = `${root}${sep}<span class="font-semibold px-1">${esc(mg.label)}</span>${sep}<span>${esc(t('tMachines'))}</span>`;
-  } else {
-    const m = mm.get(topNav.machine), iss = [...m.issues.values()].sort(byN), mu = Object.keys(m.byF).length > 1;
-    const facs = FACTORIES.filter(f => m.byF[f]).map(f => `${facDot(f)}${esc(f)}${mu ? ' ' + m.byF[f] : ''}`).join(' &nbsp; ');
-    title = `${t('tT3')} ${m.label}`; hint = t('tH3');
-    items = iss.slice(0, 5).map(i => ({ label: wrap(i.label, 18), full: i.label, n: i.n, byF: i.byF }));
-    opts = { horizontal: false };
-    head = `<tr><th>${esc(t('machine'))}</th><th>${esc(t('issue'))}</th><th class="text-right">${esc(t('times'))}</th></tr>`;
-    iss.forEach((i, idx) => {
-      body += `<tr class="${idx === 0 ? 'grp' : ''}">` +
-        (idx === 0 ? `<td class="gname" rowspan="${iss.length}">${esc(m.label)}<div class="lbl" style="font-weight:400">${facs} · ${m.n} ${t('cases')}</div></td>` : '') +
-        `<td>${esc(i.label)}${go(`${m.label} — ${i.label}`, i.times, mu)}</td><td class="text-right font-semibold">${i.n}</td></tr>`;
-    });
-    crumb = `${root}${sep}<button class="btn" data-nav="machines">${esc(mg.label)}</button>${sep}<span class="font-semibold px-1">${esc(m.label)}</span>`;
-  }
-
-  $('tBack').textContent = t('mBack'); $('tBack').style.display = level === '1' ? 'none' : '';
-  $('topCrumb').innerHTML = crumb;
-  $('topChartTitle').textContent = title; $('topChartHint').textContent = items.length ? hint : t('empty');
-  $('topNoteTxt').textContent = note;
-  $('tblTop').tHead.innerHTML = head;
-  $('tblTop').tBodies[0].innerHTML = body || `<tr><td colspan="4" class="text-center lbl">${t('empty')}</td></tr>`;
-  drawTopChart(items, opts);
-}
-
-// model = one row of the keyword sheet; its English / Chinese name (last two columns) is what we display
-const modelKeyOf = r => r.modelNameEn || ('raw|' + (r.machineRaw || ''));
-const modelLabel = r => (lang === 'zh' && r.modelNameCn) ? r.modelNameCn : (r.modelNameEn || r.machineRaw || '-');
-let modelNav = { model: null };                      // null = all models; otherwise the model whose issues are shown
-let modelChartInst = null;
-
-function groupRows(rows, keyFn, labelFn) {
-  const map = new Map();
-  rows.forEach(r => {
-    const k = keyFn(r);
-    const g = map.get(k) || { key: k, label: labelFn(r), factory: r.factory, n: 0, byF: {}, machines: new Set(), issues: new Map() };
-    g.n++; g.byF[r.factory] = (g.byF[r.factory] || 0) + 1; g.machines.add(r.machineKey);
-    const ik = r.issueEn || r.issueRaw || '-', i = g.issues.get(ik) || { label: pick(ik, r.issueCn, r.issueTh), n: 0, byF: {} };
-    i.n++; i.byF[r.factory] = (i.byF[r.factory] || 0) + 1; g.issues.set(ik, i); map.set(k, g);
   });
-  return [...map.values()];
-}
-
-function renderModelTab(rows) {
-  const dir = MODEL_SORT_ASC ? 1 : -1, by = (a, b) => dir * (a.n - b.n) || a.label.localeCompare(b.label);
-  const models = groupRows(rows, modelKeyOf, modelLabel);          // all machines of a model are added together
-  if (modelNav.model && !models.some(g => g.key === modelNav.model)) modelNav = { model: null };
-  const level = modelNav.model ? 2 : 1;
-  const modelG = level === 2 ? models.find(g => g.key === modelNav.model) : null;
-  const scope = level === 2 ? rows.filter(r => modelKeyOf(r) === modelNav.model) : rows;
-
-  // chart items
-  let items, groups;
-  if (level === 1) {                                 // level 1: cases per model
-    groups = models.sort(by);
-    items = groups.map(g => ({ key: g.key, label: g.label, n: g.n, byF: g.byF }));
-  } else {                                           // level 2: only issues that repeat (2+ times) in this model
-    groups = groupRows(scope, r => r.machineKey, mName).sort(by);          // table: every issue, one block per machine
-    items = [...modelG.issues.values()].filter(i => i.n >= 2).sort(by).map(i => ({ label: i.label, n: i.n, byF: i.byF }));
-  }
-
-  // header
-  $('mBack').textContent = t('mBack'); $('mBack').style.display = level > 1 ? '' : 'none';
-  $('modelCrumb').innerHTML = `<button class="btn" data-nav="root">${esc(t('mAll'))}</button>` +
-    (modelG ? `<span class="lbl">›</span><span class="font-semibold px-1">${esc(modelG.label)}</span>` : '');
-  $('modelChartTitle').textContent = level === 1 ? t('mChart1') : `${t('mChart2')} ${modelG.label}`;
-  $('modelHint').textContent = level === 1 ? t('mHint1') : (items.length ? t('mHint2') : t('mNoRec') + '  ' + t('mHint2'));
-  $('thModel').textContent = level === 1 ? t('model') : t('colMachine');
-
-  // chart
-  if (modelChartInst) { modelChartInst.destroy(); modelChartInst = null; }
-  const issueLvl = level === 2;
-  $('modelChartWrap').style.display = items.length ? '' : 'none';
-  if (items.length) {
-    $('modelChartWrap').style.height = Math.max(220, issueLvl
-      ? items.reduce((sum, i) => sum + Math.max(32, wrap(i.label, 46).length * 15 + 14), 0) + 70 : items.length * 34 + 70) + 'px';
-    const txt = css('--text'), grid = css('--line'), maxN = Math.max(...items.map(i => i.n));
-    const facs = FACTORIES.filter(f => items.some(i => i.byF[f]));        // only factories that actually have cases
-    modelChartInst = new Chart($('modelChart'), {
-      type: 'bar',
-      data: { labels: items.map(i => issueLvl ? wrap(i.label, 46) : i.label),
-        datasets: facs.map(f => ({ label: f, data: items.map(i => i.byF[f] || 0), backgroundColor: FCOLOR[f], barThickness: 22, stack: 'cases' })) },
-      options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false, color: txt,
-        plugins: { legend: { display: true, position: 'top', labels: { color: txt, boxWidth: 12, boxHeight: 12 } },
-          tooltip: { callbacks: { title: c => items[c[0].dataIndex].label, afterBody: c => t('total') + ': ' + items[c[0].dataIndex].n } } },
-        scales: { x: { stacked: true, beginAtZero: true, suggestedMax: Math.max(6, maxN + 1), ticks: { precision: 0, color: txt }, grid: { color: grid } },
-                  y: { stacked: true, ticks: { autoSkip: false, color: txt }, grid: { display: false } } },
-        onHover: (e, els) => { e.native.target.style.cursor = (level === 1 && els.length) ? 'pointer' : 'default'; },
-        onClick: (e, els) => { if (level !== 1 || !els.length) return; modelNav = { model: items[els[0].index].key }; renderModelTab(filtered()); }
-      },
-      plugins: [{ id: 'val', afterDatasetsDraw(c) { drawBarLabels(c, items, true, txt); } },
-        { id: 'bg', beforeDraw(c) { const x = c.ctx; x.save(); x.globalCompositeOperation = 'destination-over'; x.fillStyle = css('--panel'); x.fillRect(0, 0, c.width, c.height); x.restore(); } }]
-    });
-  }
-
-  // summary table under the chart: groups separated by a thick solid line
-  $('tblModel').tBodies[0].innerHTML = groups.map(g => {
-    const iss = [...g.issues.values()].sort(by);
-    const sub = (level === 1 ? `${g.n} ${t('cases')} · ${g.machines.size} ${t('machinesWord')}` : `${esc(g.factory)} · ${g.n} ${t('cases')}`) +
-      (level === 1 ? '<div style="margin-top:3px">' + FACTORIES.filter(f => g.byF[f]).map(f => `<span class="dot" style="background:${FCOLOR[f]};margin-right:3px"></span>${esc(f)} ${g.byF[f]}`).join(' &nbsp; ') + '</div>' : '');
-    return iss.map((i, idx) => `<tr class="${idx === 0 ? 'grp' : ''}">
-      ${idx === 0 ? `<td class="gname" rowspan="${iss.length}">${esc(g.label)}<div class="lbl font-normal">${sub}</div></td>` : ''}
-      <td>${esc(i.label)}</td><td class="cnt">${i.n}</td></tr>`).join('');
-  }).join('') || `<tr><td colspan="3" class="text-center lbl">${t('empty')}</td></tr>`;
-}
-
-/* ================== DOWNTIME / MODULES / REMARKS ================== */
-const dmy = ts => { const m = /^(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(ts || ''); return m ? `${m[3]}/${m[2]}/${m[1]}${m[4] ? ' ' + m[4] + ':' + m[5] : ''}` : (ts || ''); };
-function xd(s) {                                      // dates in EXPORTS only: MM/DD/YYYY [HH:mm]  (screen keeps its own format)
-  return String(s ?? '').replace(/(^|[^\d\/-])(?:(\d{4})-(\d\d)-(\d\d)(?:[T ](\d\d:\d\d)(?::\d\d)?)?|(\d\d)\/(\d\d)\/(\d{4}))(?![\d\/-])/g,
-    (m, p, y, mo, d, tm, d2, mo2, y2) => p + (y ? `${mo}/${d}/${y}${tm ? ' ' + tm : ''}` : `${mo2}/${d2}/${y2}`));
-}
-const natCmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
-const okMin = r => typeof r.repairMinutes === 'number' && r.repairMinutes >= 0;
-const hm = m => m >= 120 ? (m / 60).toFixed(1) + ' h' : Math.round(m) + ' min';
-
-function stackChart(old, canvasId, items, horizontal, o) {      // bars split by factory; items = [{ label, full, n, byF, tip }]
-  if (old) old.destroy();
-  const txt = css('--text'), grid = css('--line'), maxN = Math.max(1, ...items.map(i => i.n));
-  const facs = FACTORIES.filter(f => items.some(i => i.byF[f]));
-  const cat = { stacked: true, ticks: { autoSkip: !!o.skip, color: o.pick ? css('--accent') : txt, maxRotation: o.skip ? 60 : 0, minRotation: 0 }, grid: { display: false } };
-  const val = { stacked: true, beginAtZero: true, suggestedMax: Math.ceil(maxN * 1.08), ticks: { color: txt }, grid: { color: grid } };
-  return new Chart($(canvasId), {
-    type: 'bar',
-    data: { labels: items.map(i => i.label),
-      datasets: facs.map(f => ({ label: f, data: items.map(i => i.byF[f] || 0), backgroundColor: FCOLOR[f], barThickness: horizontal ? 22 : undefined, maxBarThickness: 48, stack: 'm' })) },
-    options: { indexAxis: horizontal ? 'y' : 'x', responsive: true, maintainAspectRatio: false, color: txt,
-      plugins: { legend: { display: true, position: 'top', labels: { color: txt, boxWidth: 12, boxHeight: 12 } },
-        tooltip: { callbacks: { title: c => items[c[0].dataIndex].full || [].concat(items[c[0].dataIndex].label).join(' '), afterBody: c => items[c[0].dataIndex].tip || '' } } },
-      scales: horizontal ? { x: val, y: cat } : { x: cat, y: val } },
-    plugins: [...(o.labels ? [{ id: 'val', afterDatasetsDraw(c) { drawBarLabels(c, items, horizontal, txt); } }] : []),
-      { id: 'bg', beforeDraw(c) { const x = c.ctx; x.save(); x.globalCompositeOperation = 'destination-over'; x.fillStyle = css('--panel'); x.fillRect(0, 0, c.width, c.height); x.restore(); } }]
+  Object.keys(noMod).forEach(k => {
+    if (by[k]) return;
+    const list = noMod[k].sort(asc), f = list[0];
+    out.push({ factory: f.factory, machineKey: k, machineRaw: f.machineRaw, machineNo: f.machineNo, brandEn: f.brandEn, brandCn: f.brandCn,
+               modelNameEn: f.modelNameEn, modelNameCn: f.modelNameCn, model: f.model, product: '',
+               from: list[0].timestamp, to: list[list.length - 1].timestamp, events: list.length, current: true, nextProduct: '', changedAt: '' });
   });
+  return out;
 }
 
-/* one line per factory, the area under each line tinted in the factory colour */
-const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
-function lineChart(old, canvasId, days, facs, byDay, cnt) {
-  if (old) old.destroy();
-  const txt = css('--text'), grid = css('--line');
-  return new Chart($(canvasId), {
-    type: 'line',
-    data: { labels: days.map(d => d.slice(8) + '/' + d.slice(5, 7)),
-      datasets: facs.map(f => ({ label: f, data: days.map(d => Math.round((byDay.get(d) || {})[f] || 0)), borderColor: FCOLOR[f], backgroundColor: rgba(FCOLOR[f], 0.22),
-        fill: 'origin', tension: 0.3, borderWidth: 2, pointRadius: days.length > 45 ? 0 : 3, pointHoverRadius: 5 })) },
-    options: { responsive: true, maintainAspectRatio: false, color: txt, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: true, position: 'top', labels: { color: txt, boxWidth: 12, boxHeight: 12 } },
-        tooltip: { callbacks: { title: c => dmy(days[c[0].dataIndex]),
-          label: c => c.dataset.label + ': ' + c.parsed.y + ' min' + (cnt ? ' · ' + ((cnt.get(days[c.dataIndex]) || {})[c.dataset.label] || 0) + ' ' + t('cases') : ''), footer: c => c.length > 1 ? t('total') + ': ' + c.reduce((a, x) => a + (x.parsed.y || 0), 0) : '' } } },
-      scales: { x: { ticks: { autoSkip: true, maxRotation: 60, color: txt }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: txt }, grid: { color: grid } } } },
-    plugins: [{ id: 'bg', beforeDraw(c) { const x = c.ctx; x.save(); x.globalCompositeOperation = 'destination-over'; x.fillStyle = css('--panel'); x.fillRect(0, 0, c.width, c.height); x.restore(); } }]
+/** Skill Matrix web (old ?type=modules): { ok, generatedAt, items:[{webName, machines:[...]}], unmapped:[] }.  Not used by this page - copy this block to the Skill Matrix page. */
+async function fetchModules() {
+  const [skRows, pl] = await Promise.all([fetchAll_('pr_skill_map'), fetchPayload()]);
+  const map = []; let web = '';
+  skRows.map(rowOf_).forEach(m => {
+    const w = String(fv_(m, 'web_name', 'webname') || '').trim(); if (w) web = w;               // merged WebName cell: carry down
+    const raw = String(fv_(m, 'raw_machine_name', 'rawdata_name', 'raw_name') || '').trim();
+    if (!web || !raw || /^[-–—]+$/.test(raw)) return;
+    map.push({ web, factory: norm_(fv_(m, 'factory')), raw: norm_(raw), no: digits_(fv_(m, 'machine_number', 'machine_no')) });
   });
-}
-
-/* ---------- Downtime: model -> its machines -> one machine's top issues -> (optionally) one issue's cases ---------- */
-let dtNav = { model: null, machine: null, issue: null }, dtCtx = { items: [], horizontal: true, onPick: null };
-const sp1 = v => String(v || '').replace(/\s+/g, ' ').trim();
-const dtModelKey = r => r.modelNameEn || r.machineRaw || '-';
-const dtModelLabel = r => sp1(pick(r.modelNameEn, r.modelNameCn) || r.machineRaw || '-');
-const dtMachKey = r => numOf(r.machineNo) || ('x|' + r.machineEn);          // same machine number in different factories = one bar
-const dtIssueKey = r => r.issueEn || r.issueRaw || '-';
-function dtGroup(rows, keyFn, labelFn) {
-  const m = new Map();
-  rows.forEach(r => {
-    const k = keyFn(r), a = m.get(k) || { key: k, label: labelFn(r), factory: r.factory, n: 0, ev: 0, max: 0, byF: {}, machines: new Set(), issues: new Map() };
-    a.n += r.repairMinutes; a.ev++; a.max = Math.max(a.max, r.repairMinutes); a.byF[r.factory] = (a.byF[r.factory] || 0) + r.repairMinutes; a.machines.add(r.machineKey);
-    const ik = dtIssueKey(r), i = a.issues.get(ik) || { key: ik, label: sp1(pick(ik, r.issueCn, r.issueTh)), n: 0, ev: 0, max: 0, byF: {} };
-    i.n += r.repairMinutes; i.ev++; i.max = Math.max(i.max, r.repairMinutes); i.byF[r.factory] = (i.byF[r.factory] || 0) + r.repairMinutes; a.issues.set(ik, i); m.set(k, a);
-  });
-  return [...m.values()];
-}
-function dtItem(a, label, wrapN, extra) {                    // chart bar: minutes per factory, tooltip with cases / total / average
-  const byF = {}; let n = 0;
-  Object.keys(a.byF).forEach(f => { byF[f] = Math.round(a.byF[f]); n += byF[f]; });
-  return { key: a.key, label: wrap(label, wrapN), full: label, n, byF,
-           tip: `${a.ev} ${t('cases')}${extra || ''} · ${t('dtColTotal')}: ${Math.round(a.n)} (${hm(a.n)}) · ${t('dtAvg')}: ${Math.round(a.n / a.ev)} min` };
-}
-function dtHit(ev) {                                           // a bar, or a name on the axis (Chart.js ignores clicks outside the plot area)
-  const ch = dtChartInst; if (!ch || !dtCtx.onPick) return null;
-  const r = ch.canvas.getBoundingClientRect(), a = ch.chartArea, x = ev.clientX - r.left, y = ev.clientY - r.top;
-  let i = -1;
-  if (dtCtx.horizontal && x < a.left && y >= a.top && y <= a.bottom) i = ch.scales.y.getValueForPixel(y);
-  else if (!dtCtx.horizontal && y > a.bottom && x >= a.left && x <= a.right) i = ch.scales.x.getValueForPixel(x);
-  if (i >= 0 && i < dtCtx.items.length) return dtCtx.items[i];
-  const els = ch.getElementsAtEventForMode(ev, 'nearest', { intersect: true }, false);
-  return els.length ? dtCtx.items[els[0].index] : null;
-}
-$('dtChart').addEventListener('click', ev => { const it = dtHit(ev); if (it) dtCtx.onPick(it); });
-$('dtChart').addEventListener('mousemove', ev => { $('dtChart').style.cursor = dtHit(ev) ? 'pointer' : 'default'; });
-
-function renderDowntime(rows) {
-  const okAll = rows.filter(okMin), skipped = rows.filter(r => typeof r.repairMinutes === 'number' && r.repairMinutes < 0).length;
-  if (dtChartInst) { dtChartInst.destroy(); dtChartInst = null; } if (dtChart2Inst) { dtChart2Inst.destroy(); dtChart2Inst = null; }
-  const body = $('tblDt').tBodies[0];
-  const headEvents = `<tr><th>${esc(t('colReported'))}</th><th>${esc(t('colFinished'))}</th><th>${esc(t('factory'))}</th><th>${esc(t('machine'))}</th><th>${esc(t('issue'))}</th><th class="text-right">${esc(t('colMin'))}</th></tr>`;
-  $('tblDt').tHead.innerHTML = headEvents;
-  if (!okAll.length) {
-    $('dtTitle').textContent = t('dtByModel'); $('dtTitle2').textContent = t('dtByDay'); $('dtTblTitle').textContent = t('dtTblTitle'); $('dtHint').textContent = '';
-    $('dBack').style.display = 'none'; $('dtCrumb').innerHTML = ''; dtCtx.onPick = null;
-    $('dtCards').innerHTML = ''; $('dtWrap').style.display = 'none'; $('dtWrap2').style.display = 'none';
-    body.innerHTML = `<tr><td colspan="6" class="text-center lbl">${esc(t('dtEmpty'))}</td></tr>`; return;
-  }
-  // where are we? (reset the path when a filter removed what we were looking at)
-  let base = okAll;
-  if (dtNav.model) { const b = okAll.filter(r => dtModelKey(r) === dtNav.model); if (b.length) base = b; else dtNav = { model: null, machine: null, issue: null }; }
-  if (!dtNav.model) dtNav = { model: null, machine: null, issue: null };
-  if (dtNav.machine) { const b = base.filter(r => dtMachKey(r) === dtNav.machine); if (b.length) base = b; else dtNav.machine = dtNav.issue = null; }
-  if (dtNav.issue && !base.some(r => dtIssueKey(r) === dtNav.issue)) dtNav.issue = null;
-  const level = dtNav.machine ? 3 : dtNav.model ? 2 : 1;
-  const evBase = dtNav.issue ? base.filter(r => dtIssueKey(r) === dtNav.issue) : base;   // the selected issue's cases only (else everything selected)
-  const modelLbl = dtNav.model ? dtModelLabel(base[0]) : '';
-  const machLbl = dtNav.machine ? (numOf(base[0].machineNo) ? `${modelLbl} #${numOf(base[0].machineNo)}` : sp1(mName(base[0]))) : '';
-
-  // cards follow the current selection
-  const total = evBase.reduce((a, r) => a + r.repairMinutes, 0), longest = Math.max(...evBase.map(r => r.repairMinutes));
-  const card = (name, big, small, color) => `<div class="panel px-3 py-2" style="border-left:4px solid ${color}"><div class="lbl">${esc(name)}</div>
-    <div class="text-2xl font-bold leading-tight">${big}</div><div class="lbl">${small}</div></div>`;
-  $('dtCards').innerHTML = card(t('dtTotal'), (total / 60).toFixed(1) + '<span class="lbl ml-1">h</span>', `${Math.round(total)} min`, css('--accent'))
-    + card(t('dtEvents'), evBase.length, t('cases'), css('--muted'))
-    + card(t('dtAvg'), Math.round(total / evBase.length) + '<span class="lbl ml-1">min</span>', '', css('--muted'))
-    + card(t('dtLongest'), Math.round(longest) + '<span class="lbl ml-1">min</span>', hm(longest), '#ef4444');
-
-  // chart + table of the current level
-  const by = (a, b) => b.n - a.n || String(a.label).localeCompare(String(b.label), undefined, { numeric: true });
-  let items = [], title = '', hint = '', tblTitle = '', head = headEvents, html = '', crumb = '', issFullTxt = '';
-  const root = `<button class="btn" data-dnav="root">${esc(t('mAll'))}</button>`, sep = '<span class="lbl">›</span>';
-  const facDots = (byF, show) => FACTORIES.filter(f => byF[f]).map(f => `<span class="dot" style="background:${FCOLOR[f]}"></span>${esc(f)}${show ? ' ' + Math.round(byF[f]) : ''}`).join(' &nbsp; ');
-  const evRow = r => `<tr class="align-top"><td class="whitespace-nowrap">${esc(dmy(r.timestamp))}</td><td class="whitespace-nowrap">${esc(r.recoveryEnd ? dmy(r.recoveryEnd) : '—')}</td>
-    <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
-    <td>${esc(mName(r))}</td><td>${esc(r.issueEn || r.issueRaw)}</td><td class="text-right font-semibold">${Math.round(r.repairMinutes)}</td></tr>`;
-
-  if (level === 1) {
-    const g = dtGroup(base, dtModelKey, dtModelLabel).sort(by);
-    items = g.map(a => dtItem(a, a.label, 26, ` · ${a.machines.size} ${t('machinesWord')}`));
-    const pickM = it => { dtNav = { model: it.key, machine: null, issue: null }; renderDowntime(filtered()); };
-    dtCtx = { items, horizontal: true, onPick: pickM };
-    title = t('dtByModel'); hint = t('dtHint') + (skipped ? `  (${skipped} ${t('dtSkipped')})` : '') + '  ' + t('dtPick1'); tblTitle = t('dtTblTitle');
-    html = [...base].sort((a, b) => b.repairMinutes - a.repairMinutes).slice(0, 15).map(evRow).join('');
-    crumb = root;
-  } else if (level === 2) {
-    const g = dtGroup(base, dtMachKey, r => numOf(r.machineNo) ? `${modelLbl} #${numOf(r.machineNo)}` : sp1(mName(r))).sort(by);
-    items = g.map(a => dtItem(a, a.label, 14, ` · ${a.machines.size} ${t('machinesWord')}`));
-    const pickMach = it => { dtNav = { model: dtNav.model, machine: it.key, issue: null }; renderDowntime(filtered()); };
-    dtCtx = { items, horizontal: false, onPick: pickMach };
-    const nMach = new Set(base.map(r => r.machineKey)).size;
-    title = `${t('dtT2')} · ${modelLbl}`; hint = `${nMach} ${t('machinesWord')} · ${t('dtAvg')}: ${Math.round(total / base.length)} min · ${t('dtPick2')}`; tblTitle = t('dtTblT2');
-    head = `<tr><th>${esc(t('machine'))}</th><th>${esc(t('issue'))}</th><th class="text-right">${esc(t('dtColCases'))}</th><th class="text-right">${esc(t('dtColTotal'))}</th><th class="text-right">${esc(t('dtColAvg'))}</th></tr>`;
-    g.forEach((m, gi) => {
-      const iss = [...m.issues.values()].sort(by).slice(0, 5), mu = Object.keys(m.byF).length > 1;
-      iss.forEach((i, idx) => {
-        html += `<tr class="${idx === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}">` +
-          (idx === 0 ? `<td class="gname" rowspan="${iss.length}"><button class="lnk" data-dgo="machine" data-key="${esc(m.key)}">${esc(m.label)}</button>
-            <div class="lbl" style="font-weight:400">${facDots(m.byF, mu)}</div>
-            <div class="lbl" style="font-weight:400">${m.ev} ${t('cases')} · ${t('dtColTotal')} ${Math.round(m.n)} (${hm(m.n)}) · ${t('dtColAvg')} ${Math.round(m.n / m.ev)}</div></td>` : '') +
-          `<td>${esc(i.label)}</td><td class="text-right">${i.ev}</td><td class="text-right font-semibold">${Math.round(i.n)}</td><td class="text-right">${Math.round(i.n / i.ev)}</td></tr>`;
-      });
-    });
-    crumb = `${root}${sep}<span class="font-semibold px-1">${esc(modelLbl)}</span>`;
-  } else {
-    const iss = [...dtGroup(base, () => 'all', () => '')[0].issues.values()].sort(by).slice(0, 5);
-    items = iss.map(i => dtItem(i, i.label, 18));
-    const pickI = it => { dtNav.issue = dtNav.issue === it.key ? null : it.key; renderDowntime(filtered()); };
-    dtCtx = { items, horizontal: false, onPick: pickI };
-    const evs = dtNav.issue ? base.filter(r => dtIssueKey(r) === dtNav.issue) : base;
-    const issLbl = dtNav.issue ? items.concat(iss.map(i => dtItem(i, i.label, 99))).find(x => x.key === dtNav.issue) : null;
-    issFullTxt = issLbl ? issLbl.full : '';
-    title = `${t('dtT3')} · ${machLbl}`; hint = t('dtPick3'); tblTitle = t('dtTblT3') + (issLbl ? ' · ' + issLbl.full : '');
-    html = [...evs].sort((a, b) => b.repairMinutes - a.repairMinutes).map(evRow).join('');
-    crumb = `${root}${sep}<button class="btn" data-dnav="model">${esc(modelLbl)}</button>${sep}` +
-      (issLbl ? `<button class="btn" data-dnav="machine">${esc(machLbl)}</button>${sep}<span class="font-semibold px-1">${esc(issLbl.full)}</span>` : `<span class="font-semibold px-1">${esc(machLbl)}</span>`);
-  }
-  $('dBack').textContent = t('mBack'); $('dBack').style.display = level === 1 && !dtNav.issue ? 'none' : '';
-  $('dtCrumb').innerHTML = crumb;
-  $('dtTitle').textContent = title; $('dtHint').textContent = hint; $('dtTblTitle').textContent = tblTitle;
-  $('tblDt').tHead.innerHTML = head; body.innerHTML = html;
-  $('dtWrap').style.display = ''; $('dtWrap').style.height = level === 1 ? Math.max(220, items.length * 34 + 80) + 'px' : '420px';
-  dtChartInst = stackChart(dtChartInst, 'dtChart', items, level === 1, { labels: true, pick: level < 3 || items.length > 0 });
-
-  // per day: one line per factory, area under each line tinted (follows the selection)
-  const byDay = new Map(), cntDay = new Map();
-  evBase.forEach(r => { const d = (r.timestamp || '').slice(0, 10); if (!d) return; const a = byDay.get(d) || {}, c = cntDay.get(d) || {}; a[r.factory] = (a[r.factory] || 0) + r.repairMinutes; c[r.factory] = (c[r.factory] || 0) + 1; byDay.set(d, a); cntDay.set(d, c); });
-  const days = [...byDay.keys()].sort(), list = [];
-  if (days.length) {
-    const t0 = Date.parse(days[0] + 'T00:00:00Z'), t1 = Date.parse(days[days.length - 1] + 'T00:00:00Z');
-    if ((t1 - t0) / 864e5 <= 150) for (let x = t0; x <= t1; x += 864e5) list.push(new Date(x).toISOString().slice(0, 10)); else days.forEach(d => list.push(d));   // empty days count as 0
-  }
-  $('dtTitle2').textContent = t('dtByDay') + (dtNav.model ? ' · ' + (machLbl || modelLbl) : '') + (issFullTxt ? ' · ' + issFullTxt : '');
-  $('dtWrap2').style.display = list.length ? '' : 'none'; $('dtWrap2').style.height = '320px';
-  if (list.length) dtChart2Inst = lineChart(dtChart2Inst, 'dtChart2', list, FACTORIES.filter(f => days.some(d => byDay.get(d)[f])), byDay, cntDay);
-}
-
-function renderModules() {
-  const f = $('fFactory').value, m = $('fMachine').value, br = $('fBrand').value, mo = $('fModel').value;
-  const h = HISTORY.filter(r => (!f || r.factory === f) && (!m || r.machineKey === m) && (!br || r.brandEn === br) && (!mo || r.model === mo));
-  const groups = new Map();
-  h.forEach(r => { (groups.get(r.machineKey) || groups.set(r.machineKey, []).get(r.machineKey)).push(r); });
-  const gl = [...groups.values()].sort((a, b) => FACTORIES.indexOf(a[0].factory) - FACTORIES.indexOf(b[0].factory) || natCmp(a[0].machineRaw + ' ' + a[0].machineNo, b[0].machineRaw + ' ' + b[0].machineNo));
-  const changes = h.filter(r => !r.current).length;
-  $('modCount').textContent = `${gl.length} ${t('modMachines')} · ${changes} ${t('modChanges')}`;
-  $('tblMod').tBodies[0].innerHTML = gl.map((g, gi) => {
-    g.sort((a, b) => a.from < b.from ? -1 : 1);
-    return g.map((r, i) => `<tr class="${i === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}">` +
-      (i === 0 ? `<td class="whitespace-nowrap" rowspan="${g.length}" style="vertical-align:top"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
-        <td class="gname" rowspan="${g.length}">${esc(r.machineRaw + (r.machineNo ? ' ' + r.machineNo : ''))}</td>` : '') +
-      `<td>${esc(r.product || t('modNotRec'))}</td><td class="whitespace-nowrap">${esc(dmy(r.from))}</td><td class="whitespace-nowrap">${esc(dmy(r.to))}</td><td class="text-right">${r.events}</td>
-       <td>${r.current ? `<b style="color:var(--accent)">${esc(t('stCurrent'))}</b>` : `<span class="lbl">${esc(t('stChangedTo'))}</span> ${esc(r.nextProduct)} <span class="lbl">· ${esc(dmy(r.changedAt))}</span>`}</td></tr>`).join('');
-  }).join('') || `<tr><td colspan="7" class="text-center lbl">${esc(t('modEmpty'))}</td></tr>`;
-}
-
-// ---- Machine Modules as step-by-step cards: brand > model > version > machine, then that machine's module history ----
-let modNav = { b: null, m: null, v: null, k: null }, modView = 'cards', modLvl = 0, modSkipped = {};
-const MOD_KEYS = ['b', 'm', 'v', 'k'];
-const MOD_FAC = ['Terahop 5000', 'Ayutthaya', 'Pinewave'];       // factory order on the Machine Modules page only (the rest of the site keeps FACTORIES)
-const modFi = f => { const i = MOD_FAC.indexOf(f); return i < 0 ? 99 : i; };
-const MOD_VAL = {
-  b: x => ({ key: x.brandEn, label: pick(x.brandEn, x.brandCn) || t('modNotSet') }),
-  m: x => ({ key: x.fnEn, label: pick(x.fnEn, x.fnCn) || t('modNotSet') }),          // model = machine type / function (ISO, COVER, ...)
-  v: x => ({ key: x.ver, label: x.ver || t('modNotSet') })                           // version = the (1.0) / (2.5) part of the machine name
-};
-function modMachines() {                                                    // same filters as the table above
-  const f = $('fFactory').value, m = $('fMachine').value, br = $('fBrand').value, mo = $('fModel').value;
-  const h = HISTORY.filter(r => (!f || r.factory === f) && (!m || r.machineKey === m) && (!br || r.brandEn === br) && (!mo || r.model === mo));
-  const dr = new Map(); DATA.forEach(r => { if (!dr.has(r.machineKey)) dr.set(r.machineKey, r); });
-  const g = new Map();
-  h.forEach(r => { (g.get(r.machineKey) || g.set(r.machineKey, []).get(r.machineKey)).push(r); });
-  return [...g.entries()].map(([key, ps]) => {
-    ps.sort((a, b) => a.from < b.from ? -1 : 1);
-    const r0 = ps[0], d = dr.get(key) || {};
-    return { key, factory: r0.factory, raw: r0.machineRaw, no: r0.machineNo, brandEn: r0.brandEn || '', brandCn: r0.brandCn || '',
-      fnEn: d.functionEn || '', fnCn: d.functionCn || '', ver: r0.model || '', ps, cur: ps[ps.length - 1], changes: ps.length - 1 };
-  }).sort((a, b) => modFi(a.factory) - modFi(b.factory) || natCmp(a.raw + ' ' + a.no, b.raw + ' ' + b.no));
-}
-const facDots = list => MOD_FAC.filter(f => list.has(f)).map(f => `<span class="dot" style="background:${FCOLOR[f]};margin-right:4px" title="${esc(f)}" aria-label="${esc(f)}"></span>`).join('');
-function applyModView() {
-  $('modCardsWrap').style.display = modView === 'cards' ? '' : 'none';
-  $('modTableWrap').style.display = modView === 'table' ? '' : 'none';
-  $('modVCards').classList.toggle('primary', modView === 'cards'); $('modVTable').classList.toggle('primary', modView === 'table');
-}
-function renderModuleCards() {
-  applyModView();
-  const all = modMachines(), names = { b: t('modLvB'), m: t('modLvM'), v: t('modLvV'), k: t('modLvK') };
-  let ms = all, lvl = 0; modSkipped = {};
-  for (; lvl < 3; lvl++) {                                                  // apply the choices made so far
-    const k = MOD_KEYS[lvl];
-    if (modNav[k] === null) break;
-    const nx = ms.filter(x => MOD_VAL[k](x).key === modNav[k]);
-    if (!nx.length) { for (let j = lvl; j < 4; j++) modNav[MOD_KEYS[j]] = null; break; }
-    ms = nx;
-  }
-  while (lvl < 3) {                                                         // a level with only an empty value is skipped (e.g. no version)
-    const k = MOD_KEYS[lvl];
-    if (new Set(ms.map(x => MOD_VAL[k](x).key)).size === 1 && MOD_VAL[k](ms[0] || {}).key === '') { modNav[k] = ''; modSkipped[lvl] = true; lvl++; } else break;
-  }
-  modLvl = lvl;
-  const sep = '<span class="lbl">›</span>';
-  let crumb = `<button class="btn" data-mcrumb="-1">${esc(t('mAll'))}</button>`;
-  for (let j = 0; j < Math.min(lvl, 3); j++) {
-    if (modSkipped[j]) continue;
-    const x = ms[0]; crumb += sep + `<button class="btn" data-mcrumb="${j}">${esc(x ? MOD_VAL[MOD_KEYS[j]](x).label : '—')}</button>`;
-  }
-  if (lvl === 3 && modNav.k) { const mk = ms.find(x => x.key === modNav.k); if (mk) crumb += sep + `<span class="font-semibold px-1">${esc(mk.raw + (mk.no ? ' ' + mk.no : ''))}</span>`; }
-  $('modCrumb').innerHTML = crumb;
-  $('modBack').textContent = t('mBack'); $('modBack').style.display = (lvl > 0 && Object.keys(modNav).some(k => modNav[k] !== null && !modSkipped[MOD_KEYS.indexOf(k)])) ? '' : 'none';
-  const present = new Set(ms.map(x => x.factory));
-  $('modHint').innerHTML = esc(`${t('modPick')}: ${names[MOD_KEYS[lvl]]}`) + ' <span style="margin-left:12px">' + MOD_FAC.filter(f => present.has(f)).map(f => `<span class="dot" style="background:${FCOLOR[f]}"></span>${esc(f)}`).join('&nbsp;&nbsp; ') + '</span>';
-  if (!ms.length) { $('modGrid').innerHTML = `<div class="lbl">${esc(t('modEmpty'))}</div>`; $('modDetail').innerHTML = ''; return; }
-  $('modGrid').className = 'mgrid';
-  if (lvl < 3) {                                                            // brand / model / version cards
-    const k = MOD_KEYS[lvl], g = new Map();
-    ms.forEach(x => { const v = MOD_VAL[k](x), e = g.get(v.key) || { key: v.key, label: v.label, n: 0, ch: 0, fs: new Set() }; e.n++; e.ch += x.changes; e.fs.add(x.factory); g.set(v.key, e); });
-    $('modGrid').innerHTML = [...g.values()].sort((a, b) => natCmp(a.label, b.label)).map(e =>
-      `<button class="mcard" data-mk="${esc(e.key)}"><div class="mt">${esc(e.label)} ${facDots(e.fs)}</div><div class="ms">${e.n} ${esc(t('modMachines'))} · ${e.ch} ${esc(t('modChanges'))}</div></button>`).join('');
-    $('modDetail').innerHTML = '';
-    return;
-  }
-  const mcard = x => `<button class="mcard ${x.key === modNav.k ? 'on' : ''}" data-mk="${esc(x.key)}"><div class="mt"><span class="dot" style="background:${FCOLOR[x.factory]}"></span>${esc(x.raw + (x.no ? ' ' + x.no : ''))}</div>
-      <div class="ms">${esc(x.factory)}</div><div class="mcur">${esc(t('modNow'))}: <b>${esc(x.cur.product || t('modNotRec'))}</b><div class="ms">${esc(t('modSince'))} ${esc(dmy(x.cur.from))}</div></div>
-      <div class="ms">${x.changes} ${esc(t('modChanges'))}</div></button>`;
-  const cols = new Map();                                                   // same machine number = same column, one factory per row
-  ms.forEach(x => { const nk = String(x.no || '').replace(/#/g, '').trim(); (cols.get(nk) || cols.set(nk, []).get(nk)).push(x); });
-  $('modGrid').className = 'mgrid mcols';
-  $('modGrid').innerHTML = [...cols.keys()].sort(natCmp).map(nk => `<div class="mcol">` +
-    cols.get(nk).sort((a, b) => modFi(a.factory) - modFi(b.factory) || natCmp(a.raw, b.raw)).map(mcard).join('') + `</div>`).join('');
-  const sel = ms.find(x => x.key === modNav.k);
-  if (!sel) { $('modDetail').innerHTML = ''; return; }
-  const tl = [...sel.ps].map((p, i) => ({ p, i })).reverse().map(({ p, i }) => {      // newest first
-    const what = i === 0 ? `<b>${esc(p.product || t('modNotRec'))}</b> <span class="lbl">(${esc(t('modFirst'))})</span>` : `${esc(sel.ps[i - 1].product || t('modNotRec'))} → <b>${esc(p.product || t('modNotRec'))}</b>`;
-    return `<li class="${p.current ? 'cur' : ''}"><b>${esc(dmy(p.from))}</b> — ${what}<div class="lbl">${esc(dmy(p.from))} → ${esc(dmy(p.to))} · ${p.events} ${esc(t('modLogs'))}${p.current ? ' · ' + esc(t('modNow')) : ''}</div></li>`;
-  }).join('');
-  $('modDetail').innerHTML = `<div class="mdet"><div class="font-semibold"><span class="dot" style="background:${FCOLOR[sel.factory]}"></span>${esc(sel.factory)} · ${esc(sel.raw + (sel.no ? ' ' + sel.no : ''))}</div>
-    <div class="lbl">${esc([pick(sel.brandEn, sel.brandCn), pick(sel.fnEn, sel.fnCn), sel.ver].filter(Boolean).join(' · '))}</div>
-    <div class="mcur">${esc(t('modNow'))}: <b>${esc(sel.cur.product || t('modNotRec'))}</b> <span class="lbl">${esc(t('modSince'))} ${esc(dmy(sel.cur.from))} · ${esc(t('modLastLog'))} ${esc(dmy(sel.cur.to))}</span></div>
-    <div class="font-semibold">${esc(t('modTlTitle'))} (${sel.changes})</div>
-    ${sel.changes ? '' : `<div class="lbl">${esc(t('modNoChange'))}</div>`}<ul class="mtl">${tl}</ul><div class="lbl mt-2">${esc(sel.cur.product ? t('modDateNote') : t('modNoModNote'))}</div></div>`;
-}
-$('modVCards').onclick = () => { modView = 'cards'; applyModView(); };
-$('modVTable').onclick = () => { modView = 'table'; applyModView(); };
-$('modGrid').onclick = e => {
-  const c = e.target.closest('[data-mk]'); if (!c) return;
-  if (modLvl < 3) { for (let j = modLvl; j < 4; j++) modNav[MOD_KEYS[j]] = null; modNav[MOD_KEYS[modLvl]] = c.dataset.mk; } else modNav.k = c.dataset.mk;
-  renderModuleCards();
-};
-$('modCrumb').onclick = e => {
-  const b = e.target.closest('[data-mcrumb]'); if (!b) return; const j = +b.dataset.mcrumb;
-  for (let q = j + 1; q < 4; q++) modNav[MOD_KEYS[q]] = null;
-  renderModuleCards();
-};
-$('modBack').onclick = () => {
-  if (modNav.k) { modNav.k = null; renderModuleCards(); return; }
-  for (let j = 2; j >= 0; j--) if (modNav[MOD_KEYS[j]] !== null && !modSkipped[j]) { for (let q = j; q < 4; q++) modNav[MOD_KEYS[q]] = null; break; }
-  renderModuleCards();
-};
-
-function renderRemarks(rows) {
-  const rr = rows.filter(r => r.remark).sort((a, b) => natCmp(a.factory + '|' + mName(a), b.factory + '|' + mName(b)) || (a.timestamp < b.timestamp ? -1 : 1));
-  const groups = new Map();
-  rr.forEach(r => { (groups.get(r.machineKey) || groups.set(r.machineKey, []).get(r.machineKey)).push(r); });
-  $('remCount').textContent = `${groups.size} ${t('modMachines')} · ${rr.length}`;
-  $('tblRem').tBodies[0].innerHTML = [...groups.values()].map((g, gi) => g.map((r, i) => `<tr class="align-top ${i === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}">` +
-    (i === 0 ? `<td class="whitespace-nowrap" rowspan="${g.length}"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
-      <td class="gname" rowspan="${g.length}">${esc(mName(r))}<div class="lbl" style="font-weight:400">${g.length}</div></td>` : '') +
-    `<td class="whitespace-nowrap">${esc(dmy(r.timestamp))}</td><td>${esc(r.issueEn || r.issueRaw)}</td><td>${esc(r.remark)}</td></tr>`).join('')).join('')
-    || `<tr><td colspan="5" class="text-center lbl">${esc(t('remEmpty'))}</td></tr>`;
-}
-
-function pageTitle() {                               // heading used in saved images / files
-  return { overview: () => $('chartTitle').textContent, top: () => $('topChartTitle').textContent, model: () => $('modelChartTitle').textContent,
-           downtime: () => t('tabDowntime') + ' – ' + $('dtTitle').textContent, modules: () => t('modTitle'), remarks: () => t('remTitle'), log: () => t('logTitle'), anom: () => t('anomTitle') }[tab]();
-}
-const TABLE_ONLY = ['log', 'modules', 'remarks', 'anom'];     // pages that have a table but no chart
-
-function renderLog(rows) {
-  rows = [...rows].sort(byTimeAsc);                  // Issue Log: oldest -> newest
-  const fl = rows.filter(r => r.dateWarn); rows = [...fl, ...rows.filter(r => !r.dateWarn)];   // dates waiting for a check: on top, light yellow
-  $('logCount').textContent = `${rows.length} ${t('cases')}`;
-  const DW = ({ th: ['⚠ ตรวจสอบวันที่ก่อนแก้ — ยังไม่ได้แก้ ยืนยันได้ในชีท (ตารางนี้ยังแสดงวันที่ตามที่เขียนไว้)', 'จะแก้เป็น'], zh: ['⚠ 请先核对日期 — 尚未修改，请在表格中确认（此处仍显示原始日期）', '将改为'], en: ['⚠ Check these dates before fixing — nothing changed yet, confirm in the sheet (this table still shows the date as written)', 'will become'] })[lang] || ['⚠ Check dates', 'will become'];
-  const banner = fl.length ? `<tr class="dwarn"><td colspan="6"><b>${DW[0]} (${fl.length})</b><ul style="margin:4px 0 0 18px;list-style:disc">${fl.map(r => (r.dateFix || []).map(x => `<li>${esc(mName(r))} · ${esc(x.f)}: ${esc(x.from)} → ${DW[1]} <b>${esc(x.to)}</b></li>`).join('')).join('')}</ul></td></tr>` : '';
-  const sub = v => (lang !== 'en' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
-  const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
-  const dwNote = r => r.dateWarn ? `<div class="lbl">⚠ ${esc(r.dateWarn)}</div>` : '';
-  $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}">
-    <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}${r.anomalies && r.anomalies.length && !r.confirmed ? ' <span title="' + esc(t('tabAnom')) + '">⚠</span>' : ''}${dwNote(r)}</td>
-    <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
-    <td>${esc(mName(r))}</td>
-    <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
-    <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td>
-    <td class="whitespace-nowrap">${r.pk ? `<button class="btn kebab" data-kebab="${esc(r.pk)}" aria-label="Edit / Delete">⋮</button>` : ''}</td></tr>`).join('')
-    || `<tr><td colspan="6" class="text-center lbl">${t('empty')}</td></tr>`;
-}
-
-/* ================== EXPORT ================== */
-function activeChart() {                             // the chart of the page the user is looking at
-  if (tab === 'overview') return { c: chart, title: $('chartTitle').textContent };
-  if (tab === 'top') return { c: topChartInst, title: $('topChartTitle').textContent };
-  if (tab === 'model') return { c: modelChartInst, title: $('modelChartTitle').textContent };
-  if (tab === 'downtime') return { c: dtChartInst, title: t('tabDowntime') + ' – ' + $('dtTitle').textContent };
-  return { c: null, title: '' };
-}
-let h2cP = null;
-function loadH2C() {                                 // html2canvas is fetched only when someone saves an image
-  if (window.html2canvas) return Promise.resolve();
-  return h2cP || (h2cP = new Promise((ok, no) => {
-    const sc = document.createElement('script');
-    sc.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-    sc.onload = ok; sc.onerror = () => { h2cP = null; no(new Error('html2canvas')); };
-    document.head.appendChild(sc);
+  const periods = pl.moduleHistory, order = [], byWeb = {};
+  map.forEach(m => { if (!byWeb[m.web]) { byWeb[m.web] = { webName: m.web, machines: {} }; order.push(m.web); } });
+  periods.forEach(p => map.forEach(m => {
+    const pr = norm_(p.machineRaw);
+    if (pr !== m.raw && pr.indexOf(m.raw + ' ') !== 0) return;
+    if (m.factory && norm_(p.factory) !== m.factory) return;
+    if (m.no && digits_(p.machineNo) !== m.no) return;
+    const g = byWeb[m.web].machines;
+    if (!g[p.machineKey]) g[p.machineKey] = { factory: p.factory, machine: p.machineRaw, machineNo: p.machineNo, current: null, periods: [], _seen: {} };
+    const mc = g[p.machineKey], id = p.from + '|' + p.product;
+    if (mc._seen[id]) return; mc._seen[id] = 1;
+    mc.periods.push({ product: p.product, from: p.from, to: p.to });
+    if (p.current) mc.current = { product: p.product, since: p.from };
   }));
-}
-function saveImage() {
-  const tb = { top: $('tblTop'), model: $('tblModel'), downtime: $('tblDt'), log: $('tblLog'), modules: $('tblMod'), remarks: $('tblRem'), anom: $('tblAnom') }[tab];
-  if (!tb) return doSaveImage('chart');             // overview: chart only
-  if (TABLE_ONLY.includes(tab)) return doSaveImage('both');    // log / modules / remarks: table only
-  $('saveDlg').showModal();                         // chart only, or chart + table
-}
-async function doSaveImage(mode) {                       // whole page of the tab: chart + every table row
-  $('imgTitle').textContent = t('imgTitle'); $('imgHint').textContent = t('imgBusy');
-  $('imgPrev').style.display = 'none'; $('imgDl').style.display = 'none'; $('imgDlg').showModal();
-  try {
-    await loadH2C();
-    const el = document.querySelector(`.view[data-view="${tab}"]`);
-    const title = pageTitle();
-    const f = $('fFactory'), b = $('fBrand'), m = $('fModel'), s1 = $('fStart').value, e1 = $('fEnd').value;
-    const sub = [f.selectedOptions[0].textContent, b.value ? b.selectedOptions[0].textContent : '', m.value ? m.selectedOptions[0].textContent : '',
-                 (s1 || e1) ? `${xd(s1) || '…'} – ${xd(e1) || '…'}` : ''].filter(Boolean).join('  |  ') + '   ·   ' + xd(tzFmt.format(new Date()).slice(0, 16));
-    const font = "'IBM Plex Sans','Noto Sans SC',sans-serif", txt = css('--text'), mut = css('--muted'), bg = css('--panel'), bg2 = css('--panel2');
-    const w = el.offsetWidth, tblH = mode === 'chart' ? [...el.querySelectorAll('table')].reduce((a, x) => a + x.offsetHeight, 0) : 0, h = el.scrollHeight - tblH + 90;
-    const scale = Math.max(0.5, Math.min(2, 16000 / h, 120e6 / (w * h)));          // keep the canvas inside browser limits
-    const cv = await html2canvas(el, { backgroundColor: bg, scale, useCORS: true, logging: false, onclone: (doc, node) => {
-      node.classList.remove('hidden');
-      Object.assign(node.style, { padding: '16px', border: '0', background: bg, height: 'auto', maxHeight: 'none' });
-      if (tab === 'top' || tab === 'model' || tab === 'downtime') node.firstElementChild.style.display = 'none';          // back button + breadcrumb
-      node.querySelectorAll('.go,.btn,#tBack,#mBack').forEach(x => x.style.display = 'none');
-      if (mode === 'chart') node.querySelectorAll('table').forEach(x => (x.closest('.scroll') || x).style.display = 'none');
-      node.querySelectorAll('.scroll').forEach(x => x.style.overflow = 'visible');
-      node.querySelectorAll('th').forEach(x => x.style.position = 'static');
-      node.querySelectorAll('.lnk,.cellgo').forEach(x => x.style.borderBottom = '0');
-      node.querySelectorAll('tr.alt').forEach(x => x.style.background = bg2);
-      const tw = doc.createTreeWalker(node, NodeFilter.SHOW_TEXT); for (let n; (n = tw.nextNode());) { const v = xd(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }   // export dates = MM/DD/YYYY
-      const hd = doc.createElement('div');
-      hd.innerHTML = `<div style="font:700 17px ${font};color:${txt}">${esc(title)}</div><div style="font:12px ${font};color:${mut};margin:2px 0 12px">${esc(sub)}</div>`;
-      node.prepend(hd);
-    } });
-    const url = cv.toDataURL('image/png');
-    if (url.length < 100) throw new Error('too large');
-    $('imgHint').textContent = t('imgHint');
-    $('imgPrev').src = url; $('imgPrev').style.display = 'block';
-    $('imgDl').href = url; $('imgDl').download = 'report-' + tab + '-' + new Date().toISOString().slice(0, 10) + '.png'; $('imgDl').style.display = '';
-  } catch (e) { $('imgHint').textContent = t('imgFail'); }
-}
-function exportLogCSV() {
-  const head = ['Time','Factory','Machine (EN)','Machine (CN)','Model name (EN)','Model name (CN)','Brand (EN)','Function (EN)','Model','Issue (EN)','Issue (CN)','Solution (EN)','Solution (CN)','Category'];
-  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  const lines = [head.map(q).join(',')].concat(filtered(true).sort(byTimeAsc).map(r =>
-    [xd(r.timestamp), r.factory, r.machineEn, r.machineCn, r.modelNameEn, r.modelNameCn, r.brandEn, r.functionEn, r.model, r.issueEn, r.issueCn, r.solutionEn, r.solutionCn, r.category].map(q).join(',')));
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
-  a.download = 'issue-log-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); URL.revokeObjectURL(a.href);
-}
-
-function tableRows(tb) {                             // table -> grid of text; rowspan / colspan cells are repeated
-  const g = [];
-  [...tb.rows].forEach((tr, r) => {
-    g[r] = g[r] || []; let c = 0;
-    [...tr.cells].forEach(td => {
-      while (g[r][c] !== undefined) c++;
-      const cl = td.cloneNode(true);
-      cl.querySelectorAll('.go,.btn').forEach(x => x.remove());
-      cl.querySelectorAll('div').forEach(d => d.prepend(' | '));
-      const v = xd(cl.textContent.replace(/\s+/g, ' ').trim());
-      for (let i = 0; i < td.rowSpan; i++) for (let j = 0; j < td.colSpan; j++) (g[r + i] = g[r + i] || [])[c + j] = v;
-      c += td.colSpan;
-    });
+  const unmapped = [], items = order.map(w => {
+    const machines = Object.keys(byWeb[w].machines).map(k => {
+      const mc = byWeb[w].machines[k]; delete mc._seen;
+      mc.periods.sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : 0); return mc;
+    }).sort((a, b) => (a.factory + a.machineNo).localeCompare(b.factory + b.machineNo, undefined, { numeric: true }));
+    if (!machines.length) unmapped.push(w);
+    return { webName: w, machines };
   });
-  return g.map(r => Array.from(r, x => x ?? ''));
+  return { ok: true, generatedAt: new Date().toISOString(), items, unmapped };
 }
-function reportData() {                              // chart data + table of the page the user is looking at
-  const { c, title } = activeChart(), chartRows = [], tb = { top: $('tblTop'), model: $('tblModel'), downtime: $('tblDt'), modules: $('tblMod'), remarks: $('tblRem') }[tab];
-  if (c) {
-    const names = (tab === 'top' && topCtx.items.length === c.data.labels.length) ? topCtx.items.map(i => i.full)
-                : c.data.labels.map(l => Array.isArray(l) ? l.join(' ') : l);
-    const ds = c.data.datasets.filter(d => Array.isArray(d.data) && d.label), tot = ds.length > 1;
-    chartRows.push(['', ...ds.map(d => d.label), ...(tot ? ['Total'] : [])]);
-    names.forEach((nm, i) => chartRows.push([xd(nm), ...ds.map(d => d.data[i] ?? ''), ...(tot ? [ds.reduce((a, d) => a + (+d.data[i] || 0), 0)] : [])]));
-  }
-  const ds2 = c ? c.data.datasets.filter(d => Array.isArray(d.data) && d.label) : [];
-  return { c, title: title || pageTitle(), chartRows, tableRows: tb ? tableRows(tb) : [], series: ds2.map(d => ({ label: d.label, bg: d.backgroundColor })),
-           horizontal: !!c && c.options.indexAxis === 'y', stacked: ds2.length > 1 };
-}
-function saveBlob(blob, name) {
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
-}
-function exportModulesCSV() {                         // one row per module period; \"Current module\" is filled on every row of the machine
-  const f = $('fFactory').value, m = $('fMachine').value, br = $('fBrand').value, mo = $('fModel').value;
-  const h = HISTORY.filter(r => (!f || r.factory === f) && (!m || r.machineKey === m) && (!br || r.brandEn === br) && (!mo || r.model === mo));
-  const by = new Map(); h.forEach(r => { (by.get(r.machineKey) || by.set(r.machineKey, []).get(r.machineKey)).push(r); });
-  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', mod = r => r.product || t('modNotRec');
-  const lines = [['Factory', 'Machine', 'Module', 'First logged', 'Last logged', 'Events', 'Status', 'Changed to', 'Changed on', 'Current module'].map(q).join(',')];
-  [...by.values()].sort((a, b) => FACTORIES.indexOf(a[0].factory) - FACTORIES.indexOf(b[0].factory) || natCmp(a[0].machineRaw + ' ' + a[0].machineNo, b[0].machineRaw + ' ' + b[0].machineNo)).forEach(g => {
-    g.sort((a, b) => a.from < b.from ? -1 : 1);
-    const cur = g.find(r => r.current) || g[g.length - 1];
-    g.forEach(r => lines.push([r.factory, r.machineRaw + (r.machineNo ? ' ' + r.machineNo : ''), mod(r), xd(dmy(r.from)), xd(dmy(r.to)), r.events,
-      r.current ? 'Current' : 'Changed', r.current ? '' : (r.nextProduct || t('modNotRec')), r.current ? '' : xd(dmy(r.changedAt)), mod(cur)].map(q).join(',')));
-  });
-  saveBlob(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'report-modules-' + new Date().toISOString().slice(0, 10) + '.csv');
-}
-function exportCSV() {                               // CSV is plain text: chart *data* + table (no picture possible)
-  if (tab === 'anom') return exportAnomCSV();
-  if (tab === 'log') return exportLogCSV();
-  if (tab === 'modules') return exportModulesCSV();
-  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', row = a => a.map(q).join(',');
-  const d = reportData(), out = [];
-  if (d.chartRows.length) { out.push(row(['Chart', d.title])); d.chartRows.forEach(r => out.push(row(r))); }
-  if (d.tableRows.length) { if (out.length) out.push(''); out.push(row(['Table'])); d.tableRows.forEach(r => out.push(row(r))); }
-  saveBlob(new Blob(['\uFEFF' + out.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'report-' + tab + '-' + new Date().toISOString().slice(0, 10) + '.csv');
-}
-let zipP = null;
-function loadZip() {
-  if (window.JSZip) return Promise.resolve();
-  return zipP || (zipP = new Promise((ok, no) => {
-    const sc = document.createElement('script');
-    sc.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
-    sc.onload = ok; sc.onerror = () => { zipP = null; no(new Error('jszip')); };
-    document.head.appendChild(sc);
-  }));
-}
-const xe = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
-const colL = n => { let r = ''; for (n++; n > 0; n = Math.floor((n - 1) / 26)) r = String.fromCharCode(65 + (n - 1) % 26) + r; return r; };   // 0 -> A
-function chartXml(d, nCat, ref) {                    // a real, editable Excel bar chart that reads the cells of the chart-data table
-  const hex = x => (typeof x === 'string' && /^#[0-9a-f]{6}$/i.test(x)) ? x.slice(1).toUpperCase() : null;
-  const pal = ['2DD4BF', 'F59E0B', 'A78BFA', '60A5FA', 'F472B6'], fill = c => `<c:spPr><a:solidFill><a:srgbClr val="${c}"/></a:solidFill></c:spPr>`;
-  const cats = d.chartRows.slice(1).map(r => r[0]), hr = d.chartRows[0];
-  const catXml = `<c:cat><c:strRef><c:f>Report!$A$${ref.r0 + 1}:$A$${ref.r0 + nCat}</c:f><c:strCache><c:ptCount val="${nCat}"/>${cats.map((v, i) => `<c:pt idx="${i}"><c:v>${xe(v)}</c:v></c:pt>`).join('')}</c:strCache></c:strRef></c:cat>`;
-  const ser = d.series.map((sr, k) => {
-    const col = colL(k + 1), vals = d.chartRows.slice(1).map(r => r[k + 1]);
-    const base = hex(FCOLOR[sr.label]) || hex(Array.isArray(sr.bg) ? null : sr.bg) || pal[k % pal.length];
-    const dpt = Array.isArray(sr.bg) ? sr.bg.map((c, i) => hex(c) ? `<c:dPt><c:idx val="${i}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/>${fill(hex(c))}</c:dPt>` : '').join('') : '';
-    return `<c:ser><c:idx val="${k}"/><c:order val="${k}"/><c:tx><c:strRef><c:f>Report!$${col}$${ref.r0}</c:f><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>${xe(hr[k + 1])}</c:v></c:pt></c:strCache></c:strRef></c:tx>${fill(base)}<c:invertIfNegative val="0"/>${dpt}` +
-      `<c:dLbls><c:numFmt formatCode="0;;;" sourceLinked="0"/><c:spPr><a:noFill/></c:spPr><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>${catXml}` +
-      `<c:val><c:numRef><c:f>Report!$${col}$${ref.r0 + 1}:$${col}$${ref.r0 + nCat}</c:f><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${nCat}"/>${vals.map((v, i) => v === '' || v == null ? '' : `<c:pt idx="${i}"><c:v>${+v}</c:v></c:pt>`).join('')}</c:numCache></c:numRef></c:val></c:ser>`;
-  }).join('');
-  const H = d.horizontal;
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><c:roundedCorners val="0"/><c:chart>` +
-    `<c:title><c:tx><c:rich><a:bodyPr/><a:p><a:pPr><a:defRPr sz="1400" b="1"/></a:pPr><a:r><a:rPr lang="en-US" sz="1400" b="1"/><a:t>${xe(d.title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/>` +
-    `<c:plotArea><c:layout/><c:barChart><c:barDir val="${H ? 'bar' : 'col'}"/><c:grouping val="${d.stacked ? 'stacked' : 'clustered'}"/><c:varyColors val="0"/>${ser}<c:gapWidth val="60"/>${d.stacked ? '<c:overlap val="100"/>' : ''}<c:axId val="111"/><c:axId val="222"/></c:barChart>` +
-    `<c:catAx><c:axId val="111"/><c:scaling><c:orientation val="${H ? 'maxMin' : 'minMax'}"/></c:scaling><c:delete val="0"/><c:axPos val="${H ? 'l' : 'b'}"/><c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="222"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>` +
-    `<c:valAx><c:axId val="222"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="${H ? 'b' : 'l'}"/><c:majorGridlines/><c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="111"/><c:crosses val="${H ? 'max' : 'autoZero'}"/><c:crossBetween val="between"/></c:valAx></c:plotArea>` +
-    `${d.series.length > 1 ? '<c:legend><c:legendPos val="t"/><c:overlay val="0"/></c:legend>' : ''}<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>`;
-}
-async function exportXLSX() {                        // .xlsx with an editable Excel chart + its data + the page's table
-  if (tab === 'log') return exportLogCSV();
-  const btn = $('btnXlsx'); btn.disabled = true;
-  try {
-    await loadZip();
-    const d = reportData(), nCat = Math.max(0, d.chartRows.length - 1), hasChart = !!d.c && nCat > 0 && d.series.length > 0;
-    const rows = [];                                                    // rows[r] = [[col, value, style], ...]  (r is 0-based)
-    const add = (r, c, v, st) => { (rows[r] = rows[r] || []).push([c, v, st || 0]); };
-    add(0, 0, d.title, 2);
-    const chartRowsH = hasChart ? Math.min(80, Math.max(26, Math.ceil(nCat * (d.horizontal ? 1.5 : 0.8)) + 8)) : 0;
-    let r = 2, ref = { r0: 0 };
-    if (hasChart) {
-      add(r, 0, 'Chart data', 3); r++;
-      d.chartRows.forEach((row, i) => { row.forEach((v, j) => add(r, j, v, i === 0 ? 1 : 0)); r++; });
-      ref.r0 = r - nCat;                                                // 1-based row number of the first data row = r0 + 1 -> header row is r0
-      r = Math.max(r, 2 + chartRowsH) + 2;
-    }
-    if (d.tableRows.length) {
-      add(r, 0, 'Table', 3); r++;
-      d.tableRows.forEach((row, i) => { row.forEach((v, j) => add(r, j, (i > 0 && /^-?\d+(\.\d+)?$/.test(v)) ? +v : v, i === 0 ? 1 : 0)); r++; });
-    }
-    const cell = (rr, [c, v, st]) => { const a = colL(c) + (rr + 1);
-      if (v === '' || v == null) return '';
-      return typeof v === 'number' ? `<c r="${a}" s="${st}"><v>${v}</v></c>` : `<c r="${a}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`; };
-    const sheetData = rows.map((cells, rr) => cells ? `<row r="${rr + 1}">${cells.sort((x, y) => x[0] - y[0]).map(c => cell(rr, c)).join('')}</row>` : '').join('');
-    const nCols = Math.max(0, ...rows.map(x => x ? x.length : 0));
-    const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
-    const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships', X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    const zip = new JSZip();
-    zip.file('[Content_Types].xml', X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
-      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
-      (hasChart ? '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/><Override PartName="/xl/charts/chart1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>' : '') + '</Types>');
-    zip.file('_rels/.rels', X + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
-    zip.file('xl/workbook.xml', X + `<workbook ${NS}><sheets><sheet name="Report" sheetId="1" r:id="rId1"/></sheets></workbook>`);
-    zip.file('xl/_rels/workbook.xml.rels', X + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${REL}/styles" Target="styles.xml"/></Relationships>`);
-    zip.file('xl/styles.xml', X + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font><font><b/><sz val="12"/><name val="Calibri"/></font></fonts>' +
-      '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF2"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
-      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
-    const cols = Array.from({ length: Math.max(nCols, 1) }, (_, i) => `<col min="${i + 1}" max="${i + 1}" width="${i === 0 ? 36 : 18}" customWidth="1"/>`).join('');
-    zip.file('xl/worksheets/sheet1.xml', X + `<worksheet ${NS}><cols>${cols}</cols><sheetData>${sheetData}</sheetData>${hasChart ? '<drawing r:id="rId1"/>' : ''}</worksheet>`);
-    if (hasChart) {
-      const c0 = d.chartRows[0].length + 1;                             // chart sits to the right of its data
-      zip.file('xl/worksheets/_rels/sheet1.xml.rels', X + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/drawing" Target="../drawings/drawing1.xml"/></Relationships>`);
-      zip.file('xl/drawings/drawing1.xml', X + `<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><xdr:twoCellAnchor><xdr:from><xdr:col>${c0}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>1</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>${c0 + 12}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${1 + chartRowsH}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>` +
-        `<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="2" name="Chart 1"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="${REL}" r:id="rId1"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>`);
-      zip.file('xl/drawings/_rels/drawing1.xml.rels', X + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/chart" Target="../charts/chart1.xml"/></Relationships>`);
-      zip.file('xl/charts/chart1.xml', chartXml(d, nCat, ref));
-    }
-    saveBlob(await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-             'report-' + tab + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
-  } catch (e) { console.error(e); alert(t('imgFail')); }
-  btn.disabled = false;
-}
-
-/* ================== ANOMALIES / DATA CHECK ================== */
-const allRows = () => DATA.concat(NOMACH);
-const byPk = pk => allRows().find(r => String(r.pk) === String(pk));
-const anomMsg = a => t('a_' + a.code).replace('{f}', a.f ? t('fl_' + a.f) : '').replace('{v}', a.v == null ? '' : a.v);
-function renderAnomalies() {
-  const fac = $('fFactory').value, list = allRows().filter(r => r.anomalies && r.anomalies.length && (!fac || r.factory === fac));
-  const open = list.filter(r => !r.confirmed), rows = ($('anomShowOk').checked ? list : open).sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
-  $('anomCount').textContent = `${open.length} / ${list.length}`;
-  document.querySelector('.tab[data-tab="anom"]').textContent = t('tabAnom') + (open.length ? ` (${open.length})` : '');
-  const m = s => esc((s || '').replace('T', ' ').slice(0, 16)) || '–';
-  $('tblAnom').tBodies[0].innerHTML = rows.map(r => `<tr class="align-top${r.confirmed ? ' opacity-60' : ''}">
-    <td class="whitespace-nowrap">${m(r.timestamp)}</td>
-    <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
-    <td>${esc(mName(r))}</td>
-    <td>${r.anomalies.map((a, i) => `<div>⚠ ${esc(anomMsg(a))}${a.fix ? ` <button class="btn" data-act="fix" data-pk="${esc(r.pk)}" data-ai="${i}">→ ${m(a.fix)}</button>` : ''}</div>`).join('')}</td>
-    <td class="lbl">${esc(t('fl_date'))}: ${esc(r.date || '–')}<br>${esc(t('fl_repairStart'))}: ${m(r.repairStart)}<br>${esc(t('fl_recoveryEnd'))}: ${m(r.recoveryEnd)}<br>min: ${esc(r.repairMinutes === '' ? '–' : r.repairMinutes)} · qty: ${esc(r.qty === '' ? '–' : r.qty)}</td>
-    <td class="whitespace-nowrap"><button class="btn" data-act="edit" data-pk="${esc(r.pk)}">✎ ${esc(t('anomEdit'))}</button> <button class="btn primary" data-act="cf" data-pk="${esc(r.pk)}">✓ ${esc(r.confirmed ? t('anomUndo') : t('anomConfirm'))}</button></td></tr>`).join('')
-    || `<tr><td colspan="6" class="text-center lbl">${t('anomNone')}</td></tr>`;
-}
-function exportAnomCSV() {
-  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  const rows = allRows().filter(r => r.anomalies && r.anomalies.length && !r.confirmed).sort(byTimeAsc);
-  const lines = [['Time', 'Factory', 'Machine', 'Reason', 'Date', 'Repair start', 'Recovery end', 'Minutes', 'Qty'].map(q).join(',')].concat(rows.map(r =>
-    [xd(r.timestamp), r.factory, r.machineEn, r.anomalies.map(anomMsg).join(' | '), xd(r.date), xd(r.repairStart), xd(r.recoveryEnd), r.repairMinutes, r.qty].map(q).join(',')));
-  saveBlob(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'data-check-' + new Date().toISOString().slice(0, 10) + '.csv');
-}
-
-/* ================== REPORT FORM (table as picture) ================== */
-const RF_PCT = true;          // fail-rate column as %  (false = plain ratio, e.g. 0.0123)
-const RF_PAGE = 60;           // rows per picture (more rows -> several pictures)
-const RF_HEAD = [   // [EN, 中文, ไทย] - the form follows the language button
-  ['Date', '日期', 'วันที่'], ['Shift', '班别', 'A/B'], ['Station', '站别', 'กระบวนการทำงาน'], ['Machine name', '设备名称', 'ชื่ออุปกรณ์'], ['Model', '机种', 'โมดูล'],
-  ['Issue point', '设备问题点', 'เครื่องมีปัญหา'], ['Cause & solution', '故障原因与解决办法', 'สาเหตุและวิธีแก้ไขความล้มเหลว'], ['Reported time', '报修时间', 'เวลาที่แจ้งซ่อม'],
-  ['Repair start', '维修时间', 'เวลาซ่อม'], ['Recovery time', '复机时间', 'เวลาพักฟื้นของเครื่อง'], ['Total repair time (min)', '维修总时间(min)', 'เวลาทั้งหมด(นาที)สำหรับการซ่อมแซม'],
-  ['Qty', '设备数量', 'จำนวนเครื่อง'], ['Fail rate', '设备故障率', 'อัตราความล้มเหลวของเครื่อง'], ['Leader', '领班确认', 'หัวหน้างาน'], ['Technician', '维修人员', 'ช่างเทคนิค'], ['Remark', '备注', 'หมายเหตุ']];
-const rfLi = () => lang === 'zh' ? 1 : lang === 'th' ? 2 : 0;
-const RF_W = [78, 52, 78, 150, 92, 150, 300, 108, 108, 108, 92, 62, 82, 74, 84, 130];
-let rfBlobs = [], rfUrls = [], rfIdx = 0;
-const rfD = s => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(s || ''); return m ? `${m[2]}/${m[3]}/${m[1]}` : (s || ''); };      // MM/DD/YYYY
-const rfDT = s => { const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d)/.exec(s || ''); return m ? `${m[2]}/${m[3]}/${m[1]} ${m[4]}` : (s || ''); };
-function rfCells(r) {
-  const fr = calcFailRate_(r.repairMinutes, r.qty);                       // repair_minutes / qty / 21 / 60 ; '' when minutes empty or 0, or qty <= 0
-  return [rfD(r.date || (r.timestamp || '').slice(0, 10)), r.shift, r.station, mName(r), r.product, r.issueType || pick(r.issueEn || r.issueRaw, r.issueCn, r.issueTh),
-    [pick(r.issueEn || r.issueRaw, r.issueCn, r.issueTh), pick(r.solutionEn || r.solutionRaw, r.solutionCn, r.solutionTh)].filter(Boolean).join('\n'), rfDT(r.timestamp), rfDT(r.repairStart), rfDT(r.recoveryEnd),
-    r.repairMinutes, r.qty, fr === '' ? '' : (RF_PCT ? (fr * 100).toFixed(2) + '%' : fr.toFixed(4)), r.leader, r.technician, r.remark];
-}
-let rfW = RF_W.slice();
-function rfFit(rows) {                                 // column widths measured from the text: short = 1 line, long = at most 2 lines, never cut
-  const cx = document.createElement('canvas').getContext('2d'), FF = "'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif", PAD = 22;
-  const wd = (t, bold) => { cx.font = (bold ? '700 ' : '400 ') + '12px ' + FF; return cx.measureText(t).width; };
-  const brk = /[\u0E00-\u0E7F\u3400-\u9fff]/, cells = rows.map(rfCells);
-  const fit = (paras, bold, cap) => {
-    let full = 0, word = 0;
-    paras.forEach(p => { full = Math.max(full, wd(p, bold)); p.split(/\s+/).forEach(w => { word = Math.max(word, brk.test(w) ? Math.min(wd(w, bold), 64) : wd(w, bold)); }); });
-    const w = full <= 100 ? full + PAD : Math.max((full / 2) * 1.25 + PAD, word + PAD);
-    return Math.max(46, Math.ceil(Math.min(Math.max(w, word + PAD), cap)));
-  };
-  return RF_HEAD.map((h, i) => Math.max(
-    fit([String(h[rfLi()])], true, 200),
-    fit(cells.flatMap(c => String(c[i] ?? '').split('\n')).filter(Boolean).concat(['']), false, i === 6 ? 560 : 340)));
-}
-function rfTable(rows) {
-  const b = 'border:1px solid #000;', th = 'position:static;background:#92D050;color:#000;font-weight:700;text-align:center;vertical-align:middle;padding:6px 8px;font-size:12px;line-height:1.45;' + b;
-  const td = i => `${b}padding:6px 8px;font-size:12px;line-height:1.5;color:#000;background:#fff;white-space:normal;word-break:normal;text-align:${i === 6 ? 'left' : 'center'};vertical-align:middle;`;
-  return `<table style="border-collapse:collapse;table-layout:fixed;width:${rfW.reduce((a, b2) => a + b2, 0)}px;font-family:'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif;border:2px solid #000"><colgroup>${rfW.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr>${RF_HEAD.map(h => `<th style="${th}">${esc(h[rfLi()])}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r => `<tr style="border:0">${rfCells(r).map((v, i) => `<td style="${td(i)}">${esc(v).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-}
-function rfFitImg(z) { const i = $('rfImg'); i.dataset.z = z ? '1' : ''; i.style.width = (i.naturalWidth / 2) + 'px'; i.style.maxWidth = z ? 'none' : '100%'; i.style.cursor = z ? 'zoom-out' : 'zoom-in'; }   // shown at its real size, shrunk only if the screen is smaller
-function rfShow() {
-  $('rfImg').onload = () => rfFitImg(false); $('rfImg').src = rfUrls[rfIdx]; $('rfImg').style.display = 'block'; $('rfPage').textContent = rfBlobs.length > 1 ? `${rfIdx + 1} / ${rfBlobs.length}` : '';
-  $('rfPrev').style.display = $('rfNext').style.display = rfBlobs.length > 1 ? '' : 'none';
-}
-async function openReportForm() {
-  const rows = filtered(true).sort(byTimeAsc);
-  $('rfTitle').textContent = t('rfTitle'); $('rfImg').style.display = 'none'; $('rfPage').textContent = ''; $('rfPrev').style.display = $('rfNext').style.display = 'none';
-  $('rfHint').textContent = rows.length ? t('rfBusy') : t('empty'); $('rfDlg').showModal();
-  if (!rows.length) return;
-  let host;
-  try {
-    await loadH2C(); if (document.fonts && document.fonts.ready) await document.fonts.ready; rfW = rfFit(rows); rfUrls.forEach(u => URL.revokeObjectURL(u)); rfBlobs = [];
-    host = document.createElement('div'); host.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;background:#fff;padding:6px;';
-    document.body.appendChild(host);
-    for (let i = 0; i < rows.length; i += RF_PAGE) {
-      host.innerHTML = rfTable(rows.slice(i, i + RF_PAGE));
-      const cv = await html2canvas(host, { backgroundColor: '#fff', scale: 2, logging: false, x: 0, y: 0, scrollX: 0, scrollY: 0, windowWidth: host.scrollWidth + 20 });
-      rfBlobs.push(await new Promise(ok => cv.toBlob(ok, 'image/png')));
-    }
-    rfUrls = rfBlobs.map(b => URL.createObjectURL(b)); rfIdx = 0; $('rfHint').textContent = `${rows.length} ${t('cases')}`; rfShow();
-  } catch (e) { console.error(e); $('rfHint').textContent = t('rfFail'); }
-  if (host) host.remove();
-}
-
-/* ================== EVENTS ================== */
-$('btn-en').onclick = () => { lang = 'en'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); if ($('rfDlg').open) openReportForm(); };
-$('btn-zh').onclick = () => { lang = 'zh'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); if ($('rfDlg').open) openReportForm(); };
-$('btn-th').onclick = () => { lang = 'th'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); if ($('rfDlg').open) openReportForm(); };
-$('btnTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', theme); render(); };
-document.querySelectorAll('.tab').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); if (tab === 'model' && modelChartInst) modelChartInst.resize(); if (tab === 'top' && topChartInst) topChartInst.resize(); if (tab === 'downtime') { if (dtChartInst) dtChartInst.resize(); if (dtChart2Inst) dtChart2Inst.resize(); } });
-$('fFactory').onchange = () => { buildMachineOptions(); render(); };
-['fMachine', 'fBrand', 'fModel', 'fStart', 'fEnd'].forEach(id => $(id).onchange = render);
-$('btnReset').onclick = () => { dtNav = { model: null, machine: null, issue: null }; modelNav = { model: null }; topNav = { model: null, mode: null, machine: null }; ['fFactory', 'fMachine', 'fBrand', 'fModel', 'fStart', 'fEnd'].forEach(id => $(id).value = ''); buildMachineOptions(); render(); };
-$('btnBack').onclick = () => { $('fMachine').value = ''; render(); };
-$('mBack').onclick = () => { modelNav = { model: null }; renderModelTab(filtered()); };
-$('modelCrumb').onclick = e => { if (e.target.closest('[data-nav]')) { modelNav = { model: null }; renderModelTab(filtered()); } };
-$('tblDt').onclick = e => { const g = e.target.closest('[data-dgo]'); if (!g) return; dtNav = { model: dtNav.model, machine: g.dataset.key, issue: null }; renderDowntime(filtered()); };
-$('dBack').onclick = () => { if (dtNav.issue) dtNav.issue = null; else if (dtNav.machine) dtNav.machine = null; else dtNav = { model: null, machine: null, issue: null }; renderDowntime(filtered()); };
-$('dtCrumb').onclick = e => {
-  const b = e.target.closest('[data-dnav]'); if (!b) return; const k = b.dataset.dnav;
-  dtNav = k === 'root' ? { model: null, machine: null, issue: null } : k === 'model' ? { model: dtNav.model, machine: null, issue: null } : { model: dtNav.model, machine: dtNav.machine, issue: null };
-  renderDowntime(filtered());
-};
-$('tblTop').onclick = e => {
-  const w = e.target.closest('[data-when]'); if (w) { openWhen(+w.dataset.when); return; }
-  const g = e.target.closest('[data-go]'); if (!g) return;
-  if (g.dataset.go === 'machines') topNav = { model: g.dataset.model, mode: 'machines', machine: null };      // model name -> its machines
-  else topNav = { model: topNav.model, mode: 'machines', machine: g.dataset.machine };                         // machine name -> its top issues
-  renderTop(filtered());
-};
-$('tBack').onclick = () => { topNav = (topNav.mode === 'machines' && topNav.machine) ? { model: topNav.model, mode: 'machines', machine: null } : { model: null, mode: null, machine: null }; renderTop(filtered()); };
-$('topCrumb').onclick = e => {
-  const b = e.target.closest('[data-nav]'); if (!b) return;
-  topNav = b.dataset.nav === 'root' ? { model: null, mode: null, machine: null } : { model: topNav.model, mode: 'machines', machine: null };
-  renderTop(filtered());
-};
-$('whenClose').onclick = () => $('whenDlg').close();
-$('whenDlg').addEventListener('click', e => { if (e.target === $('whenDlg')) $('whenDlg').close(); });
-$('saveChart').onclick = () => { $('saveDlg').close(); doSaveImage('chart'); };
-$('saveBoth').onclick = () => { $('saveDlg').close(); doSaveImage('both'); };
-$('saveNo').onclick = () => $('saveDlg').close();
-$('saveDlg').addEventListener('click', e => { if (e.target === $('saveDlg')) $('saveDlg').close(); });
-$('imgClose').onclick = () => $('imgDlg').close();
-$('imgDlg').addEventListener('click', e => { if (e.target === $('imgDlg')) $('imgDlg').close(); });
-let reportBuilt = false;
-$('btnExport').onclick = () => { $('expPdf').style.display = tab === 'anom' ? 'none' : ''; $('exportDlg').showModal(); };
-$('expNo').onclick = () => $('exportDlg').close();
-$('expPng').onclick = () => { $('exportDlg').close(); saveImage(); };
-$('expForm').onclick = () => { $('exportDlg').close(); openReportForm(); };
-$('expCsv').onclick = () => { $('exportDlg').close(); exportCSV(); };
-$('expPdf').onclick = () => { $('exportDlg').close(); buildReport().then(() => { reportBuilt = true; window.print(); }); };
-$('exportDlg').addEventListener('click', e => { if (e.target === $('exportDlg')) $('exportDlg').close(); });
-$('rfClose').onclick = () => $('rfDlg').close();
-$('rfImg').onclick = () => rfFitImg($('rfImg').dataset.z !== '1');
-$('rfPrev').onclick = () => { rfIdx = (rfIdx + rfBlobs.length - 1) % rfBlobs.length; rfShow(); };
-$('rfNext').onclick = () => { rfIdx = (rfIdx + 1) % rfBlobs.length; rfShow(); };
-$('rfDl').onclick = () => rfBlobs[rfIdx] && saveBlob(rfBlobs[rfIdx], 'report-form-' + new Date().toISOString().slice(0, 10) + (rfBlobs.length > 1 ? '-' + (rfIdx + 1) : '') + '.png');
-$('rfCopy').onclick = async () => {
-  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': rfBlobs[rfIdx] })]); $('rfHint').textContent = t('rfCopied'); }
-  catch (e) { $('rfHint').textContent = t('rfCopyFail'); }
-};
-$('btnToday').onclick = () => { const d = new Date().toLocaleDateString('sv-SE', { timeZone: TZ }); $('fStart').value = d; $('fEnd').value = d; render(); };
-$('anomShowOk').onchange = renderAnomalies;
-$('tblAnom').onclick = e => {
-  const b = e.target.closest('[data-act]'); if (!b) return; const r = byPk(b.dataset.pk); if (!r) return;
-  if (b.dataset.act === 'edit') PRA.open(r); else if (b.dataset.act === 'cf') PRA.confirm(r, !r.confirmed); else if (b.dataset.act === 'fix') PRA.applyFix(r, r.anomalies[+b.dataset.ai]);
-};
-$('tblLog').addEventListener('click', e => { const b = e.target.closest('[data-kebab]'); if (!b) return; const r = byPk(b.dataset.kebab); if (r) PRA.menu(b, r); });
-window.addEventListener('beforeprint', () => { if (reportBuilt) { reportBuilt = false; return; } buildReport(); });   // Ctrl+P gets the same report
-
-/* ================== DEMO DATA (used only when GAS_URL is empty) ================== */
-function demoBase() {
-  const mk = (f, d, raw, no, cn, ie, ic, se, sc) => ({ id: Math.random(), factory: f, timestamp: d, machineRaw: raw, machineNo: no,
-    machineKey: f + '|' + raw.toLowerCase() + '|' + no.replace(/\D/g, ''), machineEn: raw + ' ' + no, machineCn: cn,
-    issueRaw: ie, issueEn: ie, issueCn: ic, solutionRaw: se, solutionEn: se, solutionCn: sc, category: '' });
-  const v = ['Vision system cannot locate material.', '视觉系统无法定位物料', 'Check lighting conditions and reset vision.', '检查光照并重置视觉'];
-  const s = ['Sensor timeout on station 2.', '工位2传感器超时', 'Clean sensor and re-teach position.', '清洁传感器并重新示教'];
-  const p = ['Air pressure low.', '气压过低', 'Check compressor and air lines.', '检查压缩机与气管'];
-  return [
-    mk('Ayutthaya', '2026-10-28T09:12:00', 'Pad Mounting-ENG-(2.0)', '2#', '贴片机2.0 2#', ...v),
-    mk('Ayutthaya', '2026-10-28T13:40:00', 'Pad Mounting-ENG-(2.0)', '2#', '贴片机2.0 2#', ...v),
-    mk('Ayutthaya', '2026-10-29T08:05:00', 'BOSA-Axxon', '1#', '', ...s),
-    mk('Terahop 5000', '2026-10-27T15:20:00', 'ISO-ENG-(2.0)', '4#', '隔离器2.0 4#', ...p),
-    mk('Terahop 5000', '2026-10-29T10:30:00', 'ISO-ENG-(2.0)', '4#', '隔离器2.0 4#', ...s),
-    mk('Pinewave', '2026-10-30T07:45:00', 'ISO-LQ-(1.0)', '1#', '猎奇1.0 1# 隔离器', ...p),
-    mk('Pinewave', '2026-10-30T09:10:00', 'ISO-LQ-(1.0)', '1#', '猎奇1.0 1# 隔离器', ...v)
-  ];
-}
-const DEMO_KW = {
-  'ISO-LQ-(1.0)': { brandEn: 'LQ', brandCn: '猎奇', functionEn: 'ISO', functionCn: '隔离器', model: '1.0', modelNameEn: 'LQ 1.0 ISO', modelNameCn: '猎奇 1.0 隔离器' },
-  'ISO-ENG-(2.0)': { brandEn: 'ENG', brandCn: 'ENG恩纳基', functionEn: 'ISO', functionCn: '隔离器', model: '2.0', modelNameEn: 'ENG 2.0 ISO', modelNameCn: 'ENG恩纳基 2.0 隔离器' },
-  'Pad Mounting-ENG-(2.0)': { brandEn: 'ENG', brandCn: 'ENG恩纳基', functionEn: 'Pad Mounting', functionCn: 'Pad Mounting', model: '2.0', modelNameEn: 'ENG 2.0 Pad Mounting', modelNameCn: 'ENG恩纳基 2.0 Pad Mounting' },
-  'BOSA-Axxon': { brandEn: 'Axxon', brandCn: 'AXXON', functionEn: 'BOSA', functionCn: 'BOSA', model: '', modelNameEn: 'Axxon BOSA', modelNameCn: 'AXXON BOSA' }
-};
-function demoData() {
-  const base = demoBase();
-  const more = base.filter(r => r.machineRaw === 'ISO-LQ-(1.0)').map(r => Object.assign({}, r, {   // a second machine of the same model
-    machineNo: '2#', machineKey: r.machineKey.replace(/\|\d+$/, '|2'), machineEn: r.machineEn.replace('1#', '2#'), machineCn: r.machineCn.replace('1#', '2#') }));
-  const other = base.filter(r => r.machineRaw === 'ISO-LQ-(1.0)').slice(0, 2).map(r => Object.assign({}, r, { factory: 'Ayutthaya', machineKey: r.machineKey.replace(/^Pinewave/, 'Ayutthaya') }));   // same model, another factory
-  return base.concat(more, other).map(r => Object.assign(r, DEMO_KW[r.machineRaw] || {}));
-}
-load();
-</script>
-</body>
-</html>
