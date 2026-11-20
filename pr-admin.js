@@ -64,8 +64,7 @@ const PRA = (() => {
   .kebab{padding:3px 8px !important;font-size:15px !important;line-height:1 !important}`;
   document.head.appendChild(st);
 
-  const toast = (msg, err) => { const d = document.createElement('div'); d.className = 'pra-toast' + (err ? ' err' : ''); d.textContent = msg; document.body.appendChild(d); setTimeout(() => d.remove(), err ? 7000 : 2400); };
-
+  
   /* ---------- PIN + RPC ---------- */
   function askPin() {
     return new Promise(res => {
