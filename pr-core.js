@@ -152,7 +152,7 @@ function matchRow_(raw, rows) {
 /** pr_logs + mappings -> same JSON the GAS doGet returned: { ok, generatedAt, data, moduleHistory } */
 async function fetchPayload() {
   const [logs, mmRows, imRows, kwRows, trRows] = await Promise.all([...['pr_logs', 'pr_machine_mapping', 'pr_issue_mapping', 'pr_keyword'].map(t => fetchAll_(t)),
-    fetchAll_('pr_translations', ['kind', 'src_key']).catch(() => [])]);   // permanent translation cache (EN / ZH / TH) filled by GAS
+    fetchAll_('pr_translations', ['kind', 'src_key']).catch(e => { console.warn('pr_translations not loaded:', e.message); window.TR_ERR = e.message; return []; })]);   // permanent translation cache (EN / ZH / TH) filled by GAS
   const tr = { machine: {}, issue: {}, solution: {} };
   trRows.forEach(x => { if (tr[x.kind]) tr[x.kind][x.src_key] = { zh: x.zh || '', th: x.th || '', en: x.en || '' }; });
   const machineMap = loadMachineMapping_(mmRows), issueMap = loadIssueMapping_(imRows), keywords = loadKeywords_(kwRows), out = [];
