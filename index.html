@@ -57,6 +57,12 @@
   dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:16px;width:min(460px,92vw)}
   #imgDlg{width:min(980px,96vw)}
   dialog::backdrop{background:rgba(0,0,0,.55)}
+  dialog[open]{position:fixed;inset:0;margin:auto;height:fit-content;max-height:92vh;max-width:96vw;overflow:auto}   /* always centred in the visible screen */
+  html:has(dialog[open]){overflow:hidden}                                                                          /* page behind does not scroll */
+  #rfDlg{width:min(1800px,96vw)}
+  #rfBox{max-height:calc(92vh - 150px);overflow:auto;background:#fff;border-radius:6px}
+  #rfImg{display:none;width:100%;max-width:100%;height:auto;cursor:zoom-in}   /* fits the window; click = real size */
+  .tbar{border-top:1px solid var(--line)} .tsep{width:1px;height:20px;background:var(--line);margin:0 2px}
   dialog h3{margin:0 0 2px;font-size:14px;font-weight:700;word-break:break-word}
   .go{background:none;border:0;color:var(--muted);padding:0 5px;margin-left:4px;font-size:15px;line-height:1;cursor:pointer;border-radius:4px}
   .go:hover{color:var(--accent);background:var(--panel2)}
@@ -109,23 +115,13 @@
 </head>
 <body>
 
-<header class="no-print sticky top-0 z-20" style="background:var(--panel);border-bottom:1px solid var(--line)">
-  <div class="max-w-7xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-    <div class="min-w-0">
-      <h1 class="font-bold text-sm sm:text-base tracking-wide truncate" data-i18n="title"></h1>
-      <div class="lbl" id="updated"></div>
-    </div>
-    <div class="flex flex-wrap items-center gap-1.5">
-      <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
-      <button id="btn-en" class="btn">EN</button>
-      <button id="btn-zh" class="btn">中文</button>
-      <button id="btn-th" class="btn">ไทย</button>
-      <button id="btnTheme" class="btn" title="Theme">◐</button>
-      <button id="btnExport" class="btn primary" data-i18n="export"></button>
-    </div>
+<header class="no-print md:sticky top-0 z-20" style="background:var(--panel);border-bottom:1px solid var(--line)">
+  <div class="max-w-7xl mx-auto px-3 pt-2 min-w-0">
+    <h1 class="font-bold text-sm sm:text-base tracking-wide truncate" data-i18n="title"></h1>
+    <div class="lbl" id="updated"></div>
   </div>
-  <div class="max-w-7xl mx-auto px-3 pb-2 flex flex-wrap items-center gap-1">
-    <nav class="flex gap-1 mr-auto">
+  <div class="max-w-7xl mx-auto px-3 py-1 overflow-x-auto">
+    <nav class="flex gap-1 w-max">
       <button class="tab" data-tab="model" data-i18n="tabModel"></button>
       <button class="tab on" data-tab="overview" data-i18n="tabOverview"></button>
       <button class="tab" data-tab="top" data-i18n="tabTop"></button>
@@ -135,15 +131,32 @@
       <button class="tab" data-tab="log" data-i18n="tabLog"></button>
       <button class="tab" data-tab="anom" data-i18n="tabAnom"></button>
     </nav>
-    <select id="fFactory" aria-label="Factory"></select>
-    <select id="fMachine" aria-label="Machine" style="display:none"></select>   <!-- hidden: only holds the machine picked by clicking a bar -->
-    <select id="fBrand" aria-label="Brand" class="max-w-[130px]"></select>
-    <select id="fModel" aria-label="Model" class="max-w-[120px]"></select>
-    <input type="date" id="fStart" aria-label="Start">
-    <span class="lbl">–</span>
-    <input type="date" id="fEnd" aria-label="End">
-    <button id="btnToday" class="btn" data-i18n="today"></button>
-    <button id="btnReset" class="btn" data-i18n="reset"></button>
+  </div>
+  <div class="tbar">
+    <div class="max-w-7xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div id="filterBar" class="flex flex-wrap items-center gap-1.5">
+        <select id="fFactory" aria-label="Factory"></select>
+        <select id="fMachine" aria-label="Machine" style="display:none"></select>   <!-- hidden: only holds the machine picked by clicking a bar -->
+        <select id="fBrand" aria-label="Brand" class="max-w-[130px]"></select>
+        <select id="fModel" aria-label="Model" class="max-w-[120px]"></select>
+        <span class="tsep"></span>
+        <input type="date" id="fStart" aria-label="Start">
+        <span class="lbl">–</span>
+        <input type="date" id="fEnd" aria-label="End">
+        <button id="btnToday" class="btn" data-i18n="today"></button>
+        <button id="btnReset" class="btn" data-i18n="reset"></button>
+      </div>
+      <div id="actionBar" class="flex flex-wrap items-center gap-1.5 ml-auto">
+        <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
+        <span class="tsep"></span>
+        <button id="btn-en" class="btn">EN</button>
+        <button id="btn-zh" class="btn">中文</button>
+        <button id="btn-th" class="btn">ไทย</button>
+        <button id="btnTheme" class="btn" title="Theme">◐</button>
+        <span class="tsep"></span>
+        <button id="btnExport" class="btn primary" data-i18n="export"></button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -298,10 +311,10 @@
   </div>
 </dialog>
 
-<dialog id="rfDlg" style="max-width:96vw">
+<dialog id="rfDlg">
   <h3 id="rfTitle"></h3>
   <div class="lbl" id="rfHint" style="margin:2px 0 8px"></div>
-  <div style="max-height:68vh;overflow:auto;max-width:92vw;background:#fff;border-radius:6px"><img id="rfImg" alt="" style="display:none;width:100%;min-width:900px"></div>
+  <div id="rfBox"><img id="rfImg" alt=""></div>
   <div class="flex flex-wrap items-center justify-end gap-2 mt-3">
     <button class="btn" id="rfPrev">‹</button><span class="lbl" id="rfPage"></span><button class="btn" id="rfNext">›</button>
     <button class="btn primary" id="rfCopy" data-i18n="rfCopy"></button><button class="btn primary" id="rfDl" data-i18n="rfDl"></button><button class="btn" id="rfClose" data-i18n="close"></button>
@@ -691,11 +704,11 @@ function buildReport() {
 
   const f = $('fFactory').value, mk = $('fMachine').value, s = $('fStart').value, e = $('fEnd').value;
   const mLabel = mk ? mName(rows[0] || { machineEn: '', machineCn: '' }) : t('allM');
-  const filt = [`${t('factory')}: ${f || t('all')}`, `${t('machine')}: ${mLabel}`, `${t('brand')}: ${$('fBrand').selectedOptions[0].textContent}`, `${t('model')}: ${$('fModel').selectedOptions[0].textContent}`, `${t('dateRange')}: ${s || '…'} – ${e || '…'}`].join('  |  ');
+  const filt = [`${t('factory')}: ${f || t('all')}`, `${t('machine')}: ${mLabel}`, `${t('brand')}: ${$('fBrand').selectedOptions[0].textContent}`, `${t('model')}: ${$('fModel').selectedOptions[0].textContent}`, `${t('dateRange')}: ${xd(s) || '…'} – ${xd(e) || '…'}`].join('  |  ');
 
   const sub = v => (lang !== 'en' && v) ? `<div class="sub">${esc(v)}</div>` : '';
   const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
-  const tr = r => `<tr><td style="white-space:nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}</td>
+  const tr = r => `<tr><td style="white-space:nowrap">${esc(xd((r.timestamp || '').replace('T', ' ').slice(0, 16)))}</td>
     <td>${esc(r.factory)}</td><td>${esc(mName(r))}</td>
     <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
     <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td>
@@ -724,7 +737,7 @@ function buildReport() {
   $('report').innerHTML = `
     <h1>${esc(t('repTitle'))}${prevTab === 'overview' ? '' : ' – ' + esc(t(PDF_NAME[prevTab]))}</h1>
     <div class="meta">${esc(filt)}</div>
-    <div class="meta">${esc(t('generated'))}: ${new Date().toLocaleString(loc())}</div>
+    <div class="meta">${esc(t('generated'))}: ${xd(tzFmt.format(new Date()).slice(0, 16))}</div>
     ${showLog ? kpis : ''}${body}`;
   const im = $('repImg');
   return im && im.decode ? im.decode().catch(() => {}) : Promise.resolve();
@@ -1013,6 +1026,10 @@ function renderModelTab(rows) {
 
 /* ================== DOWNTIME / MODULES / REMARKS ================== */
 const dmy = ts => { const m = /^(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(ts || ''); return m ? `${m[3]}/${m[2]}/${m[1]}${m[4] ? ' ' + m[4] + ':' + m[5] : ''}` : (ts || ''); };
+function xd(s) {                                      // dates in EXPORTS only: MM/DD/YYYY [HH:mm]  (screen keeps its own format)
+  return String(s ?? '').replace(/(^|[^\d\/-])(?:(\d{4})-(\d\d)-(\d\d)(?:[T ](\d\d:\d\d)(?::\d\d)?)?|(\d\d)\/(\d\d)\/(\d{4}))(?![\d\/-])/g,
+    (m, p, y, mo, d, tm, d2, mo2, y2) => p + (y ? `${mo}/${d}/${y}${tm ? ' ' + tm : ''}` : `${mo2}/${d2}/${y2}`));
+}
 const natCmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
 const okMin = r => typeof r.repairMinutes === 'number' && r.repairMinutes >= 0;
 const hm = m => m >= 120 ? (m / 60).toFixed(1) + ' h' : Math.round(m) + ' min';
@@ -1384,7 +1401,7 @@ async function doSaveImage(mode) {                       // whole page of the ta
     const title = pageTitle();
     const f = $('fFactory'), b = $('fBrand'), m = $('fModel'), s1 = $('fStart').value, e1 = $('fEnd').value;
     const sub = [f.selectedOptions[0].textContent, b.value ? b.selectedOptions[0].textContent : '', m.value ? m.selectedOptions[0].textContent : '',
-                 (s1 || e1) ? `${s1 || '…'} – ${e1 || '…'}` : ''].filter(Boolean).join('  |  ') + '   ·   ' + new Date().toLocaleString(loc());
+                 (s1 || e1) ? `${xd(s1) || '…'} – ${xd(e1) || '…'}` : ''].filter(Boolean).join('  |  ') + '   ·   ' + xd(tzFmt.format(new Date()).slice(0, 16));
     const font = "'IBM Plex Sans','Noto Sans SC',sans-serif", txt = css('--text'), mut = css('--muted'), bg = css('--panel'), bg2 = css('--panel2');
     const w = el.offsetWidth, tblH = mode === 'chart' ? [...el.querySelectorAll('table')].reduce((a, x) => a + x.offsetHeight, 0) : 0, h = el.scrollHeight - tblH + 90;
     const scale = Math.max(0.5, Math.min(2, 16000 / h, 120e6 / (w * h)));          // keep the canvas inside browser limits
@@ -1398,6 +1415,7 @@ async function doSaveImage(mode) {                       // whole page of the ta
       node.querySelectorAll('th').forEach(x => x.style.position = 'static');
       node.querySelectorAll('.lnk,.cellgo').forEach(x => x.style.borderBottom = '0');
       node.querySelectorAll('tr.alt').forEach(x => x.style.background = bg2);
+      const tw = doc.createTreeWalker(node, NodeFilter.SHOW_TEXT); for (let n; (n = tw.nextNode());) { const v = xd(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }   // export dates = MM/DD/YYYY
       const hd = doc.createElement('div');
       hd.innerHTML = `<div style="font:700 17px ${font};color:${txt}">${esc(title)}</div><div style="font:12px ${font};color:${mut};margin:2px 0 12px">${esc(sub)}</div>`;
       node.prepend(hd);
@@ -1413,7 +1431,7 @@ function exportLogCSV() {
   const head = ['Time','Factory','Machine (EN)','Machine (CN)','Model name (EN)','Model name (CN)','Brand (EN)','Function (EN)','Model','Issue (EN)','Issue (CN)','Solution (EN)','Solution (CN)','Category'];
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
   const lines = [head.map(q).join(',')].concat(filtered(true).sort(byTimeAsc).map(r =>
-    [r.timestamp, r.factory, r.machineEn, r.machineCn, r.modelNameEn, r.modelNameCn, r.brandEn, r.functionEn, r.model, r.issueEn, r.issueCn, r.solutionEn, r.solutionCn, r.category].map(q).join(',')));
+    [xd(r.timestamp), r.factory, r.machineEn, r.machineCn, r.modelNameEn, r.modelNameCn, r.brandEn, r.functionEn, r.model, r.issueEn, r.issueCn, r.solutionEn, r.solutionCn, r.category].map(q).join(',')));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
   a.download = 'issue-log-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); URL.revokeObjectURL(a.href);
@@ -1428,7 +1446,7 @@ function tableRows(tb) {                             // table -> grid of text; r
       const cl = td.cloneNode(true);
       cl.querySelectorAll('.go,.btn').forEach(x => x.remove());
       cl.querySelectorAll('div').forEach(d => d.prepend(' | '));
-      const v = cl.textContent.replace(/\s+/g, ' ').trim();
+      const v = xd(cl.textContent.replace(/\s+/g, ' ').trim());
       for (let i = 0; i < td.rowSpan; i++) for (let j = 0; j < td.colSpan; j++) (g[r + i] = g[r + i] || [])[c + j] = v;
       c += td.colSpan;
     });
@@ -1442,7 +1460,7 @@ function reportData() {                              // chart data + table of th
                 : c.data.labels.map(l => Array.isArray(l) ? l.join(' ') : l);
     const ds = c.data.datasets.filter(d => Array.isArray(d.data) && d.label), tot = ds.length > 1;
     chartRows.push(['', ...ds.map(d => d.label), ...(tot ? ['Total'] : [])]);
-    names.forEach((nm, i) => chartRows.push([nm, ...ds.map(d => d.data[i] ?? ''), ...(tot ? [ds.reduce((a, d) => a + (+d.data[i] || 0), 0)] : [])]));
+    names.forEach((nm, i) => chartRows.push([xd(nm), ...ds.map(d => d.data[i] ?? ''), ...(tot ? [ds.reduce((a, d) => a + (+d.data[i] || 0), 0)] : [])]));
   }
   const ds2 = c ? c.data.datasets.filter(d => Array.isArray(d.data) && d.label) : [];
   return { c, title: title || pageTitle(), chartRows, tableRows: tb ? tableRows(tb) : [], series: ds2.map(d => ({ label: d.label, bg: d.backgroundColor })),
@@ -1460,8 +1478,8 @@ function exportModulesCSV() {                         // one row per module peri
   [...by.values()].sort((a, b) => FACTORIES.indexOf(a[0].factory) - FACTORIES.indexOf(b[0].factory) || natCmp(a[0].machineRaw + ' ' + a[0].machineNo, b[0].machineRaw + ' ' + b[0].machineNo)).forEach(g => {
     g.sort((a, b) => a.from < b.from ? -1 : 1);
     const cur = g.find(r => r.current) || g[g.length - 1];
-    g.forEach(r => lines.push([r.factory, r.machineRaw + (r.machineNo ? ' ' + r.machineNo : ''), mod(r), dmy(r.from), dmy(r.to), r.events,
-      r.current ? 'Current' : 'Changed', r.current ? '' : (r.nextProduct || t('modNotRec')), r.current ? '' : dmy(r.changedAt), mod(cur)].map(q).join(',')));
+    g.forEach(r => lines.push([r.factory, r.machineRaw + (r.machineNo ? ' ' + r.machineNo : ''), mod(r), xd(dmy(r.from)), xd(dmy(r.to)), r.events,
+      r.current ? 'Current' : 'Changed', r.current ? '' : (r.nextProduct || t('modNotRec')), r.current ? '' : xd(dmy(r.changedAt)), mod(cur)].map(q).join(',')));
   });
   saveBlob(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'report-modules-' + new Date().toISOString().slice(0, 10) + '.csv');
 }
@@ -1585,34 +1603,38 @@ function exportAnomCSV() {
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
   const rows = allRows().filter(r => r.anomalies && r.anomalies.length && !r.confirmed).sort(byTimeAsc);
   const lines = [['Time', 'Factory', 'Machine', 'Reason', 'Date', 'Repair start', 'Recovery end', 'Minutes', 'Qty'].map(q).join(',')].concat(rows.map(r =>
-    [r.timestamp, r.factory, r.machineEn, r.anomalies.map(anomMsg).join(' | '), r.date, r.repairStart, r.recoveryEnd, r.repairMinutes, r.qty].map(q).join(',')));
+    [xd(r.timestamp), r.factory, r.machineEn, r.anomalies.map(anomMsg).join(' | '), xd(r.date), xd(r.repairStart), xd(r.recoveryEnd), r.repairMinutes, r.qty].map(q).join(',')));
   saveBlob(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'data-check-' + new Date().toISOString().slice(0, 10) + '.csv');
 }
 
 /* ================== REPORT FORM (table as picture) ================== */
 const RF_PCT = true;          // fail-rate column as %  (false = plain ratio, e.g. 0.0123)
 const RF_PAGE = 60;           // rows per picture (more rows -> several pictures)
-const RF_HEAD = [['日期', 'วันที่'], ['班别', 'A/B'], ['站别', 'กระบวนการทำงาน'], ['设备名称', 'ชื่ออุปกรณ์'], ['机种', 'โมดูล'], ['设备问题点', 'เครื่องมีปัญหา'], ['故障原因与解决办法', 'สาเหตุและวิธีแก้ไขความล้มเหลว'],
-  ['报修时间', 'เวลาที่แจ้งซ่อม'], ['维修时间', 'เวลาซ่อม'], ['复机时间', 'เวลาพักฟื้นของเครื่อง'], ['维修总时间(min)', 'เวลาทั้งหมด(นาที)สำหรับการซ่อมแซม'], ['设备数量', 'จำนวนเครื่อง'],
-  ['设备故障率', 'อัตราความล้มเหลวของเครื่อง'], ['领班确认', 'หัวหน้างาน'], ['维修人员', 'ช่างเทคนิค'], ['备注', 'หมายเหตุ']];
+const RF_HEAD = [   // [EN, 中文, ไทย] - the form follows the language button
+  ['Date', '日期', 'วันที่'], ['Shift', '班别', 'A/B'], ['Station', '站别', 'กระบวนการทำงาน'], ['Machine name', '设备名称', 'ชื่ออุปกรณ์'], ['Model', '机种', 'โมดูล'],
+  ['Issue point', '设备问题点', 'เครื่องมีปัญหา'], ['Cause & solution', '故障原因与解决办法', 'สาเหตุและวิธีแก้ไขความล้มเหลว'], ['Reported time', '报修时间', 'เวลาที่แจ้งซ่อม'],
+  ['Repair start', '维修时间', 'เวลาซ่อม'], ['Recovery time', '复机时间', 'เวลาพักฟื้นของเครื่อง'], ['Total repair time (min)', '维修总时间(min)', 'เวลาทั้งหมด(นาที)สำหรับการซ่อมแซม'],
+  ['Qty', '设备数量', 'จำนวนเครื่อง'], ['Fail rate', '设备故障率', 'อัตราความล้มเหลวของเครื่อง'], ['Leader', '领班确认', 'หัวหน้างาน'], ['Technician', '维修人员', 'ช่างเทคนิค'], ['Remark', '备注', 'หมายเหตุ']];
+const rfLi = () => lang === 'zh' ? 1 : lang === 'th' ? 2 : 0;
 const RF_W = [78, 52, 78, 150, 92, 150, 300, 108, 108, 108, 92, 62, 82, 74, 84, 130];
 let rfBlobs = [], rfUrls = [], rfIdx = 0;
-const rfD = s => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(s || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (s || ''); };
-const rfDT = s => { const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d)/.exec(s || ''); return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}` : (s || ''); };
+const rfD = s => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(s || ''); return m ? `${m[2]}/${m[3]}/${m[1]}` : (s || ''); };      // MM/DD/YYYY
+const rfDT = s => { const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d)/.exec(s || ''); return m ? `${m[2]}/${m[3]}/${m[1]} ${m[4]}` : (s || ''); };
 function rfCells(r) {
   const fr = calcFailRate_(r.repairMinutes, r.qty);                       // repair_minutes / qty / 21 / 60 ; '' when minutes empty or 0, or qty <= 0
-  return [rfD(r.date || (r.timestamp || '').slice(0, 10)), r.shift, r.station, r.machineCn || r.machineEn, r.product, r.issueType || r.issueCn || r.issueEn,
-    [r.issueCn || r.issueEn, r.solutionCn || r.solutionEn].filter(Boolean).join('\n'), rfDT(r.timestamp), rfDT(r.repairStart), rfDT(r.recoveryEnd),
+  return [rfD(r.date || (r.timestamp || '').slice(0, 10)), r.shift, r.station, mName(r), r.product, r.issueType || pick(r.issueEn || r.issueRaw, r.issueCn, r.issueTh),
+    [pick(r.issueEn || r.issueRaw, r.issueCn, r.issueTh), pick(r.solutionEn || r.solutionRaw, r.solutionCn, r.solutionTh)].filter(Boolean).join('\n'), rfDT(r.timestamp), rfDT(r.repairStart), rfDT(r.recoveryEnd),
     r.repairMinutes, r.qty, fr === '' ? '' : (RF_PCT ? (fr * 100).toFixed(2) + '%' : fr.toFixed(4)), r.leader, r.technician, r.remark];
 }
 function rfTable(rows) {
   const b = 'border:1px solid #000;', th = 'position:static;background:#92D050;color:#000;font-weight:700;text-align:center;padding:5px 6px;font-size:12px;line-height:1.35;' + b;
   const td = i => `${b}padding:4px 6px;font-size:12px;line-height:1.35;color:#000;background:#fff;white-space:pre-wrap;word-break:break-word;text-align:${i === 6 ? 'left' : 'center'};vertical-align:middle;`;
   return `<table style="border-collapse:collapse;table-layout:fixed;width:${RF_W.reduce((a, b2) => a + b2, 0)}px;font-family:'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif;border:2px solid #000"><colgroup>${RF_W.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr>${RF_HEAD.map(h => `<th style="${th}">${esc(h[0])}<br>${esc(h[1])}</th>`).join('')}</tr></thead>
+    <thead><tr>${RF_HEAD.map(h => `<th style="${th}">${esc(h[rfLi()])}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => `<tr style="border:0">${rfCells(r).map((v, i) => `<td style="${td(i)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function rfShow() {
+  { const i = $('rfImg'); i.style.width = i.style.maxWidth = ''; i.style.cursor = ''; i.dataset.z = ''; }   // back to fit-to-window
   $('rfImg').src = rfUrls[rfIdx]; $('rfImg').style.display = 'block'; $('rfPage').textContent = rfBlobs.length > 1 ? `${rfIdx + 1} / ${rfBlobs.length}` : '';
   $('rfPrev').style.display = $('rfNext').style.display = rfBlobs.length > 1 ? '' : 'none';
 }
@@ -1637,9 +1659,9 @@ async function openReportForm() {
 }
 
 /* ================== EVENTS ================== */
-$('btn-en').onclick = () => { lang = 'en'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
-$('btn-zh').onclick = () => { lang = 'zh'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
-$('btn-th').onclick = () => { lang = 'th'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
+$('btn-en').onclick = () => { lang = 'en'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); if ($('rfDlg').open) openReportForm(); };
+$('btn-zh').onclick = () => { lang = 'zh'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); if ($('rfDlg').open) openReportForm(); };
+$('btn-th').onclick = () => { lang = 'th'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); if ($('rfDlg').open) openReportForm(); };
 $('btnTheme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', theme); render(); };
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); if (tab === 'model' && modelChartInst) modelChartInst.resize(); if (tab === 'top' && topChartInst) topChartInst.resize(); if (tab === 'downtime') { if (dtChartInst) dtChartInst.resize(); if (dtChart2Inst) dtChart2Inst.resize(); } });
 $('fFactory').onchange = () => { buildMachineOptions(); render(); };
@@ -1685,6 +1707,7 @@ $('expCsv').onclick = () => { $('exportDlg').close(); exportCSV(); };
 $('expPdf').onclick = () => { $('exportDlg').close(); buildReport().then(() => { reportBuilt = true; window.print(); }); };
 $('exportDlg').addEventListener('click', e => { if (e.target === $('exportDlg')) $('exportDlg').close(); });
 $('rfClose').onclick = () => $('rfDlg').close();
+$('rfImg').onclick = () => { const i = $('rfImg'), z = i.dataset.z !== '1'; i.dataset.z = z ? '1' : ''; i.style.width = z ? (i.naturalWidth / 2) + 'px' : ''; i.style.maxWidth = z ? 'none' : ''; i.style.cursor = z ? 'zoom-out' : ''; };
 $('rfPrev').onclick = () => { rfIdx = (rfIdx + rfBlobs.length - 1) % rfBlobs.length; rfShow(); };
 $('rfNext').onclick = () => { rfIdx = (rfIdx + 1) % rfBlobs.length; rfShow(); };
 $('rfDl').onclick = () => rfBlobs[rfIdx] && saveBlob(rfBlobs[rfIdx], 'report-form-' + new Date().toISOString().slice(0, 10) + (rfBlobs.length > 1 ? '-' + (rfIdx + 1) : '') + '.png');
