@@ -7,7 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="pr-core.js"></script>
+<script src="pr-core.js?v=38"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -334,10 +334,10 @@
 
 
 <div id="report"></div>
-<script src="pr-admin.js"></script>
+<script src="pr-admin.js?v=38"></script>
 <script>
 /* ================== CONFIG ================== */
-const APP_VERSION = 'v36-2026-11-20';
+const APP_VERSION = 'v38-2026-11-20';
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
 const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': '#a78bfa' };
@@ -545,7 +545,7 @@ function applyChrome() {
   $('btn-th').classList.toggle('primary', lang === 'th');
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.dataset.view !== tab));
-  $('updated').textContent = (generatedAt ? `${t('updated')}: ${new Date(generatedAt).toLocaleString(loc())}` : '') + ' · ' + APP_VERSION;
+  $('updated').textContent = (generatedAt ? `${t('updated')}: ${new Date(generatedAt).toLocaleString(loc())}` : '') + ' · ' + APP_VERSION + ' · TH ' + DATA.filter(r => r.issueTh).length + '/' + DATA.length + (window.TR_ERR ? ' · ⚠ translations: ' + window.TR_ERR : '');
   $('fFactory').options[0].textContent = t('all');
   $('fMachine').options[0].textContent = t('allM');
   $('fBrand').options[0].textContent = t('allB');
