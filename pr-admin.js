@@ -52,6 +52,7 @@ const PRA = (() => {
   .pra-f label{display:block;font-size:11px;color:var(--muted);margin-bottom:2px;position:static}
   .pra-f input,.pra-f textarea,.pra-f select{width:100%;font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text);color-scheme:inherit;min-width:0}
   .pra-f{position:relative} .pra-f input[readonly]{opacity:.7}
+  .pra-dt{display:flex;gap:4px;align-items:center} .pra-f .pra-dt select{width:66px;flex:none} .pra-f .pra-dt input{flex:1}
   .pra-dd{display:none;position:absolute;left:0;right:0;top:100%;z-index:60;max-height:210px;overflow:auto;background:var(--panel);border:1px solid var(--accent);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
   .pra-dd div{padding:6px 9px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line)} .pra-dd div:hover{background:var(--panel2)} .pra-dd .new{color:var(--accent);font-weight:600}
   .pra-foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
@@ -132,27 +133,38 @@ const PRA = (() => {
   }
 
   /* ---------- combo box (pick from existing, or type a new value) ---------- */
-  function combo(inp, getList) {
+  function combo(inp, getList) {                                  // list items: 'text' or [storedValue, shownLabel]
     const box = document.createElement('div'); box.className = 'pra-dd'; inp.parentNode.appendChild(box);
+    const V = x => Array.isArray(x) ? x[0] : x, L = x => Array.isArray(x) ? x[1] : x;
     const show = () => {
-      const list = getList(), k = nk(inp.value), hit = list.filter(x => !k || nk(x).includes(k)).slice(0, 80), exact = list.some(x => nk(x) === k);
-      box.innerHTML = hit.map(x => `<div data-v="${E(x)}">${E(x)}</div>`).join('') + (k && !exact ? `<div class="new" data-v="${E(inp.value.trim())}">＋ ${T('addNew')}: ${E(inp.value.trim())}</div>` : '');
+      const list = getList(), k = nk(inp.value), hit = list.filter(x => !k || nk(V(x)).includes(k) || nk(L(x)).includes(k)).slice(0, 80), exact = list.some(x => nk(V(x)) === k || nk(L(x)) === k);
+      box.innerHTML = hit.map(x => `<div data-v="${E(V(x))}">${E(L(x))}${L(x) !== V(x) ? `<br><span style="font-size:11px;color:var(--muted)">${E(V(x))}</span>` : ''}</div>`).join('') + (k && !exact ? `<div class="new" data-v="${E(inp.value.trim())}">＋ ${T('addNew')}: ${E(inp.value.trim())}</div>` : '');
       box.style.display = box.innerHTML ? 'block' : 'none';
     };
     inp.addEventListener('focus', show); inp.addEventListener('input', show);
     inp.addEventListener('blur', () => setTimeout(() => (box.style.display = 'none'), 120));
     box.addEventListener('mousedown', e => { const d = e.target.closest('[data-v]'); if (!d) return; e.preventDefault(); inp.value = d.dataset.v; box.style.display = 'none'; inp.dispatchEvent(new Event('change', { bubbles: true })); });
   }
+  const trOf = (r, k) => lang === 'zh' ? (r[k + 'Cn'] || '') : lang === 'th' ? (r[k + 'Th'] || '') : '';      // translation in the selected language (needs pr-core to fill issueTh / solutionTh)
+  const pairs = (rows, rawKey, trKey) => { const c = new Map(), lb = new Map(); rows.forEach(r => { const v = String(r[rawKey] ?? '').trim(); if (!v) return; c.set(v, (c.get(v) || 0) + 1); if (!lb.get(v)) lb.set(v, trOf(r, trKey)); }); return [...c.entries()].sort((a, b) => b[1] - a[1]).map(([v]) => [v, lb.get(v) || v]); };
   const uniq = (key, filter) => { const c = new Map(); all().forEach(r => { if (filter && !filter(r)) return; const v = String(r[key] ?? '').trim(); if (v) c.set(v, (c.get(v) || 0) + 1); }); return [...c.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]); };
 
   /* ---------- form ---------- */
+  function dtWrap(key) {                                           // date + 24 h time (no AM/PM) that behaves like one value 'YYYY-MM-DDTHH:mm'
+    const dd = q('pra_' + key + '_d'), hh = q('pra_' + key + '_h'), mm = q('pra_' + key + '_m'), subs = [dd, hh, mm];
+    return { get value() { return dd.value ? `${dd.value}T${hh.value || '00'}:${mm.value || '00'}` : ''; },
+      set value(v) { const m = /^(\d{4}-\d\d-\d\d)T(\d\d):(\d\d)/.exec(v || ''); dd.value = m ? m[1] : ''; hh.value = m ? m[2] : ''; mm.value = m ? m[3] : ''; },
+      addEventListener(ev, fn) { subs.forEach(x => x.addEventListener(ev, fn)); }, focus() { dd.focus(); } };
+  }
   function open(row) {
     const old = q('praDlg'); if (old) old.remove();
     const editing = row || null, d = document.createElement('dialog'); d.id = 'praDlg';
     const f = (id, type, wide, key = id) => {
+      if (type === 'dt') { const op = n => '<option value=""></option>' + Array.from({ length: n }, (_, i) => `<option>${p2(i)}</option>`).join('');
+        return `<div class="pra-f${wide ? ' wide' : ''}"><label for="pra_${key}_d">${T(id)}</label><div class="pra-dt"><input type="date" id="pra_${key}_d"><select id="pra_${key}_h">${op(24)}</select><span>:</span><select id="pra_${key}_m">${op(60)}</select></div></div>`; }
       const lab = `<label for="pra_${key}">${T(id)}</label>`;
       const ctl = type === 'area' ? `<textarea id="pra_${key}" rows="2" autocomplete="off"></textarea>` : `<input id="pra_${key}" ${type === 'dt' ? 'type="datetime-local"' : type === 'num' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} autocomplete="off" ${id === 'failRate' ? 'readonly' : ''}>`;
-      return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}</div>`;
+      return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}${(id === 'issue' || id === 'solution') ? `<div class="lbl" id="pra_${id}_t" style="margin-top:2px"></div>` : ''}</div>`;
     };
     d.innerHTML = `<div class="pra-head"><span>${editing ? T('edit') : T('add')}</span><button class="btn" id="pra_x">✕</button></div><div class="pra-body">
       <div class="pra-sec">${T('secWhen')}</div><div class="pra-grid">${f('factory', 'text')}${f('time', 'dt', 0, 'timestamp')}${f('shift', 'text')}${f('station', 'text')}</div>
@@ -162,7 +174,7 @@ const PRA = (() => {
       <div class="pra-sec">${T('secPeople')}</div><div class="pra-grid">${f('leader', 'text')}${f('technician', 'text')}${f('remark', 'area', 1)}</div></div>
       <div class="pra-foot"><button class="btn" id="pra_cancel">${T('cancel')}</button>${editing ? '' : `<button class="btn" id="pra_saveNew">${T('saveNew')}</button>`}<button class="btn primary" id="pra_save">${T('save')}</button></div>`;
     document.body.appendChild(d);
-    const I = {}; ['factory', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'failRate', 'leader', 'technician', 'remark'].forEach(k => (I[k] = q('pra_' + k)));
+    const I = {}; ['factory', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'failRate', 'leader', 'technician', 'remark'].forEach(k => (I[k] = ['timestamp', 'repairStart', 'recoveryEnd'].includes(k) ? dtWrap(k) : q('pra_' + k)));
     const get = () => { const v = {}; Object.keys(I).forEach(k => (v[k] = (I[k].value || '').trim())); return v; };
     const set = v => Object.keys(v).forEach(k => { if (I[k]) I[k].value = v[k] ?? ''; });
     let manual = false;
@@ -170,18 +182,21 @@ const PRA = (() => {
     const fac = () => I.factory.value.trim(), mach = () => all().filter(r => (!fac() || r.factory === fac()) && nk(r.machineRaw) === nk(I.machine.value));
     combo(I.factory, () => FACTORIES); combo(I.shift, () => uniq('shift')); combo(I.station, () => uniq('station')); combo(I.product, () => uniq('product')); combo(I.issueType, () => uniq('issueType'));
     combo(I.machine, () => uniq('machineRaw', r => !r.noMachine && (!fac() || r.factory === fac()))); combo(I.machineNo, () => [...new Set(mach().map(r => r.machineNo).filter(Boolean))]);
-    combo(I.issue, () => uniq('issueRaw')); combo(I.leader, () => uniq('leader')); combo(I.technician, () => uniq('technician'));
-    combo(I.solution, () => { const own = new Set(all().filter(r => nk(r.issueRaw) === nk(I.issue.value) && r.solutionRaw).map(r => r.solutionRaw)); return [...own, ...uniq('solutionRaw').filter(x => !own.has(x))]; });
+    combo(I.issue, () => pairs(all(), 'issueRaw', 'issue')); combo(I.leader, () => uniq('leader')); combo(I.technician, () => uniq('technician'));
+    combo(I.solution, () => { const own = pairs(all().filter(r => nk(r.issueRaw) === nk(I.issue.value)), 'solutionRaw', 'solution'), have = new Set(own.map(x => x[0])); return [...own, ...pairs(all(), 'solutionRaw', 'solution').filter(x => !have.has(x[0]))]; });
+    const hintFor = (k, rk, tk) => { const v = nk(I[k].value), r = v && all().find(x => nk(x[rk]) === v && trOf(x, tk)); q('pra_' + k + '_t').textContent = r ? '→ ' + trOf(r, tk) : ''; };
+    const refreshHints = () => { hintFor('issue', 'issueRaw', 'issue'); hintFor('solution', 'solutionRaw', 'solution'); };
+    ['input', 'change'].forEach(ev => { I.issue.addEventListener(ev, refreshHints); I.solution.addEventListener(ev, refreshHints); });
     I.machine.addEventListener('change', () => { const m = mach().sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.product.value) I.product.value = m.product || ''; if (m && !I.machineNo.value) I.machineNo.value = m.machineNo || ''; });
     I.issue.addEventListener('change', () => { const m = all().filter(r => nk(r.issueRaw) === nk(I.issue.value) && r.solutionRaw).sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.solution.value) I.solution.value = m.solutionRaw; });
     ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.minutes.addEventListener('input', () => { manual = I.minutes.value !== ''; recalc(); });
     if (editing) { const v = toForm(editing); set(v); manual = v.minutes !== ''; } else { I.timestamp.value = nowLocal(); I.factory.value = q('fFactory') && q('fFactory').value || ''; }
-    recalc();
+    recalc(); refreshHints();
     const close = () => { d.close(); d.remove(); };
     q('pra_x').onclick = q('pra_cancel').onclick = close;
     q('pra_save').onclick = async () => { if (await commit(get(), editing)) close(); };
     if (!editing) q('pra_saveNew').onclick = async () => {
-      const v = get(); if (await commit(v, null)) { ['machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'remark', 'failRate'].forEach(k => (I[k].value = '')); manual = false; I.timestamp.value = nowLocal(); recalc(); I.machine.focus(); }
+      const v = get(); if (await commit(v, null)) { ['machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'remark', 'failRate'].forEach(k => (I[k].value = '')); manual = false; I.timestamp.value = nowLocal(); recalc(); refreshHints(); I.machine.focus(); }
     };
     d.showModal();
   }
