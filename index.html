@@ -121,9 +121,7 @@
       <button id="btn-zh" class="btn">中文</button>
       <button id="btn-th" class="btn">ไทย</button>
       <button id="btnTheme" class="btn" title="Theme">◐</button>
-      <button id="btnPng" class="btn" data-i18n="saveImg"></button>
-      <button id="btnCsv" class="btn" title="CSV">⇩ CSV</button>
-      <button id="btnPrint" class="btn" title="PDF">⎙ PDF</button>
+      <button id="btnExport" class="btn primary" data-i18n="export"></button>
     </div>
   </div>
   <div class="max-w-7xl mx-auto px-3 pb-2 flex flex-wrap items-center gap-1">
@@ -135,6 +133,7 @@
       <button class="tab" data-tab="modules" data-i18n="tabModules"></button>
       <button class="tab" data-tab="remarks" data-i18n="tabRemarks"></button>
       <button class="tab" data-tab="log" data-i18n="tabLog"></button>
+      <button class="tab" data-tab="anom" data-i18n="tabAnom"></button>
     </nav>
     <select id="fFactory" aria-label="Factory"></select>
     <select id="fMachine" aria-label="Machine" style="display:none"></select>   <!-- hidden: only holds the machine picked by clicking a bar -->
@@ -143,6 +142,7 @@
     <input type="date" id="fStart" aria-label="Start">
     <span class="lbl">–</span>
     <input type="date" id="fEnd" aria-label="End">
+    <button id="btnToday" class="btn" data-i18n="today"></button>
     <button id="btnReset" class="btn" data-i18n="reset"></button>
   </div>
 </header>
@@ -250,7 +250,21 @@
     </div>
     <div class="scroll">
       <table class="w-full" id="tblLog">
-        <thead><tr><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="issue"></th><th data-i18n="solution"></th></tr></thead>
+        <thead><tr><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="issue"></th><th data-i18n="solution"></th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="view panel p-3 hidden" data-view="anom">
+    <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
+      <div class="font-semibold" data-i18n="anomTitle"></div>
+      <div class="flex items-center gap-3"><label class="lbl flex items-center gap-1"><input type="checkbox" id="anomShowOk"><span data-i18n="anomShowOk"></span></label><span id="anomCount" class="lbl"></span></div>
+    </div>
+    <div class="lbl mb-2" data-i18n="anomNote"></div>
+    <div class="scroll">
+      <table class="w-full" id="tblAnom">
+        <thead><tr><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="anomReason"></th><th data-i18n="anomValue"></th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -273,6 +287,27 @@
   <div class="flex justify-end gap-2 mt-3"><a id="imgDl" class="btn primary" download="report.png" style="display:none" data-i18n="dlPng"></a><button class="btn" id="imgClose" data-i18n="close"></button></div>
 </dialog>
 
+<dialog id="exportDlg">
+  <div style="font-weight:600;font-size:13px;margin-bottom:10px" data-i18n="expTitle"></div>
+  <div class="flex flex-col gap-2" style="min-width:240px">
+    <button class="btn primary" id="expPng" data-i18n="expPng"></button>
+    <button class="btn primary" id="expForm" data-i18n="expForm"></button>
+    <button class="btn" id="expCsv" data-i18n="expCsv"></button>
+    <button class="btn" id="expPdf" data-i18n="expPdf"></button>
+    <button class="btn" id="expNo" data-i18n="exit"></button>
+  </div>
+</dialog>
+
+<dialog id="rfDlg" style="max-width:96vw">
+  <h3 id="rfTitle"></h3>
+  <div class="lbl" id="rfHint" style="margin:2px 0 8px"></div>
+  <div style="max-height:68vh;overflow:auto;max-width:92vw;background:#fff;border-radius:6px"><img id="rfImg" alt="" style="display:none;width:100%;min-width:900px"></div>
+  <div class="flex flex-wrap items-center justify-end gap-2 mt-3">
+    <button class="btn" id="rfPrev">‹</button><span class="lbl" id="rfPage"></span><button class="btn" id="rfNext">›</button>
+    <button class="btn primary" id="rfCopy" data-i18n="rfCopy"></button><button class="btn primary" id="rfDl" data-i18n="rfDl"></button><button class="btn" id="rfClose" data-i18n="close"></button>
+  </div>
+</dialog>
+
 <dialog id="saveDlg">
   <div style="font-weight:600;font-size:13px;margin-bottom:10px" data-i18n="saveTitle"></div>
   <div class="flex flex-col gap-2" style="min-width:210px">
@@ -287,14 +322,20 @@
 <script src="pr-admin.js"></script>
 <script>
 /* ================== CONFIG ================== */
-const APP_VERSION = 'v35-2026-11-17';
+const APP_VERSION = 'v36-2026-11-20';
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
 const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': '#a78bfa' };
 
 /* ================== i18n ================== */
 const I18N = {
-  en: { title:'Non-Standard Problem Report', addData:'＋ Add Data', factory:'Factory', machine:'Machine', reset:'Reset',
+  en: { export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
+ rfTitle:'Report form', rfBusy:'Building the picture…', rfFail:'Could not build the picture (try fewer rows)', rfCopy:'Copy image', rfDl:'Download PNG', rfCopied:'Image copied to clipboard', rfCopyFail:'Copy not allowed here – use Download PNG',
+ anomTitle:'Data check – records with problems', anomNote:'Fix the record (✎), apply the suggested date (→), or confirm it if the value is really correct (✓).', anomShowOk:'Show confirmed', anomNone:'No problems found 👍',
+ anomReason:'Reason', anomValue:'Values', anomEdit:'Edit', anomConfirm:'Confirm', anomUndo:'Undo confirm',
+ a_noTime:'No valid report time', a_future:'Report time is in the future (day / month swapped?)', a_dateSwap:'{f}: day and month look swapped', a_dateMismatch:'{f} is far from the report time',
+ a_negTime:'{f} is earlier than the report / repair time (negative time)', a_negMin:'Repair minutes are negative', a_overLimit:'Repair minutes are over the limit (> 1000)', a_incomplete:'Missing: {v}',
+ fl_timestamp:'Report time', fl_date:'Date', fl_repairStart:'Repair start', fl_recoveryEnd:'Recovery', title:'Non-Standard Problem Report', addData:'＋ Add Data', factory:'Factory', machine:'Machine', reset:'Reset',
     all:'All factories', allM:'All machines', cases:'cases', chartTitle:'Issues per machine',
     tabOverview:'Overview', saveImg:'▧ Save image', imgTitle:'Save this page as an image',
     imgHint:'Right-click the picture below, then choose “Save image as…” (on a phone: press and hold the picture, then “Save image”).',
@@ -322,7 +363,13 @@ const I18N = {
     saveTitle:'Save as image', saveChart:'Chart only', saveBoth:'Chart + table', yes:'Yes', exit:'Exit', imgBusy:'Creating the image…', imgFail:'Could not create the image. Try CSV or PDF instead.', dlPng:'⇩ Download PNG',
     loading:'Loading data…', demo:'Demo data shown. Set GAS_URL in index.html to load your sheets.',
     error:'Could not load data: ', empty:'No records match the current filters.', updated:'Updated', total:'Total' },
-  zh: { title:'非标准问题报告', addData:'＋ 添加数据', factory:'工厂', machine:'机器', reset:'重置',
+  zh: { export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
+ rfTitle:'报告表单', rfBusy:'正在生成图片…', rfFail:'无法生成图片（请减少行数）', rfCopy:'复制图片', rfDl:'下载 PNG', rfCopied:'图片已复制到剪贴板', rfCopyFail:'此处不允许复制 – 请下载 PNG',
+ anomTitle:'数据检查 – 有问题的记录', anomNote:'请修改记录（✎）、采用建议日期（→），或在数值确实正确时确认（✓）。', anomShowOk:'显示已确认', anomNone:'未发现问题 👍',
+ anomReason:'原因', anomValue:'数值', anomEdit:'修改', anomConfirm:'确认', anomUndo:'取消确认',
+ a_noTime:'报修时间缺失或无效', a_future:'报修时间在未来（日/月颠倒？）', a_dateSwap:'{f}：日和月似乎颠倒', a_dateMismatch:'{f} 与报修时间相差太大',
+ a_negTime:'{f} 早于报修/维修时间（时间为负）', a_negMin:'维修总时间为负数', a_overLimit:'维修总时间超过上限（> 1000）', a_incomplete:'缺少：{v}',
+ fl_timestamp:'报修时间', fl_date:'日期', fl_repairStart:'维修时间', fl_recoveryEnd:'复机时间', title:'非标准问题报告', addData:'＋ 添加数据', factory:'工厂', machine:'机器', reset:'重置',
     all:'全部工厂', allM:'全部机器', cases:'起', chartTitle:'各机器问题统计',
     tabOverview:'概览', saveImg:'▧ 保存图片', imgTitle:'将此页面保存为图片',
     imgHint:'请在下方图片上点击右键，选择“图片另存为…”（手机：长按图片，选择“保存图片”）。',
@@ -350,7 +397,13 @@ const I18N = {
     saveTitle:'保存为图片', saveChart:'仅图表', saveBoth:'图表 + 表格', yes:'是', exit:'退出', imgBusy:'正在生成图片…', imgFail:'无法生成图片，请改用 CSV 或 PDF。', dlPng:'⇩ 下载 PNG',
     loading:'数据加载中…', demo:'当前为演示数据。请在 index.html 中设置 GAS_URL 以加载表格数据。',
     error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' },
-  th:{ title:'รายงานปัญหาที่ไม่เป็นมาตรฐาน', addData:'＋ เพิ่มข้อมูล', factory:'โรงงาน', machine:'เครื่อง', reset:'รีเซ็ต',
+  th:{ export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
+ rfTitle:'ฟอร์มรายงาน', rfBusy:'กำลังสร้างรูปภาพ…', rfFail:'สร้างรูปไม่ได้ (ลองลดจำนวนแถว)', rfCopy:'คัดลอกรูปภาพ', rfDl:'ดาวน์โหลดรูป (PNG)', rfCopied:'คัดลอกรูปไปคลิปบอร์ดแล้ว', rfCopyFail:'คัดลอกไม่ได้ที่นี่ – ใช้ดาวน์โหลด PNG แทน',
+ anomTitle:'ตรวจข้อมูล – รายการที่มีปัญหา', anomNote:'แก้ไขรายการ (✎) ใช้วันที่ที่แนะนำ (→) หรือกดยืนยัน (✓) ถ้าค่าถูกต้องจริง', anomShowOk:'แสดงที่ยืนยันแล้ว', anomNone:'ไม่พบความผิดปกติ 👍',
+ anomReason:'สาเหตุ', anomValue:'ค่า', anomEdit:'แก้ไข', anomConfirm:'ยืนยัน', anomUndo:'ยกเลิกยืนยัน',
+ a_noTime:'ไม่มีเวลาแจ้งซ่อมที่ถูกต้อง', a_future:'เวลาแจ้งซ่อมอยู่ในอนาคต (สลับวัน/เดือน?)', a_dateSwap:'{f}: วันและเดือนน่าจะสลับกัน', a_dateMismatch:'{f} ห่างจากเวลาแจ้งซ่อมมากผิดปกติ',
+ a_negTime:'{f} เร็วกว่าเวลาแจ้งซ่อม/เวลาซ่อม (เวลาติดลบ)', a_negMin:'เวลาซ่อมติดลบ', a_overLimit:'เวลาซ่อมเกินเกณฑ์ (> 1000 นาที)', a_incomplete:'ข้อมูลไม่ครบ: {v}',
+ fl_timestamp:'เวลาแจ้งซ่อม', fl_date:'วันที่', fl_repairStart:'เวลาซ่อม', fl_recoveryEnd:'เวลาพักฟื้น', title:'รายงานปัญหาที่ไม่เป็นมาตรฐาน', addData:'＋ เพิ่มข้อมูล', factory:'โรงงาน', machine:'เครื่อง', reset:'รีเซ็ต',
     all:'ทุกโรงงาน', allM:'ทุกเครื่อง', cases:'รายการ', chartTitle:'ปัญหาต่อเครื่อง',
     tabOverview:'ภาพรวม', saveImg:'▧ บันทึกรูป', imgTitle:'บันทึกหน้านี้เป็นรูปภาพ',
     imgHint:'คลิกขวาที่รูปด้านล่าง แล้วเลือก “บันทึกรูปภาพเป็น…” (บนมือถือ: กดค้างที่รูป แล้วเลือก “บันทึกรูปภาพ”)',
@@ -466,7 +519,7 @@ function filtered(withNoMachine) {                   // withNoMachine: also the 
 function render() {
   applyChrome();
   const rows = filtered();
-  renderCards(rows); renderChart(rows); renderTop(rows); renderModelTab(rows); renderDowntime(rows); renderModules(); renderModuleCards(); renderRemarks(rows); renderLog(filtered(true));
+  renderCards(rows); renderChart(rows); renderTop(rows); renderModelTab(rows); renderDowntime(rows); renderModules(); renderModuleCards(); renderRemarks(rows); renderLog(filtered(true)); renderAnomalies();
 }
 function applyChrome() {
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
@@ -1275,26 +1328,27 @@ function renderRemarks(rows) {
 
 function pageTitle() {                               // heading used in saved images / files
   return { overview: () => $('chartTitle').textContent, top: () => $('topChartTitle').textContent, model: () => $('modelChartTitle').textContent,
-           downtime: () => t('tabDowntime') + ' – ' + $('dtTitle').textContent, modules: () => t('modTitle'), remarks: () => t('remTitle'), log: () => t('logTitle') }[tab]();
+           downtime: () => t('tabDowntime') + ' – ' + $('dtTitle').textContent, modules: () => t('modTitle'), remarks: () => t('remTitle'), log: () => t('logTitle'), anom: () => t('anomTitle') }[tab]();
 }
-const TABLE_ONLY = ['log', 'modules', 'remarks'];     // pages that have a table but no chart
+const TABLE_ONLY = ['log', 'modules', 'remarks', 'anom'];     // pages that have a table but no chart
 
 function renderLog(rows) {
   rows = [...rows].sort(byTimeAsc);                  // Issue Log: oldest -> newest
   const fl = rows.filter(r => r.dateWarn); rows = [...fl, ...rows.filter(r => !r.dateWarn)];   // dates waiting for a check: on top, light yellow
   $('logCount').textContent = `${rows.length} ${t('cases')}`;
   const DW = ({ th: ['⚠ ตรวจสอบวันที่ก่อนแก้ — ยังไม่ได้แก้ ยืนยันได้ในชีท (ตารางนี้ยังแสดงวันที่ตามที่เขียนไว้)', 'จะแก้เป็น'], zh: ['⚠ 请先核对日期 — 尚未修改，请在表格中确认（此处仍显示原始日期）', '将改为'], en: ['⚠ Check these dates before fixing — nothing changed yet, confirm in the sheet (this table still shows the date as written)', 'will become'] })[lang] || ['⚠ Check dates', 'will become'];
-  const banner = fl.length ? `<tr class="dwarn"><td colspan="5"><b>${DW[0]} (${fl.length})</b><ul style="margin:4px 0 0 18px;list-style:disc">${fl.map(r => (r.dateFix || []).map(x => `<li>${esc(mName(r))} · ${esc(x.f)}: ${esc(x.from)} → ${DW[1]} <b>${esc(x.to)}</b></li>`).join('')).join('')}</ul></td></tr>` : '';
+  const banner = fl.length ? `<tr class="dwarn"><td colspan="6"><b>${DW[0]} (${fl.length})</b><ul style="margin:4px 0 0 18px;list-style:disc">${fl.map(r => (r.dateFix || []).map(x => `<li>${esc(mName(r))} · ${esc(x.f)}: ${esc(x.from)} → ${DW[1]} <b>${esc(x.to)}</b></li>`).join('')).join('')}</ul></td></tr>` : '';
   const sub = v => (lang !== 'en' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
   const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
   const dwNote = r => r.dateWarn ? `<div class="lbl">⚠ ${esc(r.dateWarn)}</div>` : '';
   $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}">
-    <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}${dwNote(r)}</td>
+    <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}${r.anomalies && r.anomalies.length && !r.confirmed ? ' <span title="' + esc(t('tabAnom')) + '">⚠</span>' : ''}${dwNote(r)}</td>
     <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
     <td>${esc(mName(r))}</td>
     <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
-    <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td></tr>`).join('')
-    || `<tr><td colspan="5" class="text-center lbl">${t('empty')}</td></tr>`;
+    <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td>
+    <td class="whitespace-nowrap">${r.pk ? `<button class="btn kebab" data-kebab="${esc(r.pk)}" aria-label="Edit / Delete">⋮</button>` : ''}</td></tr>`).join('')
+    || `<tr><td colspan="6" class="text-center lbl">${t('empty')}</td></tr>`;
 }
 
 /* ================== EXPORT ================== */
@@ -1316,7 +1370,7 @@ function loadH2C() {                                 // html2canvas is fetched o
   }));
 }
 function saveImage() {
-  const tb = { top: $('tblTop'), model: $('tblModel'), downtime: $('tblDt'), log: $('tblLog'), modules: $('tblMod'), remarks: $('tblRem') }[tab];
+  const tb = { top: $('tblTop'), model: $('tblModel'), downtime: $('tblDt'), log: $('tblLog'), modules: $('tblMod'), remarks: $('tblRem'), anom: $('tblAnom') }[tab];
   if (!tb) return doSaveImage('chart');             // overview: chart only
   if (TABLE_ONLY.includes(tab)) return doSaveImage('both');    // log / modules / remarks: table only
   $('saveDlg').showModal();                         // chart only, or chart + table
@@ -1412,6 +1466,7 @@ function exportModulesCSV() {                         // one row per module peri
   saveBlob(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'report-modules-' + new Date().toISOString().slice(0, 10) + '.csv');
 }
 function exportCSV() {                               // CSV is plain text: chart *data* + table (no picture possible)
+  if (tab === 'anom') return exportAnomCSV();
   if (tab === 'log') return exportLogCSV();
   if (tab === 'modules') return exportModulesCSV();
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', row = a => a.map(q).join(',');
@@ -1507,6 +1562,80 @@ async function exportXLSX() {                        // .xlsx with an editable E
   btn.disabled = false;
 }
 
+/* ================== ANOMALIES / DATA CHECK ================== */
+const allRows = () => DATA.concat(NOMACH);
+const byPk = pk => allRows().find(r => String(r.pk) === String(pk));
+const anomMsg = a => t('a_' + a.code).replace('{f}', a.f ? t('fl_' + a.f) : '').replace('{v}', a.v == null ? '' : a.v);
+function renderAnomalies() {
+  const fac = $('fFactory').value, list = allRows().filter(r => r.anomalies && r.anomalies.length && (!fac || r.factory === fac));
+  const open = list.filter(r => !r.confirmed), rows = ($('anomShowOk').checked ? list : open).sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
+  $('anomCount').textContent = `${open.length} / ${list.length}`;
+  document.querySelector('.tab[data-tab="anom"]').textContent = t('tabAnom') + (open.length ? ` (${open.length})` : '');
+  const m = s => esc((s || '').replace('T', ' ').slice(0, 16)) || '–';
+  $('tblAnom').tBodies[0].innerHTML = rows.map(r => `<tr class="align-top${r.confirmed ? ' opacity-60' : ''}">
+    <td class="whitespace-nowrap">${m(r.timestamp)}</td>
+    <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
+    <td>${esc(mName(r))}</td>
+    <td>${r.anomalies.map((a, i) => `<div>⚠ ${esc(anomMsg(a))}${a.fix ? ` <button class="btn" data-act="fix" data-pk="${esc(r.pk)}" data-ai="${i}">→ ${m(a.fix)}</button>` : ''}</div>`).join('')}</td>
+    <td class="lbl">${esc(t('fl_date'))}: ${esc(r.date || '–')}<br>${esc(t('fl_repairStart'))}: ${m(r.repairStart)}<br>${esc(t('fl_recoveryEnd'))}: ${m(r.recoveryEnd)}<br>min: ${esc(r.repairMinutes === '' ? '–' : r.repairMinutes)} · qty: ${esc(r.qty === '' ? '–' : r.qty)}</td>
+    <td class="whitespace-nowrap"><button class="btn" data-act="edit" data-pk="${esc(r.pk)}">✎ ${esc(t('anomEdit'))}</button> <button class="btn primary" data-act="cf" data-pk="${esc(r.pk)}">✓ ${esc(r.confirmed ? t('anomUndo') : t('anomConfirm'))}</button></td></tr>`).join('')
+    || `<tr><td colspan="6" class="text-center lbl">${t('anomNone')}</td></tr>`;
+}
+function exportAnomCSV() {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = allRows().filter(r => r.anomalies && r.anomalies.length && !r.confirmed).sort(byTimeAsc);
+  const lines = [['Time', 'Factory', 'Machine', 'Reason', 'Date', 'Repair start', 'Recovery end', 'Minutes', 'Qty'].map(q).join(',')].concat(rows.map(r =>
+    [r.timestamp, r.factory, r.machineEn, r.anomalies.map(anomMsg).join(' | '), r.date, r.repairStart, r.recoveryEnd, r.repairMinutes, r.qty].map(q).join(',')));
+  saveBlob(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'data-check-' + new Date().toISOString().slice(0, 10) + '.csv');
+}
+
+/* ================== REPORT FORM (table as picture) ================== */
+const RF_PCT = true;          // fail-rate column as %  (false = plain ratio, e.g. 0.0123)
+const RF_PAGE = 60;           // rows per picture (more rows -> several pictures)
+const RF_HEAD = [['日期', 'วันที่'], ['班别', 'A/B'], ['站别', 'กระบวนการทำงาน'], ['设备名称', 'ชื่ออุปกรณ์'], ['机种', 'โมดูล'], ['设备问题点', 'เครื่องมีปัญหา'], ['故障原因与解决办法', 'สาเหตุและวิธีแก้ไขความล้มเหลว'],
+  ['报修时间', 'เวลาที่แจ้งซ่อม'], ['维修时间', 'เวลาซ่อม'], ['复机时间', 'เวลาพักฟื้นของเครื่อง'], ['维修总时间(min)', 'เวลาทั้งหมด(นาที)สำหรับการซ่อมแซม'], ['设备数量', 'จำนวนเครื่อง'],
+  ['设备故障率', 'อัตราความล้มเหลวของเครื่อง'], ['领班确认', 'หัวหน้างาน'], ['维修人员', 'ช่างเทคนิค'], ['备注', 'หมายเหตุ']];
+const RF_W = [78, 52, 78, 150, 92, 150, 300, 108, 108, 108, 92, 62, 82, 74, 84, 130];
+let rfBlobs = [], rfUrls = [], rfIdx = 0;
+const rfD = s => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(s || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (s || ''); };
+const rfDT = s => { const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d)/.exec(s || ''); return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}` : (s || ''); };
+function rfCells(r) {
+  const fr = calcFailRate_(r.repairMinutes, r.qty);                       // repair_minutes / qty / 21 / 60 ; '' when minutes empty or 0, or qty <= 0
+  return [rfD(r.date || (r.timestamp || '').slice(0, 10)), r.shift, r.station, r.machineCn || r.machineEn, r.product, r.issueType || r.issueCn || r.issueEn,
+    [r.issueCn || r.issueEn, r.solutionCn || r.solutionEn].filter(Boolean).join('\n'), rfDT(r.timestamp), rfDT(r.repairStart), rfDT(r.recoveryEnd),
+    r.repairMinutes, r.qty, fr === '' ? '' : (RF_PCT ? (fr * 100).toFixed(2) + '%' : fr.toFixed(4)), r.leader, r.technician, r.remark];
+}
+function rfTable(rows) {
+  const b = 'border:1px solid #000;', th = 'position:static;background:#92D050;color:#000;font-weight:700;text-align:center;padding:5px 6px;font-size:12px;line-height:1.35;' + b;
+  const td = i => `${b}padding:4px 6px;font-size:12px;line-height:1.35;color:#000;background:#fff;white-space:pre-wrap;word-break:break-word;text-align:${i === 6 ? 'left' : 'center'};vertical-align:middle;`;
+  return `<table style="border-collapse:collapse;table-layout:fixed;width:${RF_W.reduce((a, b2) => a + b2, 0)}px;font-family:'Noto Sans SC','Noto Sans Thai','IBM Plex Sans',Arial,sans-serif;border:2px solid #000"><colgroup>${RF_W.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+    <thead><tr>${RF_HEAD.map(h => `<th style="${th}">${esc(h[0])}<br>${esc(h[1])}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr style="border:0">${rfCells(r).map((v, i) => `<td style="${td(i)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function rfShow() {
+  $('rfImg').src = rfUrls[rfIdx]; $('rfImg').style.display = 'block'; $('rfPage').textContent = rfBlobs.length > 1 ? `${rfIdx + 1} / ${rfBlobs.length}` : '';
+  $('rfPrev').style.display = $('rfNext').style.display = rfBlobs.length > 1 ? '' : 'none';
+}
+async function openReportForm() {
+  const rows = filtered(true).sort(byTimeAsc);
+  $('rfTitle').textContent = t('rfTitle'); $('rfImg').style.display = 'none'; $('rfPage').textContent = ''; $('rfPrev').style.display = $('rfNext').style.display = 'none';
+  $('rfHint').textContent = rows.length ? t('rfBusy') : t('empty'); $('rfDlg').showModal();
+  if (!rows.length) return;
+  let host;
+  try {
+    await loadH2C(); rfUrls.forEach(u => URL.revokeObjectURL(u)); rfBlobs = [];
+    host = document.createElement('div'); host.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;background:#fff;padding:6px;';
+    document.body.appendChild(host);
+    for (let i = 0; i < rows.length; i += RF_PAGE) {
+      host.innerHTML = rfTable(rows.slice(i, i + RF_PAGE));
+      const cv = await html2canvas(host, { backgroundColor: '#fff', scale: 2, logging: false, x: 0, y: 0, scrollX: 0, scrollY: 0, windowWidth: host.scrollWidth + 20 });
+      rfBlobs.push(await new Promise(ok => cv.toBlob(ok, 'image/png')));
+    }
+    rfUrls = rfBlobs.map(b => URL.createObjectURL(b)); rfIdx = 0; $('rfHint').textContent = `${rows.length} ${t('cases')}`; rfShow();
+  } catch (e) { console.error(e); $('rfHint').textContent = t('rfFail'); }
+  if (host) host.remove();
+}
+
 /* ================== EVENTS ================== */
 $('btn-en').onclick = () => { lang = 'en'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
 $('btn-zh').onclick = () => { lang = 'zh'; localStorage.setItem('lang', lang); buildMachineOptions(); render(); };
@@ -1541,16 +1670,35 @@ $('topCrumb').onclick = e => {
 };
 $('whenClose').onclick = () => $('whenDlg').close();
 $('whenDlg').addEventListener('click', e => { if (e.target === $('whenDlg')) $('whenDlg').close(); });
-$('btnPng').onclick = saveImage;
 $('saveChart').onclick = () => { $('saveDlg').close(); doSaveImage('chart'); };
 $('saveBoth').onclick = () => { $('saveDlg').close(); doSaveImage('both'); };
 $('saveNo').onclick = () => $('saveDlg').close();
 $('saveDlg').addEventListener('click', e => { if (e.target === $('saveDlg')) $('saveDlg').close(); });
 $('imgClose').onclick = () => $('imgDlg').close();
 $('imgDlg').addEventListener('click', e => { if (e.target === $('imgDlg')) $('imgDlg').close(); });
-$('btnCsv').onclick = exportCSV;
 let reportBuilt = false;
-$('btnPrint').onclick = () => buildReport().then(() => { reportBuilt = true; window.print(); });
+$('btnExport').onclick = () => { $('expPdf').style.display = tab === 'anom' ? 'none' : ''; $('exportDlg').showModal(); };
+$('expNo').onclick = () => $('exportDlg').close();
+$('expPng').onclick = () => { $('exportDlg').close(); saveImage(); };
+$('expForm').onclick = () => { $('exportDlg').close(); openReportForm(); };
+$('expCsv').onclick = () => { $('exportDlg').close(); exportCSV(); };
+$('expPdf').onclick = () => { $('exportDlg').close(); buildReport().then(() => { reportBuilt = true; window.print(); }); };
+$('exportDlg').addEventListener('click', e => { if (e.target === $('exportDlg')) $('exportDlg').close(); });
+$('rfClose').onclick = () => $('rfDlg').close();
+$('rfPrev').onclick = () => { rfIdx = (rfIdx + rfBlobs.length - 1) % rfBlobs.length; rfShow(); };
+$('rfNext').onclick = () => { rfIdx = (rfIdx + 1) % rfBlobs.length; rfShow(); };
+$('rfDl').onclick = () => rfBlobs[rfIdx] && saveBlob(rfBlobs[rfIdx], 'report-form-' + new Date().toISOString().slice(0, 10) + (rfBlobs.length > 1 ? '-' + (rfIdx + 1) : '') + '.png');
+$('rfCopy').onclick = async () => {
+  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': rfBlobs[rfIdx] })]); $('rfHint').textContent = t('rfCopied'); }
+  catch (e) { $('rfHint').textContent = t('rfCopyFail'); }
+};
+$('btnToday').onclick = () => { const d = new Date().toLocaleDateString('sv-SE', { timeZone: TZ }); $('fStart').value = d; $('fEnd').value = d; render(); };
+$('anomShowOk').onchange = renderAnomalies;
+$('tblAnom').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const r = byPk(b.dataset.pk); if (!r) return;
+  if (b.dataset.act === 'edit') PRA.open(r); else if (b.dataset.act === 'cf') PRA.confirm(r, !r.confirmed); else if (b.dataset.act === 'fix') PRA.applyFix(r, r.anomalies[+b.dataset.ai]);
+};
+$('tblLog').addEventListener('click', e => { const b = e.target.closest('[data-kebab]'); if (!b) return; const r = byPk(b.dataset.kebab); if (r) PRA.menu(b, r); });
 window.addEventListener('beforeprint', () => { if (reportBuilt) { reportBuilt = false; return; } buildReport(); });   // Ctrl+P gets the same report
 
 /* ================== DEMO DATA (used only when GAS_URL is empty) ================== */
