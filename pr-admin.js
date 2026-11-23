@@ -13,7 +13,7 @@ const PRA = (() => {
       viaForm: 'Fill in a form', viaFile: 'Import a file (.xlsx / .csv)', impTitle: 'Import data from file', impPick: 'File (.xlsx, .xls, .csv)', impSheet: 'Sheet', impHdr: 'Header row no.', impDateOrder: 'Order of text dates',
       impDefFactory: 'Factory (if not in file)', impMap: 'Match file columns to fields', impMapHint: 'Guessed from the column names – change anything that is wrong.', impNone: '— not in file —', impSkipDup: 'Skip rows already in the system',
       impPreview: 'Preview', impReady: 'ready to import', impDup: 'duplicates skipped', impErr: 'with errors', impBadDate: 'Date/time not recognised', impStart: 'Import', impBusy: 'Importing', impDone: 'Imported', impFailed: 'failed',
-      impRow: 'Row', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)' },
+      impRow: 'Row', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)', viaPaste: 'Paste (copy a table)', impPaste: 'Paste the table here (copy from Excel / Google Sheets, include the header row)', clear: 'Clear', pasteHint: 'Copy cells in Excel or Google Sheets and paste here (Ctrl+V).', tabHint: 'Add data by: filling a form, pasting a table, or attaching a file.' },
     zh: { add: '新增数据', edit: '修改数据', del: '删除', confirm: '确认（数值无误）', unconfirm: '取消确认', save: '保存', saveNew: '保存并继续新增', cancel: '取消', pinTitle: '管理员 PIN', pinHint: '请输入管理员 PIN（每次浏览只需一次）。',
       ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（同时从 Google 表格删除）', deleted: '已删除',
       confirmed: '已确认', need: '必填：工厂、日期时间、设备或问题', badFactory: '工厂必须是：', secWhen: '时间 / 地点', secMachine: '设备', secIssue: '问题与解决方法', secRepair: '维修', secPeople: '人员',
@@ -22,7 +22,7 @@ const PRA = (() => {
       viaForm: '通过表单填写', viaFile: '导入文件 (.xlsx / .csv)', impTitle: '从文件导入数据', impPick: '文件 (.xlsx, .xls, .csv)', impSheet: '工作表', impHdr: '表头行号', impDateOrder: '文本日期顺序',
       impDefFactory: '工厂（文件中没有时）', impMap: '将文件列与字段匹配', impMapHint: '已按列名自动匹配 — 如有错误请修改。', impNone: '— 文件中没有 —', impSkipDup: '跳过系统中已有的记录',
       impPreview: '预览', impReady: '可导入', impDup: '重复已跳过', impErr: '有错误', impBadDate: '无法识别日期时间', impStart: '开始导入', impBusy: '导入中', impDone: '已导入', impFailed: '失败',
-      impRow: '行', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）' },
+      impRow: '行', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）', viaPaste: '粘贴（复制表格）', impPaste: '在此粘贴表格（从 Excel / Google 表格复制，含表头行）', clear: '清空', pasteHint: '在 Excel 或 Google 表格中复制单元格，然后粘贴到这里 (Ctrl+V)。', tabHint: '添加数据的方式：填写表单、粘贴表格或附加文件。' },
     th: { add: 'เพิ่มข้อมูล', edit: 'แก้ไขข้อมูล', del: 'ลบ', confirm: 'ยืนยัน (ค่าถูกต้อง)', unconfirm: 'ยกเลิกการยืนยัน', save: 'บันทึก', saveNew: 'บันทึกแล้วเพิ่มรายการถัดไป', cancel: 'ยกเลิก', pinTitle: 'PIN แอดมิน',
       pinHint: 'ใส่ PIN แอดมิน (ถามครั้งเดียวต่อการเปิดเบราว์เซอร์)', ok: 'ตกลง', badPin: 'PIN ไม่ถูกต้อง', addNew: 'ค่าใหม่', saving: 'กำลังบันทึก…', saved: 'บันทึกแล้ว',
       sheetFail: 'บันทึกใน Supabase แล้ว แต่ Google Sheet ยังไม่ถูกอัปเดต: ', delAsk: 'ลบรายการนี้? (จะลบออกจาก Google Sheet ด้วย)', deleted: 'ลบแล้ว', confirmed: 'ยืนยันแล้ว',
@@ -33,7 +33,7 @@ const PRA = (() => {
       viaForm: 'กรอกผ่านฟอร์ม', viaFile: 'แนบไฟล์ (.xlsx / .csv)', impTitle: 'นำเข้าข้อมูลจากไฟล์', impPick: 'ไฟล์ (.xlsx, .xls, .csv)', impSheet: 'ชีต', impHdr: 'แถวหัวตารางที่', impDateOrder: 'ลำดับวันที่ (แบบข้อความ)',
       impDefFactory: 'โรงงาน (ถ้าไฟล์ไม่มีคอลัมน์)', impMap: 'จับคู่คอลัมน์ในไฟล์กับฟิลด์', impMapHint: 'เดาจากชื่อคอลัมน์ให้อัตโนมัติ — แก้ที่ไม่ตรงได้', impNone: '— ไม่มีในไฟล์ —', impSkipDup: 'ข้ามรายการที่มีอยู่แล้วในระบบ',
       impPreview: 'ตัวอย่าง', impReady: 'พร้อมนำเข้า', impDup: 'ข้ามรายการซ้ำ', impErr: 'มีข้อผิดพลาด', impBadDate: 'อ่านวันที่/เวลาไม่ได้', impStart: 'นำเข้า', impBusy: 'กำลังนำเข้า', impDone: 'นำเข้าแล้ว', impFailed: 'ล้มเหลว',
-      impRow: 'แถว', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)' }
+      impRow: 'แถว', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)', viaPaste: 'ก๊อปวาง (คัดลอกตาราง)', impPaste: 'วางตารางที่นี่ (คัดลอกจาก Excel / Google Sheets พร้อมแถวหัวตาราง)', clear: 'ล้าง', pasteHint: 'คัดลอกเซลล์จาก Excel หรือ Google Sheets แล้ววางที่นี่ (Ctrl+V)', tabHint: 'เพิ่มข้อมูลได้ 3 แบบ: กรอกฟอร์ม, ก๊อปตารางมาวาง หรือแนบไฟล์' }
   };
   const T = k => ((TXT[lang] || TXT.en)[k]) || TXT.en[k] || k;
   const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -62,6 +62,7 @@ const PRA = (() => {
   .pra-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:200;padding:9px 14px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:600;max-width:92vw}
   .pra-toast.err{background:#d93025;color:#fff}
   .kebab{padding:3px 8px !important;font-size:15px !important;line-height:1 !important}`;
+  st.textContent += `\n.pra-inline .pra-body{max-height:none;padding:12px 0} .pra-inline .pra-foot{padding:10px 0;border-top:1px solid var(--line)}`;
   document.head.appendChild(st);
 
   
@@ -158,7 +159,9 @@ const PRA = (() => {
   }
   function open(row) {
     const old = q('praDlg'); if (old) old.remove();
-    const editing = row || null, d = document.createElement('dialog'); d.id = 'praDlg';
+    const editing = row || null, host = editing ? null : q('praAddForm');
+    if (editing) unmount();                                          // the edit dialog uses the same field ids as the add tab
+    const d = document.createElement(host ? 'div' : 'dialog'); if (host) d.className = 'pra-inline'; else d.id = 'praDlg';
     const f = (id, type, wide, key = id) => {
       if (type === 'dt') { const op = n => '<option value=""></option>' + Array.from({ length: n }, (_, i) => `<option>${p2(i)}</option>`).join('');
         return `<div class="pra-f${wide ? ' wide' : ''}"><label for="pra_${key}_d">${T(id)}</label><div class="pra-dt"><input type="date" id="pra_${key}_d"><select id="pra_${key}_h">${op(24)}</select><span>:</span><select id="pra_${key}_m">${op(60)}</select></div></div>`; }
@@ -166,14 +169,14 @@ const PRA = (() => {
       const ctl = type === 'area' ? `<textarea id="pra_${key}" rows="2" autocomplete="off"></textarea>` : `<input id="pra_${key}" ${type === 'dt' ? 'type="datetime-local"' : type === 'num' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} autocomplete="off" ${id === 'failRate' ? 'readonly' : ''}>`;
       return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}${(id === 'issue' || id === 'solution' || id === 'minutes') ? `<div class="lbl" id="pra_${id}_t" style="margin-top:2px"></div>` : ''}</div>`;
     };
-    d.innerHTML = `<div class="pra-head"><span>${editing ? T('edit') : T('add')}</span><button class="btn" id="pra_x">✕</button></div><div class="pra-body">
+    d.innerHTML = `${host ? '' : `<div class="pra-head"><span>${editing ? T('edit') : T('add')}</span><button class="btn" id="pra_x">✕</button></div>`}<div class="pra-body">
       <div class="pra-sec">${T('secWhen')}</div><div class="pra-grid">${f('factory', 'text')}${f('time', 'dt', 0, 'timestamp')}${f('shift', 'text')}${f('station', 'text')}</div>
       <div class="pra-sec">${T('secMachine')}</div><div class="pra-grid">${f('machine', 'text')}${f('machineNo', 'text')}${f('product', 'text')}${f('issueType', 'text')}</div>
       <div class="pra-sec">${T('secIssue')}</div><div class="pra-grid">${f('issue', 'area', 1)}${f('solution', 'area', 1)}</div>
       <div class="pra-sec">${T('secRepair')}</div><div class="pra-grid">${f('repairStart', 'dt')}${f('recoveryEnd', 'dt')}${f('minutes', 'num')}${f('qty', 'num')}${f('failRate', 'text')}</div>
       <div class="pra-sec">${T('secPeople')}</div><div class="pra-grid">${f('leader', 'text')}${f('technician', 'text')}${f('remark', 'area', 1)}</div></div>
-      <div class="pra-foot"><button class="btn" id="pra_cancel">${T('cancel')}</button>${editing ? '' : `<button class="btn" id="pra_saveNew">${T('saveNew')}</button>`}<button class="btn primary" id="pra_save">${T('save')}</button></div>`;
-    document.body.appendChild(d);
+      <div class="pra-foot"><button class="btn" id="pra_cancel">${host ? T('clear') : T('cancel')}</button>${editing || host ? '' : `<button class="btn" id="pra_saveNew">${T('saveNew')}</button>`}<button class="btn primary" id="pra_save">${T('save')}</button></div>`;
+    if (host) { host.innerHTML = ''; host.appendChild(d); } else document.body.appendChild(d);
     const I = {}; ['factory', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'failRate', 'leader', 'technician', 'remark'].forEach(k => (I[k] = ['timestamp', 'repairStart', 'recoveryEnd'].includes(k) ? dtWrap(k) : q('pra_' + k)));
     const get = () => { const v = {}; Object.keys(I).forEach(k => (v[k] = (I[k].value || '').trim())); return v; };
     const set = v => Object.keys(v).forEach(k => { if (I[k]) I[k].value = v[k] ?? ''; });
@@ -194,13 +197,13 @@ const PRA = (() => {
     ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.timestamp.addEventListener('input', () => { tsTouched = true; }); ['repairStart', 'recoveryEnd'].forEach(k => I[k].addEventListener('input', () => { syncTs(); recalc(); })); I.minutes.addEventListener('input', () => { manual = I.minutes.value !== ''; recalc(); });
     if (editing) { const v = toForm(editing); set(v); manual = v.minutes !== ''; } else { I.timestamp.value = nowLocal(); I.factory.value = q('fFactory') && q('fFactory').value || ''; }
     recalc(); refreshHints();
-    const close = () => { d.close(); d.remove(); };
-    q('pra_x').onclick = q('pra_cancel').onclick = close;
+    const close = () => { if (host) { open(); return; } d.close(); d.remove(); };      // add tab: "close" = fresh empty form
+    if (q('pra_x')) q('pra_x').onclick = close; q('pra_cancel').onclick = close;
     q('pra_save').onclick = async () => { if (await commit(get(), editing)) close(); };
-    if (!editing) q('pra_saveNew').onclick = async () => {
+    if (!editing && !host) q('pra_saveNew').onclick = async () => {
       const v = get(); if (await commit(v, null)) { ['machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'remark', 'failRate'].forEach(k => (I[k].value = '')); manual = false; tsTouched = false; I.timestamp.value = nowLocal(); recalc(); refreshHints(); I.machine.focus(); }
     };
-    d.showModal();
+    if (!host) d.showModal();
   }
 
   /* ---------- delete / confirm / quick fix / row menu ---------- */
@@ -292,14 +295,28 @@ const PRA = (() => {
     });
     return { good, errs, dup };
   }
-  function importDlg() {
-    const old = q('praImp'); if (old) old.remove();
-    const d = document.createElement('dialog'); d.id = 'praImp';
-    d.innerHTML = `<div class="pra-head"><span>${T('impTitle')}</span><button class="btn" id="imp_x">✕</button></div><div class="pra-body">
-      <div class="pra-f"><label>${T('impPick')}</label><input type="file" id="imp_file" accept=".xlsx,.xls,.csv,.txt"></div>
+  function parsePaste(text) {                                        // Excel / Google Sheets copy = TAB separated (quotes allowed); also accepts CSV
+    const t = String(text || '').replace(/^\uFEFF/, ''), first = t.split(/\r?\n/)[0] || '', dl = t.includes('\t') ? '\t' : (first.includes(',') ? ',' : (first.includes(';') ? ';' : '\t'));
+    const rows = []; let row = [], cur = '', inQ = false;
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (inQ) { if (c === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else inQ = false; } else cur += c; }
+      else if (c === '"' && cur === '') inQ = true;
+      else if (c === dl) { row.push(cur.trim()); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur.trim()); cur = ''; rows.push(row); row = []; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur.trim()); rows.push(row); }
+    return rows.filter(r => r.some(x => x !== ''));
+  }
+  function importDlg(mode) {
+    const isPaste = mode === 'paste', host = q('praAddImp'); if (!host) return;
+    const d = document.createElement('div'); d.className = 'pra-inline';
+    d.innerHTML = `<div class="pra-body">
+      ${isPaste ? `<div class="pra-f"><label>${T('impPaste')}</label><textarea id="imp_text" rows="8" placeholder="${E(T('pasteHint'))}" style="font-family:monospace;white-space:pre"></textarea></div>` : `<div class="pra-f"><label>${T('impPick')}</label><input type="file" id="imp_file" accept=".xlsx,.xls,.csv,.txt"></div>`}
       <div id="imp_cfg" style="display:none">
         <div class="pra-grid" style="margin-top:8px">
-          <div class="pra-f"><label>${T('impSheet')}</label><select id="imp_sheet"></select></div>
+          <div class="pra-f" style="${isPaste ? 'display:none' : ''}"><label>${T('impSheet')}</label><select id="imp_sheet"></select></div>
           <div class="pra-f"><label>${T('impHdr')}</label><input type="number" id="imp_hdr" min="1" value="1"></div>
           <div class="pra-f"><label>${T('impDateOrder')}</label><select id="imp_ord"><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></div>
           <div class="pra-f"><label>${T('impDefFactory')}</label><select id="imp_fac"><option value=""></option>${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select></div>
@@ -310,8 +327,8 @@ const PRA = (() => {
         <div style="overflow:auto;max-height:190px;margin-top:6px;border:1px solid var(--line);border-radius:6px"><table id="imp_tbl" style="font-size:12px;width:100%"></table></div>
         <div id="imp_err" class="lbl" style="max-height:90px;overflow:auto;margin-top:6px;color:#ef4444"></div>
       </div></div>
-      <div class="pra-foot"><span class="lbl" id="imp_prog" style="margin-right:auto"></span><button class="btn" id="imp_cancel">${T('cancel')}</button><button class="btn primary" id="imp_go" disabled>${T('impStart')}</button></div>`;
-    document.body.appendChild(d);
+      <div class="pra-foot"><span class="lbl" id="imp_prog" style="margin-right:auto"></span><button class="btn" id="imp_cancel">${T('clear')}</button><button class="btn primary" id="imp_go" disabled>${T('impStart')}</button></div>`;
+    host.innerHTML = ''; host.appendChild(d);
     let wb = null, grid = [], good = [], busy = false;
     const hdrIdx = () => Math.max(0, (+q('imp_hdr').value || 1) - 1);
     const opts = () => ({ mdy: q('imp_ord').value === 'mdy', factory: q('imp_fac').value, skipDup: q('imp_dup').checked });
@@ -325,13 +342,14 @@ const PRA = (() => {
       q('imp_go').disabled = busy || !r.good.length;
     };
     const buildMap = () => {
-      grid = readGrid(wb.Sheets[q('imp_sheet').value]); const heads = grid[hdrIdx()] || [], am = autoMap(heads);
+      if (!isPaste) grid = readGrid(wb.Sheets[q('imp_sheet').value]); const heads = grid[hdrIdx()] || [], am = autoMap(heads);
       const op = `<option value="-1">${T('impNone')}</option>` + heads.map((h, i) => `<option value="${i}">${colL(i)} · ${E(String(h).replace(/\s+/g, ' ').slice(0, 40))}</option>`).join('');
       q('imp_map').innerHTML = IMP_FIELDS.map(f => `<div class="pra-f"><label>${f === 'timestamp' ? T('time') : f === 'date' ? T('fDate') : T(f)}</label><select id="imp_m_${f}">${op}</select></div>`).join('');
       IMP_FIELDS.forEach(f => { q('imp_m_' + f).value = String(am[f]); q('imp_m_' + f).onchange = preview; });
       preview();
     };
-    q('imp_file').onchange = async e => {
+    if (isPaste) { let tm; q('imp_text').oninput = () => { clearTimeout(tm); tm = setTimeout(() => { grid = parsePaste(q('imp_text').value); q('imp_cfg').style.display = grid.length > 1 ? '' : 'none'; if (grid.length > 1) buildMap(); else { good = []; q('imp_go').disabled = true; } }, 250); }; }
+    else q('imp_file').onchange = async e => {
       const f = e.target.files[0]; if (!f) return;
       try {
         wb = /\.(csv|txt)$/i.test(f.name) ? XLSX.read((await f.text()).replace(/^\uFEFF/, ''), { type: 'string', raw: true }) : XLSX.read(await f.arrayBuffer(), { type: 'array', cellNF: true });
@@ -339,31 +357,33 @@ const PRA = (() => {
       } catch (err) { console.error(err); toast(T('impBadFile'), true); }
     };
     q('imp_sheet').onchange = buildMap; q('imp_hdr').oninput = buildMap; ['imp_ord', 'imp_fac', 'imp_dup'].forEach(id => (q(id).onchange = preview));
-    const close = () => { if (busy) return; d.close(); d.remove(); };
-    q('imp_x').onclick = q('imp_cancel').onclick = close; d.addEventListener('cancel', e => { if (busy) e.preventDefault(); else d.remove(); });
+    const close = () => { if (busy) return; importDlg(mode); };                // back to an empty import box
+    q('imp_cancel').onclick = close;
     q('imp_go').onclick = async () => {
       const pin = await ensurePin(); if (!pin || !good.length) return;
-      busy = true; q('imp_go').disabled = q('imp_cancel').disabled = q('imp_x').disabled = true; let ok = 0, fail = 0, gasFail = 0; const errs = [];
+      busy = true; q('imp_go').disabled = q('imp_cancel').disabled = true; let ok = 0, fail = 0, gasFail = 0; const errs = [];
       for (let i = 0; i < good.length; i++) {
         q('imp_prog').textContent = `${T('impBusy')} ${i + 1} / ${good.length}`;
         try { const r = await saveOne(pin, good[i].v, null); ok++; if (r.gasErr) gasFail++; }
         catch (e) { fail++; errs.push(`${T('impRow')} ${good[i].rowNo}: ${e.message}`); if (e.message === T('badPin')) break; }
       }
       busy = false; toast(`${T('impDone')} ${ok}` + (fail ? ` · ${T('impFailed')} ${fail}` : '') + (gasFail ? ` · ${T('sheetFail')}${gasFail}` : ''), !!(fail || gasFail));
-      await load(); if (fail) { q('imp_err').innerHTML = errs.slice(0, 30).map(E).join('<br>'); q('imp_prog').textContent = ''; q('imp_cancel').disabled = q('imp_x').disabled = false; good = []; } else { q('imp_cancel').disabled = q('imp_x').disabled = false; close(); }
+      await load(); if (fail) { q('imp_err').innerHTML = errs.slice(0, 30).map(E).join('<br>'); q('imp_prog').textContent = ''; q('imp_cancel').disabled = false; good = []; } else { q('imp_cancel').disabled = false; close(); }
     };
-    d.showModal();
   }
-  function chooser() {
-    const old = q('praChoose'); if (old) old.remove();
-    const d = document.createElement('dialog'); d.id = 'praChoose';
-    d.innerHTML = `<div style="font-weight:700;margin-bottom:10px">${T('add')}</div><div class="flex flex-col gap-2" style="min-width:250px"><button class="btn primary" data-c="form">✎ ${T('viaForm')}</button><button class="btn primary" data-c="file">⇪ ${T('viaFile')}</button><button class="btn" data-c="x">${T('cancel')}</button></div>`;
-    document.body.appendChild(d);
-    d.onclick = e => { const b = e.target.closest('[data-c]'); if (!b && e.target !== d) return; const c = b ? b.dataset.c : 'x'; d.close(); d.remove(); if (c === 'form') open(); else if (c === 'file') importDlg(); };
-    d.addEventListener('cancel', () => setTimeout(() => d.remove()));
-    d.showModal();
+  /* ---------- "Add data" tab: form | paste | file (no pop-up chooser) ---------- */
+  let addMethod = 'form', mountedLang = '';
+  function unmount() { const h = q('praAddHost'); if (h) h.innerHTML = ''; mountedLang = ''; }
+  function mount(force) {
+    const h = q('praAddHost'); if (!h) return;
+    if (!force && mountedLang === lang && h.firstChild) return;      // keep what the person typed while data reloads
+    mountedLang = lang;
+    h.innerHTML = `<div class="font-semibold mb-1">${T('add')}</div><div class="lbl mb-2">${T('tabHint')}</div>
+      <div class="flex flex-wrap gap-1.5 mb-3" id="praMethods">${[['form', '✎ ' + T('viaForm')], ['paste', '📋 ' + T('viaPaste')], ['file', '⇪ ' + T('viaFile')]].map(([k, l]) => `<button class="btn${addMethod === k ? ' primary' : ''}" data-m="${k}">${l}</button>`).join('')}</div>
+      <div id="praAddForm"></div><div id="praAddImp"></div>`;
+    h.querySelectorAll('[data-m]').forEach(b => (b.onclick = () => { addMethod = b.dataset.m; mount(true); }));
+    if (addMethod === 'form') open(); else importDlg(addMethod);
   }
-  if (q('btnAdmin')) q('btnAdmin').onclick = chooser;
   /* ---------- toast (shows above open <dialog> top-layer too) ---------- */
   const toast = (msg, err) => {
     const host = document.querySelector('dialog[open]') || document.body;
@@ -377,5 +397,5 @@ const PRA = (() => {
     host.appendChild(d);
     setTimeout(() => d.remove(), err ? 7000 : 2400);
   };
-  return { open, menu, del, confirm: confirmRow, applyFix };
+  return { open, menu, del, confirm: confirmRow, applyFix, mount };
 })();
