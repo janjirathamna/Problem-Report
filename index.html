@@ -7,7 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="pr-core.js?v=38"></script>
+<script src="pr-core.js?v=39"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -122,8 +122,6 @@
       <div class="lbl" id="updated"></div>
     </div>
     <div id="actionBar" class="flex flex-wrap items-center gap-1.5 ml-auto">
-      <button id="btnAdmin" class="btn primary" data-i18n="addData"></button>
-      <span class="tsep"></span>
       <button id="btn-en" class="btn">EN</button>
       <button id="btn-zh" class="btn">中文</button>
       <button id="btn-th" class="btn">ไทย</button>
@@ -142,6 +140,7 @@
       <button class="tab" data-tab="remarks" data-i18n="tabRemarks"></button>
       <button class="tab" data-tab="log" data-i18n="tabLog"></button>
       <button class="tab" data-tab="anom" data-i18n="tabAnom"></button>
+      <button class="tab" data-tab="add" data-i18n="tabAdd"></button>
     </nav>
   </div>
   <div class="tbar">
@@ -285,6 +284,8 @@
     </div>
   </section>
 
+  <section class="view panel p-3 hidden" data-view="add"><div id="praAddHost"></div></section>
+
   <div id="status" class="text-center lbl no-print"></div>
 </main>
 
@@ -334,7 +335,7 @@
 
 
 <div id="report"></div>
-<script src="pr-admin.js?v=38"></script>
+<script src="pr-admin.js?v=39"></script>
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
@@ -344,7 +345,7 @@ const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': 
 
 /* ================== i18n ================== */
 const I18N = {
-  en: { export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
+  en: { tabAdd:'＋ Add data', export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'Report form', rfBusy:'Building the picture…', rfFail:'Could not build the picture (try fewer rows)', rfCopy:'Copy image', rfDl:'Download PNG', rfCopied:'Image copied to clipboard', rfCopyFail:'Copy not allowed here – use Download PNG',
  anomTitle:'Data check – records with problems', anomNote:'Fix the record (✎), apply the suggested date (→), or confirm it if the value is really correct (✓).', anomShowOk:'Show confirmed', anomNone:'No problems found 👍',
  anomReason:'Reason', anomValue:'Values', anomEdit:'Edit', anomConfirm:'Confirm', anomUndo:'Undo confirm',
@@ -378,7 +379,7 @@ const I18N = {
     saveTitle:'Save as image', saveChart:'Chart only', saveBoth:'Chart + table', yes:'Yes', exit:'Exit', imgBusy:'Creating the image…', imgFail:'Could not create the image. Try CSV or PDF instead.', dlPng:'⇩ Download PNG',
     loading:'Loading data…', demo:'Demo data shown. Set GAS_URL in index.html to load your sheets.',
     error:'Could not load data: ', empty:'No records match the current filters.', updated:'Updated', total:'Total' },
-  zh: { export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
+  zh: { tabAdd:'＋ 添加数据', export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'报告表单', rfBusy:'正在生成图片…', rfFail:'无法生成图片（请减少行数）', rfCopy:'复制图片', rfDl:'下载 PNG', rfCopied:'图片已复制到剪贴板', rfCopyFail:'此处不允许复制 – 请下载 PNG',
  anomTitle:'数据检查 – 有问题的记录', anomNote:'请修改记录（✎）、采用建议日期（→），或在数值确实正确时确认（✓）。', anomShowOk:'显示已确认', anomNone:'未发现问题 👍',
  anomReason:'原因', anomValue:'数值', anomEdit:'修改', anomConfirm:'确认', anomUndo:'取消确认',
@@ -412,7 +413,7 @@ const I18N = {
     saveTitle:'保存为图片', saveChart:'仅图表', saveBoth:'图表 + 表格', yes:'是', exit:'退出', imgBusy:'正在生成图片…', imgFail:'无法生成图片，请改用 CSV 或 PDF。', dlPng:'⇩ 下载 PNG',
     loading:'数据加载中…', demo:'当前为演示数据。请在 index.html 中设置 GAS_URL 以加载表格数据。',
     error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' },
-  th:{ export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
+  th:{ tabAdd:'＋ เพิ่มข้อมูล', export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'ฟอร์มรายงาน', rfBusy:'กำลังสร้างรูปภาพ…', rfFail:'สร้างรูปไม่ได้ (ลองลดจำนวนแถว)', rfCopy:'คัดลอกรูปภาพ', rfDl:'ดาวน์โหลดรูป (PNG)', rfCopied:'คัดลอกรูปไปคลิปบอร์ดแล้ว', rfCopyFail:'คัดลอกไม่ได้ที่นี่ – ใช้ดาวน์โหลด PNG แทน',
  anomTitle:'ตรวจข้อมูล – รายการที่มีปัญหา', anomNote:'แก้ไขรายการ (✎) ใช้วันที่ที่แนะนำ (→) หรือกดยืนยัน (✓) ถ้าค่าถูกต้องจริง', anomShowOk:'แสดงที่ยืนยันแล้ว', anomNone:'ไม่พบความผิดปกติ 👍',
  anomReason:'สาเหตุ', anomValue:'ค่า', anomEdit:'แก้ไข', anomConfirm:'ยืนยัน', anomUndo:'ยกเลิกยืนยัน',
@@ -545,6 +546,8 @@ function applyChrome() {
   $('btn-th').classList.toggle('primary', lang === 'th');
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.dataset.view !== tab));
+  document.querySelector('.tbar').style.display = tab === 'add' ? 'none' : '';
+  if (tab === 'add' && typeof PRA !== 'undefined') PRA.mount();
   $('updated').textContent = (generatedAt ? `${t('updated')}: ${new Date(generatedAt).toLocaleString(loc())}` : '') + ' · ' + APP_VERSION + ' · TH ' + DATA.filter(r => r.issueTh).length + '/' + DATA.length + (window.TR_ERR ? ' · ⚠ translations: ' + window.TR_ERR : '');
   $('fFactory').options[0].textContent = t('all');
   $('fMachine').options[0].textContent = t('allM');
