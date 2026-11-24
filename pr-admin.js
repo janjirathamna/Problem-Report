@@ -13,7 +13,7 @@ const PRA = (() => {
       viaForm: 'Fill in a form', viaFile: 'Import a file (.xlsx / .csv)', impTitle: 'Import data from file', impPick: 'File (.xlsx, .xls, .csv)', impSheet: 'Sheet', impHdr: 'Header row no.', impDateOrder: 'Order of text dates',
       impDefFactory: 'Factory (if not in file)', impMap: 'Match file columns to fields', impMapHint: 'Guessed from the column names – change anything that is wrong.', impNone: '— not in file —', impSkipDup: 'Skip rows already in the system',
       impPreview: 'Preview', impReady: 'ready to import', impDup: 'duplicates skipped', impErr: 'with errors', impBadDate: 'Date/time not recognised', impStart: 'Import', impBusy: 'Importing', impDone: 'Imported', impFailed: 'failed',
-      impRow: 'Row', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)', viaPaste: 'Paste (copy a table)', impPaste: 'Paste the table here (copy from Excel / Google Sheets, include the header row)', clear: 'Clear', pasteHint: 'Copy cells in Excel or Google Sheets and paste here (Ctrl+V).', tabHint: 'Add data by: filling a form, pasting a table, or attaching a file.' },
+      impRow: 'Row', impAutoTag: 'auto', impEditTag: 'edited', impMissing: 'Not matched yet: ', impSolMode: 'Issue & solution in the file', impSolSep: 'Separate columns', impSolComb: 'Both in one cell', impSplitBy: 'Split at', impSepAuto: 'Auto', impNl: 'New line', impCombHint: 'Text before the first separator = issue, the rest = solution.', impSwapped: 'Swapped with: ', impSolSame: '= same column as Issue', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)', viaPaste: 'Paste (copy a table)', impPaste: 'Paste the table here (copy from Excel / Google Sheets, include the header row)', clear: 'Clear', pasteHint: 'Copy cells in Excel or Google Sheets and paste here (Ctrl+V).', tabHint: 'Add data by: filling a form, pasting a table, or attaching a file.' },
     zh: { add: '新增数据', edit: '修改数据', del: '删除', confirm: '确认（数值无误）', unconfirm: '取消确认', save: '保存', saveNew: '保存并继续新增', cancel: '取消', pinTitle: '管理员 PIN', pinHint: '请输入管理员 PIN（每次浏览只需一次）。',
       ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（同时从 Google 表格删除）', deleted: '已删除',
       confirmed: '已确认', need: '必填：工厂、日期时间、设备或问题', badFactory: '工厂必须是：', secWhen: '时间 / 地点', secMachine: '设备', secIssue: '问题与解决方法', secRepair: '维修', secPeople: '人员',
@@ -22,7 +22,7 @@ const PRA = (() => {
       viaForm: '通过表单填写', viaFile: '导入文件 (.xlsx / .csv)', impTitle: '从文件导入数据', impPick: '文件 (.xlsx, .xls, .csv)', impSheet: '工作表', impHdr: '表头行号', impDateOrder: '文本日期顺序',
       impDefFactory: '工厂（文件中没有时）', impMap: '将文件列与字段匹配', impMapHint: '已按列名自动匹配 — 如有错误请修改。', impNone: '— 文件中没有 —', impSkipDup: '跳过系统中已有的记录',
       impPreview: '预览', impReady: '可导入', impDup: '重复已跳过', impErr: '有错误', impBadDate: '无法识别日期时间', impStart: '开始导入', impBusy: '导入中', impDone: '已导入', impFailed: '失败',
-      impRow: '行', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）', viaPaste: '粘贴（复制表格）', impPaste: '在此粘贴表格（从 Excel / Google 表格复制，含表头行）', clear: '清空', pasteHint: '在 Excel 或 Google 表格中复制单元格，然后粘贴到这里 (Ctrl+V)。', tabHint: '添加数据的方式：填写表单、粘贴表格或附加文件。' },
+      impRow: '行', impAutoTag: '自动', impEditTag: '已改', impMissing: '尚未匹配：', impSolMode: '文件中问题与解决办法的位置', impSolSep: '分开两列', impSolComb: '同一单元格', impSplitBy: '分隔符', impSepAuto: '自动', impNl: '换行', impCombHint: '第一个分隔符之前 = 问题，其余 = 解决办法。', impSwapped: '已互换：', impSolSame: '= 与「问题」同一列', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）', viaPaste: '粘贴（复制表格）', impPaste: '在此粘贴表格（从 Excel / Google 表格复制，含表头行）', clear: '清空', pasteHint: '在 Excel 或 Google 表格中复制单元格，然后粘贴到这里 (Ctrl+V)。', tabHint: '添加数据的方式：填写表单、粘贴表格或附加文件。' },
     th: { add: 'เพิ่มข้อมูล', edit: 'แก้ไขข้อมูล', del: 'ลบ', confirm: 'ยืนยัน (ค่าถูกต้อง)', unconfirm: 'ยกเลิกการยืนยัน', save: 'บันทึก', saveNew: 'บันทึกแล้วเพิ่มรายการถัดไป', cancel: 'ยกเลิก', pinTitle: 'PIN แอดมิน',
       pinHint: 'ใส่ PIN แอดมิน (ถามครั้งเดียวต่อการเปิดเบราว์เซอร์)', ok: 'ตกลง', badPin: 'PIN ไม่ถูกต้อง', addNew: 'ค่าใหม่', saving: 'กำลังบันทึก…', saved: 'บันทึกแล้ว',
       sheetFail: 'บันทึกใน Supabase แล้ว แต่ Google Sheet ยังไม่ถูกอัปเดต: ', delAsk: 'ลบรายการนี้? (จะลบออกจาก Google Sheet ด้วย)', deleted: 'ลบแล้ว', confirmed: 'ยืนยันแล้ว',
@@ -33,7 +33,7 @@ const PRA = (() => {
       viaForm: 'กรอกผ่านฟอร์ม', viaFile: 'แนบไฟล์ (.xlsx / .csv)', impTitle: 'นำเข้าข้อมูลจากไฟล์', impPick: 'ไฟล์ (.xlsx, .xls, .csv)', impSheet: 'ชีต', impHdr: 'แถวหัวตารางที่', impDateOrder: 'ลำดับวันที่ (แบบข้อความ)',
       impDefFactory: 'โรงงาน (ถ้าไฟล์ไม่มีคอลัมน์)', impMap: 'จับคู่คอลัมน์ในไฟล์กับฟิลด์', impMapHint: 'เดาจากชื่อคอลัมน์ให้อัตโนมัติ — แก้ที่ไม่ตรงได้', impNone: '— ไม่มีในไฟล์ —', impSkipDup: 'ข้ามรายการที่มีอยู่แล้วในระบบ',
       impPreview: 'ตัวอย่าง', impReady: 'พร้อมนำเข้า', impDup: 'ข้ามรายการซ้ำ', impErr: 'มีข้อผิดพลาด', impBadDate: 'อ่านวันที่/เวลาไม่ได้', impStart: 'นำเข้า', impBusy: 'กำลังนำเข้า', impDone: 'นำเข้าแล้ว', impFailed: 'ล้มเหลว',
-      impRow: 'แถว', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)', viaPaste: 'ก๊อปวาง (คัดลอกตาราง)', impPaste: 'วางตารางที่นี่ (คัดลอกจาก Excel / Google Sheets พร้อมแถวหัวตาราง)', clear: 'ล้าง', pasteHint: 'คัดลอกเซลล์จาก Excel หรือ Google Sheets แล้ววางที่นี่ (Ctrl+V)', tabHint: 'เพิ่มข้อมูลได้ 3 แบบ: กรอกฟอร์ม, ก๊อปตารางมาวาง หรือแนบไฟล์' }
+      impRow: 'แถว', impAutoTag: 'อัตโนมัติ', impEditTag: 'แก้แล้ว', impMissing: 'ยังจับคู่ไม่ได้: ', impSolMode: 'ปัญหา & วิธีแก้ ในไฟล์', impSolSep: 'แยกคอลัมน์', impSolComb: 'รวมอยู่ในเซลล์เดียว', impSplitBy: 'คั่นด้วย', impSepAuto: 'อัตโนมัติ', impNl: 'ขึ้นบรรทัดใหม่', impCombHint: 'ข้อความก่อนตัวคั่นแรก = ปัญหา ที่เหลือ = วิธีแก้', impSwapped: 'สลับกับ: ', impSolSame: '= คอลัมน์เดียวกับปัญหา', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)', viaPaste: 'ก๊อปวาง (คัดลอกตาราง)', impPaste: 'วางตารางที่นี่ (คัดลอกจาก Excel / Google Sheets พร้อมแถวหัวตาราง)', clear: 'ล้าง', pasteHint: 'คัดลอกเซลล์จาก Excel หรือ Google Sheets แล้ววางที่นี่ (Ctrl+V)', tabHint: 'เพิ่มข้อมูลได้ 3 แบบ: กรอกฟอร์ม, ก๊อปตารางมาวาง หรือแนบไฟล์' }
   };
   const T = k => ((TXT[lang] || TXT.en)[k]) || TXT.en[k] || k;
   const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -286,6 +286,7 @@ const PRA = (() => {
       const txt = f => sv_(cell(r, f)), numS = f => { const n = numVal_(cell(r, f)); return n === '' ? '' : String(n); };
       const v = { factory, timestamp: ts, shift: txt('shift'), station: txt('station'), machine: txt('machine'), machineNo: txt('machineNo'), product: txt('product'), issueType: txt('issueType'),
         issue: txt('issue'), solution: txt('solution'), repairStart: sub('repairStart'), recoveryEnd: sub('recoveryEnd'), minutes: numS('minutes'), qty: numS('qty'), leader: txt('leader'), technician: txt('technician'), remark: txt('remark') };
+      if (o.comb && map.issue >= 0) { const sp = splitComb_(v.issue, o.sep); v.issue = sp[0]; v.solution = sp[1]; }   // problem and fix share one cell
       if (!v.minutes) v.minutes = autoMin(v);
       let why = '';
       if (!ts) why = T('impBadDate'); else if (!v.machine && !v.issue) why = T('need'); else if (!FACTORIES.includes(factory)) why = T('badFactory') + FACTORIES.join(', '); else if (v.minutes !== '' && Number(v.minutes) < 0) why = T('negMin');
@@ -309,6 +310,26 @@ const PRA = (() => {
     if (cur !== '' || row.length) { row.push(cur.trim()); rows.push(row); }
     return rows.filter(r => r.some(x => x !== ''));
   }
+  const splitComb_ = (s, sep) => {                                   // 'problem # fix' -> [problem, fix]; split at the first separator found
+    s = String(s || ''); const list = sep === 'auto' ? ['#', '\n', '/', ','] : [sep === 'nl' ? '\n' : sep];
+    for (const p of list) { const i = s.indexOf(p); if (i > 0) return [s.slice(0, i).trim(), s.slice(i + 1).trim()]; }
+    return [s.trim(), ''];
+  };
+  const detectComb = (rows, m) => {                                   // issue + solution sharing one column? -> the separator, or ''
+    if (m.issue < 0 || m.solution >= 0) return '';
+    const cells = rows.map(r => String(r[m.issue] ?? '')).filter(x => x.trim()); if (!cells.length) return '';
+    const rt = p => cells.filter(x => x.indexOf(p) > 0).length / cells.length;
+    if (rt('#') >= 0.1) return '#';
+    for (const p of ['/', ',']) if (rt(p) >= 0.4) return p;
+    return '';
+  };
+  const guessByContent = (rows, m) => {                               // fill what the column names missed, by looking at the values
+    const sample = rows.slice(0, 200), used = new Set(Object.values(m).filter(i => i >= 0)), ncol = Math.max(0, ...sample.map(r => r.length));
+    const col = c => sample.map(r => String(r[c] ?? '').trim()).filter(Boolean);
+    const pick = test => { for (let c = 0; c < ncol; c++) { if (used.has(c)) continue; const v = col(c); if (v.length && test(v)) { used.add(c); return c; } } return -1; };
+    if (m.factory < 0) { const c = pick(v => v.filter(x => FACTORIES.some(f => nk(f) === nk(x))).length / v.length >= 0.6); if (c >= 0) m.factory = c; }
+    if (m.timestamp < 0 && m.date < 0) { const c = pick(v => v.filter(x => /\d[\/\-.:]\d/.test(x) && toLocal_(x)).length / v.length >= 0.7); if (c >= 0) m.timestamp = c; }
+  };
   function importDlg(mode) {
     const isPaste = mode === 'paste', host = q('praAddImp'); if (!host) return;
     const d = document.createElement('div'); d.className = 'pra-inline';
@@ -321,7 +342,13 @@ const PRA = (() => {
           <div class="pra-f"><label>${T('impDateOrder')}</label><select id="imp_ord"><option value="dmy">DD/MM/YYYY</option><option value="mdy">MM/DD/YYYY</option></select></div>
           <div class="pra-f"><label>${T('impDefFactory')}</label><select id="imp_fac"><option value=""></option>${FACTORIES.map(f => `<option>${E(f)}</option>`).join('')}</select></div>
         </div>
-        <div class="pra-sec">${T('impMap')}</div><div class="lbl" style="margin-bottom:6px">${T('impMapHint')}</div><div class="pra-grid" id="imp_map"></div>
+        <div class="pra-sec">${T('impMap')}</div><div class="lbl" style="margin-bottom:6px">${T('impMapHint')}</div><div class="pra-grid" id="imp_map"></div><div class="lbl" id="imp_warn" style="margin-top:6px;color:#f59e0b"></div>
+        <div class="pra-sec">${T('impSolMode')}</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px">
+          <label style="display:flex;gap:5px;align-items:center"><input type="radio" name="imp_sm" id="imp_sm_sep" checked>${T('impSolSep')}</label>
+          <label style="display:flex;gap:5px;align-items:center"><input type="radio" name="imp_sm" id="imp_sm_comb">${T('impSolComb')}</label>
+          <span id="imp_sepW" style="display:none;align-items:center;gap:6px">${T('impSplitBy')} <select id="imp_sep" style="width:auto"><option value="auto">${T('impSepAuto')}</option><option value="#">#</option><option value="/">/</option><option value=",">,</option><option value="nl">${T('impNl')}</option></select></span>
+        </div><div class="lbl" style="margin-top:4px">${T('impCombHint')}</div>
         <label class="lbl" style="display:flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" id="imp_dup" checked>${T('impSkipDup')}</label>
         <div class="pra-sec">${T('impPreview')}</div><div id="imp_sum" style="font-weight:600"></div>
         <div style="overflow:auto;max-height:190px;margin-top:6px;border:1px solid var(--line);border-radius:6px"><table id="imp_tbl" style="font-size:12px;width:100%"></table></div>
@@ -331,22 +358,44 @@ const PRA = (() => {
     host.innerHTML = ''; host.appendChild(d);
     let wb = null, grid = [], good = [], busy = false;
     const hdrIdx = () => Math.max(0, (+q('imp_hdr').value || 1) - 1);
-    const opts = () => ({ mdy: q('imp_ord').value === 'mdy', factory: q('imp_fac').value, skipDup: q('imp_dup').checked });
-    const mapNow = () => { const m = {}; IMP_FIELDS.forEach(f => (m[f] = +q('imp_m_' + f).value)); return m; };
+    const comb = () => q('imp_sm_comb').checked;
+    const opts = () => ({ mdy: q('imp_ord').value === 'mdy', factory: q('imp_fac').value, skipDup: q('imp_dup').checked, comb: comb(), sep: q('imp_sep').value });
+    const labelOf = f => (f === 'timestamp' ? T('time') : f === 'date' ? T('fDate') : T(f));
+    let curMap = {}, autoSet = new Set();                               // curMap: field -> column index; autoSet: fields matched automatically (and not changed since)
+    const mapNow = () => { const m = Object.assign({}, curMap); if (comb()) m.solution = -1; return m; };
+    const sampleOf = c => { if (c < 0) return ''; for (const r of grid.slice(hdrIdx() + 1)) { const x = String(r[c] ?? '').replace(/\s+/g, ' ').trim(); if (x) return x.slice(0, 40); } return ''; };
+    const paint = () => {                                               // selects, auto/edited tags and a sample value under each field
+      IMP_FIELDS.forEach(f => {
+        const s = q('imp_m_' + f), dis = f === 'solution' && comb(); s.value = String(curMap[f]); s.disabled = dis; s.style.opacity = dis ? '.5' : '';
+        q('imp_s_' + f).textContent = dis ? T('impSolSame') : sampleOf(curMap[f]);
+        const g = q('imp_t_' + f); g.textContent = curMap[f] < 0 ? '' : autoSet.has(f) ? '✓ ' + T('impAutoTag') : '✎ ' + T('impEditTag'); g.style.color = autoSet.has(f) ? '#22c55e' : 'var(--accent)';
+      });
+      q('imp_sepW').style.display = comb() ? 'inline-flex' : 'none';
+    };
+    const missing = () => { const m = mapNow(), o = opts(), out = []; if (m.timestamp < 0 && m.date < 0) out.push(T('time')); if (m.factory < 0 && !o.factory) out.push(T('factory')); if (m.machine < 0 && m.issue < 0) out.push(T('machine') + ' / ' + T('issue')); return out; };
     const preview = () => {
       const r = impRows(grid, hdrIdx() + 1, mapNow(), opts()); good = r.good;
+      const miss = missing(); q('imp_warn').textContent = miss.length ? '⚠ ' + T('impMissing') + miss.join(', ') : '';
       q('imp_sum').textContent = `${r.good.length} ${T('impReady')} · ${r.dup} ${T('impDup')} · ${r.errs.length} ${T('impErr')}`;
-      q('imp_tbl').innerHTML = '<tr>' + ['factory', 'time', 'machine', 'issue', 'minutes', 'qty'].map(k => `<th style="position:static;padding:4px 8px">${T(k)}</th>`).join('') + '</tr>' +
-        r.good.slice(0, 5).map(({ v }) => `<tr>${[v.factory, v.timestamp.replace('T', ' '), (v.machine + ' ' + v.machineNo).trim(), v.issue.slice(0, 50), v.minutes, v.qty].map(x => `<td style="padding:4px 8px">${E(x)}</td>`).join('')}</tr>`).join('');
+      q('imp_tbl').innerHTML = '<tr>' + ['factory', 'time', 'machine', 'issue', 'solution', 'minutes', 'qty'].map(k => `<th style="position:static;padding:4px 8px">${T(k)}</th>`).join('') + '</tr>' +
+        r.good.slice(0, 6).map(({ v }) => `<tr>${[v.factory, v.timestamp.replace('T', ' '), (v.machine + ' ' + v.machineNo).trim(), v.issue.slice(0, 50), v.solution.slice(0, 50), v.minutes, v.qty].map(x => `<td style="padding:4px 8px">${E(x)}</td>`).join('')}</tr>`).join('');
       q('imp_err').innerHTML = r.errs.slice(0, 30).map(E).join('<br>') + (r.errs.length > 30 ? '<br>…' : '');
       q('imp_go').disabled = busy || !r.good.length;
     };
+    const onMap = f => {                                                // choosing a column that another field already uses = swap the two (move)
+      const nv = +q('imp_m_' + f).value, old = curMap[f]; let note = '';
+      if (nv >= 0) { const g = IMP_FIELDS.find(x => x !== f && curMap[x] === nv && !(x === 'solution' && comb())); if (g) { curMap[g] = old; autoSet.delete(g); note = T('impSwapped') + labelOf(g); } }
+      curMap[f] = nv; autoSet.delete(f); paint(); preview(); if (note) toast(note);
+    };
     const buildMap = () => {
-      if (!isPaste) grid = readGrid(wb.Sheets[q('imp_sheet').value]); const heads = grid[hdrIdx()] || [], am = autoMap(heads);
+      if (!isPaste) grid = readGrid(wb.Sheets[q('imp_sheet').value]);
+      const heads = grid[hdrIdx()] || [], rows = grid.slice(hdrIdx() + 1), am = autoMap(heads); guessByContent(rows, am);
+      autoSet = new Set(IMP_FIELDS.filter(f => am[f] >= 0)); curMap = am;
       const op = `<option value="-1">${T('impNone')}</option>` + heads.map((h, i) => `<option value="${i}">${colL(i)} · ${E(String(h).replace(/\s+/g, ' ').slice(0, 40))}</option>`).join('');
-      q('imp_map').innerHTML = IMP_FIELDS.map(f => `<div class="pra-f"><label>${f === 'timestamp' ? T('time') : f === 'date' ? T('fDate') : T(f)}</label><select id="imp_m_${f}">${op}</select></div>`).join('');
-      IMP_FIELDS.forEach(f => { q('imp_m_' + f).value = String(am[f]); q('imp_m_' + f).onchange = preview; });
-      preview();
+      q('imp_map').innerHTML = IMP_FIELDS.map(f => `<div class="pra-f"><label>${labelOf(f)} <span id="imp_t_${f}" style="font-size:10px;font-weight:600"></span></label><select id="imp_m_${f}">${op}</select><div class="lbl" id="imp_s_${f}" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div></div>`).join('');
+      IMP_FIELDS.forEach(f => { q('imp_m_' + f).onchange = () => onMap(f); });
+      const det = detectComb(rows, am); q('imp_sm_comb').checked = !!det; q('imp_sm_sep').checked = !det; if (det) q('imp_sep').value = det;   // one cell holds both -> pre-select 'combined'
+      paint(); preview();
     };
     if (isPaste) { let tm; q('imp_text').oninput = () => { clearTimeout(tm); tm = setTimeout(() => { grid = parsePaste(q('imp_text').value); q('imp_cfg').style.display = grid.length > 1 ? '' : 'none'; if (grid.length > 1) buildMap(); else { good = []; q('imp_go').disabled = true; } }, 250); }; }
     else q('imp_file').onchange = async e => {
@@ -357,6 +406,7 @@ const PRA = (() => {
       } catch (err) { console.error(err); toast(T('impBadFile'), true); }
     };
     q('imp_sheet').onchange = buildMap; q('imp_hdr').oninput = buildMap; ['imp_ord', 'imp_fac', 'imp_dup'].forEach(id => (q(id).onchange = preview));
+    ['imp_sm_sep', 'imp_sm_comb'].forEach(id => (q(id).onchange = () => { paint(); preview(); })); q('imp_sep').onchange = preview;
     const close = () => { if (busy) return; importDlg(mode); };                // back to an empty import box
     q('imp_cancel').onclick = close;
     q('imp_go').onclick = async () => {
