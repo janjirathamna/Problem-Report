@@ -130,6 +130,7 @@
       <button id="btn-zh" class="btn">中文</button>
       <button id="btn-th" class="btn">ไทย</button>
       <button id="btnTheme" class="btn" title="Theme">◐</button>
+      <a id="btnSheet" class="btn" href="#" target="_blank" rel="noopener" title="Google Sheet (backup)" style="display:none;font-size:12px;padding:4px 8px;text-decoration:none">📄 Sheet</a>
       <span class="tsep"></span>
       <button id="btnExport" class="btn primary" data-i18n="export"></button>
     </div>
@@ -343,6 +344,8 @@
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
+const SHEET_URL = '';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
+(() => { const a = document.getElementById('btnSheet'); if (a && SHEET_URL) { a.href = SHEET_URL; a.style.display = ''; } })();
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
 const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': '#a78bfa' };
