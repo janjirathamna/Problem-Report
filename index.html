@@ -344,7 +344,7 @@
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
-const SHEET_URL = '';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?usp=sharing';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
 (() => { const a = document.getElementById('btnSheet'); if (a && SHEET_URL) { a.href = SHEET_URL; a.style.display = ''; } })();
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
