@@ -138,17 +138,17 @@
   <div class="max-w-7xl mx-auto px-3 py-1 overflow-x-auto">
     <nav class="flex gap-1 w-max">
       <button class="tab" data-tab="model" data-i18n="tabModel"></button>
-      <button class="tab on" data-tab="overview" data-i18n="tabOverview"></button>
+      <button class="tab" data-tab="overview" data-i18n="tabOverview"></button>
       <button class="tab" data-tab="top" data-i18n="tabTop"></button>
       <button class="tab" data-tab="downtime" data-i18n="tabDowntime"></button>
       <button class="tab" data-tab="modules" data-i18n="tabModules"></button>
       <button class="tab" data-tab="remarks" data-i18n="tabRemarks"></button>
       <button class="tab" data-tab="log" data-i18n="tabLog"></button>
       <button class="tab" data-tab="anom" data-i18n="tabAnom"></button>
-      <button class="tab addtab" data-tab="add" data-i18n="tabAdd"></button>
+      <button class="tab addtab on" data-tab="add" data-i18n="tabAdd"></button>
     </nav>
   </div>
-  <div class="tbar">
+  <div class="tbar" style="display:none">
     <div class="max-w-7xl mx-auto px-3 py-2">
       <div id="filterBar" class="flex flex-wrap items-center gap-1.5">
         <select id="fFactory" aria-label="Factory"></select>
@@ -168,7 +168,7 @@
 
 <main class="max-w-7xl mx-auto px-3 py-3 space-y-3">
 
-  <section class="view" data-view="overview">
+  <section class="view hidden" data-view="overview">
     <div id="cards" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"></div>
     <div class="panel p-3">
       <div class="flex items-center justify-between gap-2 mb-2">
@@ -289,7 +289,7 @@
     </div>
   </section>
 
-  <section class="view panel p-3 hidden" data-view="add"><div id="praAddHost"></div></section>
+  <section class="view panel p-3" data-view="add"><div id="praAddHost"></div></section>
 
   <div id="status" class="text-center lbl no-print"></div>
 </main>
@@ -344,7 +344,7 @@
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?usp=sharing';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
+const SHEET_URL = '';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
 (() => { const a = document.getElementById('btnSheet'); if (a && SHEET_URL) { a.href = SHEET_URL; a.style.display = ''; } })();
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
@@ -481,7 +481,7 @@ const t = k => I18N[lang][k] || k;
 const loc = () => lang === 'zh' ? 'zh-CN' : lang === 'th' ? 'th-TH-u-ca-gregory' : 'en-GB';   // Thai: Christian-era years
 
 /* ================== STATE ================== */
-let DATA = [], NOMACH = [], HISTORY = [], dtChartInst = null, dtChart2Inst = null, chart = null, generatedAt = null, tab = 'overview';
+let DATA = [], NOMACH = [], HISTORY = [], dtChartInst = null, dtChart2Inst = null, chart = null, generatedAt = null, tab = 'add';   // opens on the Add data form
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const mName = r => (lang === 'zh' && r.machineCn) ? r.machineCn : r.machineEn;
@@ -1782,6 +1782,7 @@ function demoData() {
   const other = base.filter(r => r.machineRaw === 'ISO-LQ-(1.0)').slice(0, 2).map(r => Object.assign({}, r, { factory: 'Ayutthaya', machineKey: r.machineKey.replace(/^Pinewave/, 'Ayutthaya') }));   // same model, another factory
   return base.concat(more, other).map(r => Object.assign(r, DEMO_KW[r.machineRaw] || {}));
 }
+if (typeof PRA !== 'undefined') PRA.mount();   // show the form immediately, before the data has loaded (lists fill in as data arrives)
 load();
 </script>
 </body>
