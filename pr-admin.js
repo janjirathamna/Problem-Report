@@ -64,6 +64,7 @@ const PRA = (() => {
   .kebab{padding:3px 8px !important;font-size:15px !important;line-height:1 !important}`;
   st.textContent += `\n.pra-inline .pra-body{max-height:none;padding:12px 0} .pra-inline .pra-foot{padding:10px 0;border-top:1px solid var(--line)}`;
   st.textContent += `\n#praDup{width:min(900px,96vw);max-height:92vh;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text)} #praDup::backdrop{background:rgba(0,0,0,.55)} #praDup td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top} #praDup select{font-size:12px;padding:5px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text)}`;
+  st.textContent += `\n.pra-grid.t3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))} .pra-grid.t3 .pra-dt select{width:60px} .pra-grid.sm{grid-template-columns:repeat(auto-fit,minmax(130px,200px))} .pra-f input[readonly]{opacity:.7;cursor:not-allowed}`;
   document.head.appendChild(st);
 
   
@@ -172,22 +173,23 @@ const PRA = (() => {
       if (type === 'dt') { const op = n => '<option value=""></option>' + Array.from({ length: n }, (_, i) => `<option>${p2(i)}</option>`).join('');
         return `<div class="pra-f${wide ? ' wide' : ''}"><label for="pra_${key}_d">${T(id)}</label><div class="pra-dt"><input type="date" id="pra_${key}_d"><select id="pra_${key}_h">${op(24)}</select><span>:</span><select id="pra_${key}_m">${op(60)}</select></div></div>`; }
       const lab = `<label for="pra_${key}">${T(id)}</label>`;
-      const ctl = type === 'area' ? `<textarea id="pra_${key}" rows="2" autocomplete="off"></textarea>` : `<input id="pra_${key}" ${type === 'dt' ? 'type="datetime-local"' : type === 'num' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} autocomplete="off" ${id === 'failRate' ? 'readonly' : ''}>`;
+      const ctl = type === 'area' ? `<textarea id="pra_${key}" rows="2" autocomplete="off"></textarea>` : `<input id="pra_${key}" ${type === 'dt' ? 'type="datetime-local"' : type === 'num' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} autocomplete="off" ${id === 'failRate' || id === 'minutes' ? 'readonly' : ''}>`;
       return `<div class="pra-f${wide ? ' wide' : ''}">${lab}${ctl}${(id === 'issue' || id === 'solution' || id === 'minutes') ? `<div class="lbl" id="pra_${id}_t" style="margin-top:2px"></div>` : ''}</div>`;
     };
     d.innerHTML = `${host ? '' : `<div class="pra-head"><span>${editing ? T('edit') : T('add')}</span><button class="btn" id="pra_x">✕</button></div>`}<div class="pra-body">
-      <div class="pra-sec">${T('secWhen')}</div><div class="pra-grid">${f('factory', 'text')}${f('time', 'dt', 0, 'timestamp')}${f('shift', 'text')}${f('station', 'text')}</div>
+      <div class="pra-sec">${T('secWhen')}</div><div class="pra-grid sm">${f('factory', 'text')}${f('shift', 'text')}${f('station', 'text')}</div>
       <div class="pra-sec">${T('secMachine')}</div><div class="pra-grid">${f('machine', 'text')}${f('machineNo', 'text')}${f('product', 'text')}${f('issueType', 'text')}</div>
       <div class="pra-sec">${T('secIssue')}</div><div class="pra-grid">${f('issue', 'area', 1)}${f('solution', 'area', 1)}</div>
-      <div class="pra-sec">${T('secRepair')}</div><div class="pra-grid">${f('repairStart', 'dt')}${f('recoveryEnd', 'dt')}${f('minutes', 'num')}${f('qty', 'num')}${f('failRate', 'text')}</div>
+      <div class="pra-sec">${T('secRepair')}</div><div class="pra-grid t3">${f('time', 'dt', 0, 'timestamp')}${f('repairStart', 'dt')}${f('recoveryEnd', 'dt')}</div><div class="pra-grid sm" style="margin-top:8px">${f('minutes', 'num')}${f('qty', 'num')}${f('failRate', 'text')}</div>
       <div class="pra-sec">${T('secPeople')}</div><div class="pra-grid">${f('leader', 'text')}${f('technician', 'text')}${f('remark', 'area', 1)}</div></div>
       <div class="pra-foot"><button class="btn" id="pra_cancel">${host ? T('clear') : T('cancel')}</button>${editing || host ? '' : `<button class="btn" id="pra_saveNew">${T('saveNew')}</button>`}<button class="btn primary" id="pra_save">${T('save')}</button></div>`;
     if (host) { host.innerHTML = ''; host.appendChild(d); } else document.body.appendChild(d);
     const I = {}; ['factory', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'failRate', 'leader', 'technician', 'remark'].forEach(k => (I[k] = ['timestamp', 'repairStart', 'recoveryEnd'].includes(k) ? dtWrap(k) : q('pra_' + k)));
     const get = () => { const v = {}; Object.keys(I).forEach(k => (v[k] = (I[k].value || '').trim())); return v; };
     const set = v => Object.keys(v).forEach(k => { if (I[k]) I[k].value = v[k] ?? ''; });
+    const legacyMin = editing && !toForm(editing).recoveryEnd ? toForm(editing).minutes : '';   // old record with minutes but no recovery time: keep its minutes
     let manual = false;
-    const recalc = () => { if (!manual) I.minutes.value = autoMin(get()); const fr = calcFailRate_(I.minutes.value, I.qty.value); I.failRate.value = fr === '' ? '' : (fr * 100).toFixed(2) + ' %'; const w = q('pra_minutes_t'), neg = I.minutes.value !== '' && Number(I.minutes.value) < 0; w.textContent = neg ? '⚠ ' + T('negMin') : ''; w.style.color = neg ? '#ef4444' : ''; };
+    const recalc = () => { { const a = autoMin(get()); I.minutes.value = a !== '' ? a : (legacyMin && !I.recoveryEnd.value ? legacyMin : ''); } /* minutes are locked: always calculated */ const fr = calcFailRate_(I.minutes.value, I.qty.value); I.failRate.value = fr === '' ? '' : (fr * 100).toFixed(2) + ' %'; const w = q('pra_minutes_t'), neg = I.minutes.value !== '' && Number(I.minutes.value) < 0; w.textContent = neg ? '⚠ ' + T('negMin') : ''; w.style.color = neg ? '#ef4444' : ''; };
     let tsTouched = !!editing;                                        // reported time still the default (= now) -> follows the repair start, so minutes are not negative
     const syncTs = () => { if (tsTouched) return; const b = I.repairStart.value || I.recoveryEnd.value; if (b && (!I.timestamp.value || I.timestamp.value > b)) I.timestamp.value = b; };
     const fac = () => I.factory.value.trim(), mach = () => all().filter(r => (!fac() || r.factory === fac()) && nk(r.machineRaw) === nk(I.machine.value));
@@ -200,8 +202,8 @@ const PRA = (() => {
     ['input', 'change'].forEach(ev => { I.issue.addEventListener(ev, refreshHints); I.solution.addEventListener(ev, refreshHints); });
     I.machine.addEventListener('change', () => { const m = mach().sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.product.value) I.product.value = m.product || ''; if (m && !I.machineNo.value) I.machineNo.value = m.machineNo || ''; });
     I.issue.addEventListener('change', () => { const m = all().filter(r => nk(r.issueRaw) === nk(I.issue.value) && r.solutionRaw).sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0]; if (m && !I.solution.value) I.solution.value = m.solutionRaw; });
-    ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.timestamp.addEventListener('input', () => { tsTouched = true; }); ['repairStart', 'recoveryEnd'].forEach(k => I[k].addEventListener('input', () => { syncTs(); recalc(); })); I.minutes.addEventListener('input', () => { manual = I.minutes.value !== ''; recalc(); });
-    if (editing) { const v = toForm(editing); set(v); manual = v.minutes !== ''; } else { I.timestamp.value = nowLocal(); I.factory.value = q('fFactory') && q('fFactory').value || ''; }
+    ['timestamp', 'recoveryEnd', 'qty'].forEach(k => I[k].addEventListener('input', recalc)); I.timestamp.addEventListener('input', () => { tsTouched = true; }); ['repairStart', 'recoveryEnd'].forEach(k => I[k].addEventListener('input', () => { syncTs(); recalc(); }));
+    if (editing) { const v = toForm(editing); set(v); } else { I.timestamp.value = nowLocal(); I.factory.value = q('fFactory') && q('fFactory').value || ''; }
     recalc(); refreshHints();
     const close = () => { if (host) { open(); return; } d.close(); d.remove(); };      // add tab: "close" = fresh empty form
     if (q('pra_x')) q('pra_x').onclick = close; q('pra_cancel').onclick = close;
