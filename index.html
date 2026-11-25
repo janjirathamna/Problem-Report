@@ -115,6 +115,8 @@
   }
 
 .dwarn td{background:#fff2b3!important;color:#222!important}.dwarn .lbl{color:#7a5a00!important}
+#tblRem tr.remgo{cursor:pointer} #tblRem tr.remgo:hover td{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+#tblLog tr.logflash td{animation:lgfl 2.6s ease-out} @keyframes lgfl{0%,55%{background:color-mix(in srgb,var(--accent) 38%,transparent)}100%{background:transparent}}
 </style>
 </head>
 <body>
@@ -344,7 +346,7 @@
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?gid=1565639877#gid=1565639877';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?gid=1012980436#gid=1012980436';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
 (() => { const a = document.getElementById('btnSheet'); if (a && SHEET_URL) { a.href = SHEET_URL; a.style.display = ''; } })();
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
@@ -352,7 +354,7 @@ const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': 
 
 /* ================== i18n ================== */
 const I18N = {
-  en: { logSelect:'☑ Select rows', logDone:'✕ Done', logAllBtn:'Select all', logNone:'Clear selection', logDelSel:'🗑 Delete selected', tabAdd:'＋ Add data', export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
+  en: { remGo:'Open in Issue Log (edit / delete)', logSelect:'☑ Select rows', logDone:'✕ Done', logAllBtn:'Select all', logNone:'Clear selection', logDelSel:'🗑 Delete selected', tabAdd:'＋ Add data', export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'Report form', rfBusy:'Building the picture…', rfFail:'Could not build the picture (try fewer rows)', rfCopy:'Copy image', rfDl:'Download PNG', rfCopied:'Image copied to clipboard', rfCopyFail:'Copy not allowed here – use Download PNG',
  anomTitle:'Data check – records with problems', anomNote:'Fix the record (✎), apply the suggested date (→), or confirm it if the value is really correct (✓).', anomShowOk:'Show confirmed', anomNone:'No problems found 👍',
  anomReason:'Reason', anomValue:'Values', anomEdit:'Edit', anomConfirm:'Confirm', anomUndo:'Undo confirm',
@@ -386,7 +388,7 @@ const I18N = {
     saveTitle:'Save as image', saveChart:'Chart only', saveBoth:'Chart + table', yes:'Yes', exit:'Exit', imgBusy:'Creating the image…', imgFail:'Could not create the image. Try CSV or PDF instead.', dlPng:'⇩ Download PNG',
     loading:'Loading data…', demo:'Demo data shown. Set GAS_URL in index.html to load your sheets.',
     error:'Could not load data: ', empty:'No records match the current filters.', updated:'Updated', total:'Total' },
-  zh: { logSelect:'☑ 选择多条', logDone:'✕ 完成', logAllBtn:'全选', logNone:'取消选择', logDelSel:'🗑 删除所选', tabAdd:'＋ 添加数据', export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
+  zh: { remGo:'在问题记录中打开（可修改/删除）', logSelect:'☑ 选择多条', logDone:'✕ 完成', logAllBtn:'全选', logNone:'取消选择', logDelSel:'🗑 删除所选', tabAdd:'＋ 添加数据', export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'报告表单', rfBusy:'正在生成图片…', rfFail:'无法生成图片（请减少行数）', rfCopy:'复制图片', rfDl:'下载 PNG', rfCopied:'图片已复制到剪贴板', rfCopyFail:'此处不允许复制 – 请下载 PNG',
  anomTitle:'数据检查 – 有问题的记录', anomNote:'请修改记录（✎）、采用建议日期（→），或在数值确实正确时确认（✓）。', anomShowOk:'显示已确认', anomNone:'未发现问题 👍',
  anomReason:'原因', anomValue:'数值', anomEdit:'修改', anomConfirm:'确认', anomUndo:'取消确认',
@@ -420,7 +422,7 @@ const I18N = {
     saveTitle:'保存为图片', saveChart:'仅图表', saveBoth:'图表 + 表格', yes:'是', exit:'退出', imgBusy:'正在生成图片…', imgFail:'无法生成图片，请改用 CSV 或 PDF。', dlPng:'⇩ 下载 PNG',
     loading:'数据加载中…', demo:'当前为演示数据。请在 index.html 中设置 GAS_URL 以加载表格数据。',
     error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' },
-  th:{ logSelect:'☑ เลือกหลายรายการ', logDone:'✕ เสร็จ', logAllBtn:'เลือกทั้งหมด', logNone:'ล้างที่เลือก', logDelSel:'🗑 ลบที่เลือก', tabAdd:'＋ เพิ่มข้อมูล', export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
+  th:{ remGo:'เปิดที่บันทึกปัญหา (แก้ไข/ลบได้)', logSelect:'☑ เลือกหลายรายการ', logDone:'✕ เสร็จ', logAllBtn:'เลือกทั้งหมด', logNone:'ล้างที่เลือก', logDelSel:'🗑 ลบที่เลือก', tabAdd:'＋ เพิ่มข้อมูล', export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'ฟอร์มรายงาน', rfBusy:'กำลังสร้างรูปภาพ…', rfFail:'สร้างรูปไม่ได้ (ลองลดจำนวนแถว)', rfCopy:'คัดลอกรูปภาพ', rfDl:'ดาวน์โหลดรูป (PNG)', rfCopied:'คัดลอกรูปไปคลิปบอร์ดแล้ว', rfCopyFail:'คัดลอกไม่ได้ที่นี่ – ใช้ดาวน์โหลด PNG แทน',
  anomTitle:'ตรวจข้อมูล – รายการที่มีปัญหา', anomNote:'แก้ไขรายการ (✎) ใช้วันที่ที่แนะนำ (→) หรือกดยืนยัน (✓) ถ้าค่าถูกต้องจริง', anomShowOk:'แสดงที่ยืนยันแล้ว', anomNone:'ไม่พบความผิดปกติ 👍',
  anomReason:'สาเหตุ', anomValue:'ค่า', anomEdit:'แก้ไข', anomConfirm:'ยืนยัน', anomUndo:'ยกเลิกยืนยัน',
@@ -1348,7 +1350,7 @@ function renderRemarks(rows) {
   const groups = new Map();
   rr.forEach(r => { (groups.get(r.machineKey) || groups.set(r.machineKey, []).get(r.machineKey)).push(r); });
   $('remCount').textContent = `${groups.size} ${t('modMachines')} · ${rr.length}`;
-  $('tblRem').tBodies[0].innerHTML = [...groups.values()].map((g, gi) => g.map((r, i) => `<tr class="align-top ${i === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}">` +
+  $('tblRem').tBodies[0].innerHTML = [...groups.values()].map((g, gi) => g.map((r, i) => `<tr class="align-top ${i === 0 ? 'grp' : ''} ${gi % 2 ? 'alt' : ''}${r.pk ? ' remgo' : ''}"${r.pk ? ` data-pk="${esc(r.pk)}" title="${esc(t('remGo'))}"` : ''}>` +
     (i === 0 ? `<td class="whitespace-nowrap" rowspan="${g.length}"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
       <td class="gname" rowspan="${g.length}">${esc(mName(r))}<div class="lbl" style="font-weight:400">${g.length}</div></td>` : '') +
     `<td class="whitespace-nowrap">${esc(dmy(r.timestamp))}</td><td>${esc(r.issueEn || r.issueRaw)}</td><td>${esc(r.remark)}</td></tr>`).join('')).join('')
@@ -1374,7 +1376,7 @@ function renderLog(rows) {
   const sub = v => (lang !== 'en' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
   const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
   const dwNote = r => r.dateWarn ? `<div class="lbl">⚠ ${esc(r.dateWarn)}</div>` : '';
-  $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}">${logSelMode ? `<td>${r.pk ? `<input type="checkbox" class="logck" data-pk="${esc(r.pk)}"${logSel.has(String(r.pk)) ? ' checked' : ''}>` : ''}</td>` : ''}
+  $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}" data-pk="${esc(r.pk ?? '')}">${logSelMode ? `<td>${r.pk ? `<input type="checkbox" class="logck" data-pk="${esc(r.pk)}"${logSel.has(String(r.pk)) ? ' checked' : ''}>` : ''}</td>` : ''}
     <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}${r.anomalies && r.anomalies.length && !r.confirmed ? ' <span title="' + esc(t('tabAnom')) + '">⚠</span>' : ''}${dwNote(r)}</td>
     <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
     <td>${esc(mName(r))}</td>
@@ -1763,6 +1765,12 @@ $('tblAnom').onclick = e => {
   if (b.dataset.act === 'edit') PRA.open(r); else if (b.dataset.act === 'cf') PRA.confirm(r, !r.confirmed); else if (b.dataset.act === 'fix') PRA.applyFix(r, r.anomalies[+b.dataset.ai]);
 };
 $('tblLog').addEventListener('click', e => { const b = e.target.closest('[data-kebab]'); if (!b) return; const r = byPk(b.dataset.kebab); if (r) PRA.menu(b, r); });
+function goLog(pk) {                                  // Remarks -> the same record in the Issue Log (⋮ there = edit / delete)
+  tab = 'log'; render();
+  const row = $('tblLog').querySelector(`tr[data-pk="${CSS.escape(String(pk))}"]`); if (!row) return;
+  row.scrollIntoView({ block: 'center', behavior: 'smooth' }); row.classList.add('logflash'); setTimeout(() => row.classList.remove('logflash'), 2800);
+}
+$('tblRem').addEventListener('click', e => { if (String(window.getSelection())) return; const tr = e.target.closest('tr[data-pk]'); if (tr) goLog(tr.dataset.pk); });
 $('logSelBtn').onclick = () => { logSelMode = !logSelMode; if (!logSelMode) logSel.clear(); renderLog(lastLogRows); };
 const setAllLog = on => { logSel.clear(); if (on) logShown.forEach(r => logSel.add(String(r.pk))); renderLog(lastLogRows); };
 $('logAllBtn').onclick = () => setAllLog(logSel.size !== logShown.length);
