@@ -20,7 +20,7 @@
   .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
   .tab{font-size:12px;padding:6px 12px;border-radius:6px;color:var(--muted);border:1px solid transparent}
   .tab.on{background:var(--panel2);color:var(--text);border-color:var(--line);font-weight:600}
-  .tab.addtab,.tab.addtab.on{margin-left:12px;padding:6px 18px;font-weight:700;color:#fff;border:2px solid #fff3;background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 0 0 0 #f59e0b99;animation:addp 2.2s infinite}
+  .tab.addtab,.tab.addtab.on{margin-right:12px;padding:6px 18px;font-weight:700;color:#fff;border:2px solid #fff3;background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 0 0 0 #f59e0b99;animation:addp 2.2s infinite}
   .tab.addtab:hover{filter:brightness(1.1)}.tab.addtab.on{animation:none;outline:2px solid var(--text);outline-offset:2px;box-shadow:0 2px 10px #ef444488}
   @keyframes addp{0%{box-shadow:0 0 0 0 #f59e0b99}70%{box-shadow:0 0 0 9px #f59e0b00}100%{box-shadow:0 0 0 0 #f59e0b00}}
   @media (prefers-reduced-motion:reduce){.tab.addtab{animation:none}}
@@ -139,6 +139,7 @@
   </div>
   <div class="max-w-7xl mx-auto px-3 py-1 overflow-x-auto">
     <nav class="flex gap-1 w-max">
+      <button class="tab addtab on" data-tab="add" data-i18n="tabAdd"></button>
       <button class="tab" data-tab="model" data-i18n="tabModel"></button>
       <button class="tab" data-tab="overview" data-i18n="tabOverview"></button>
       <button class="tab" data-tab="top" data-i18n="tabTop"></button>
@@ -147,7 +148,6 @@
       <button class="tab" data-tab="remarks" data-i18n="tabRemarks"></button>
       <button class="tab" data-tab="log" data-i18n="tabLog"></button>
       <button class="tab" data-tab="anom" data-i18n="tabAnom"></button>
-      <button class="tab addtab on" data-tab="add" data-i18n="tabAdd"></button>
     </nav>
   </div>
   <div class="tbar" style="display:none">
@@ -346,7 +346,7 @@
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?gid=1012980436#gid=1012980436';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?usp=sharing';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
 (() => { const a = document.getElementById('btnSheet'); if (a && SHEET_URL) { a.href = SHEET_URL; a.style.display = ''; } })();
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
