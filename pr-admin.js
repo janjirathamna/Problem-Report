@@ -5,35 +5,35 @@ const PRA = (() => {
   const TXT = {
     en: { add: 'Add data', edit: 'Edit data', del: 'Delete', confirm: 'Confirm (value is correct)', unconfirm: 'Remove confirmation', save: 'Save', saveNew: 'Save & add next', cancel: 'Cancel',
       pinTitle: 'Admin PIN', pinHint: 'Enter the admin PIN (asked once per browser session).', ok: 'OK', badPin: 'Wrong PIN', addNew: 'New value', saving: 'Saving…', saved: 'Saved',
-      sheetFail: 'Saved in Supabase, but the Google Sheet was NOT updated: ', delAsk: 'Delete this record? (also removed from the Google Sheet)', deleted: 'Deleted', confirmed: 'Confirmed',
+      sheetFail: 'Saved in Supabase, but the Google Sheet was NOT updated: ', delAsk: 'Delete this record? (removed from the web; kept in the Google Sheet with a red note)', deleted: 'Deleted', confirmed: 'Confirmed',
       need: 'Required: factory, date/time and machine or issue', badFactory: 'Factory must be one of: ', secWhen: 'When / where', secMachine: 'Machine', secIssue: 'Issue & solution', secRepair: 'Repair',
       secPeople: 'People', factory: 'Factory', time: 'Reported time 报修时间', shift: 'Shift 班别', station: 'Station 站别', machine: 'Machine name', machineNo: 'Machine no.', product: 'Model 机种',
       issueType: 'Issue point 设备问题点', issue: 'Issue', solution: 'Solution', repairStart: 'Repair start 维修时间', recoveryEnd: 'Recovery 复机时间', minutes: 'Repair minutes 维修总时间(min)',
       qty: 'Qty 设备数量', failRate: 'Fail rate 设备故障率 (auto)', leader: 'Leader 领班确认', technician: 'Technician 维修人员', remark: 'Remark 备注', fixed: 'Fixed', negMin: 'Recovery time is before the reported time (minutes would be negative) – check the dates / times',
       viaForm: 'Fill in a form', viaFile: 'Import a file (.xlsx / .csv)', impTitle: 'Import data from file', impPick: 'File (.xlsx, .xls, .csv)', impSheet: 'Sheet', impHdr: 'Header row no.', impDateOrder: 'Order of text dates',
-      impDefFactory: 'Factory (if not in file)', impMap: 'Match file columns to fields', impMapHint: 'Guessed from the column names – change anything that is wrong.', impNone: '— not in file —', impSkipDup: 'Skip rows already in the system',
+      impDefFactory: 'Factory (if not in file)', impMap: 'Match file columns to fields', impMapHint: 'Guessed from the column names – change anything that is wrong.', impNone: '— not in file —', impSkipDup: 'Check duplicates (identical → overwrite, 1 column differs → review first)',
       impPreview: 'Preview', impReady: 'ready to import', impDup: 'duplicates skipped', impErr: 'with errors', impBadDate: 'Date/time not recognised', impStart: 'Import', impBusy: 'Importing', impDone: 'Imported', impFailed: 'failed',
-      impRow: 'Row', impAutoTag: 'auto', impEditTag: 'edited', impMissing: 'Not matched yet: ', impSolMode: 'Issue & solution in the file', impSolSep: 'Separate columns', impSolComb: 'Both in one cell', impSplitBy: 'Split at', impSepAuto: 'Auto', impNl: 'New line', impCombHint: 'Text before the first separator = issue, the rest = solution.', impSwapped: 'Swapped with: ', impSolSame: '= same column as Issue', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)', viaPaste: 'Paste (copy a table)', impPaste: 'Paste the table here (copy from Excel / Google Sheets, include the header row)', clear: 'Clear', pasteHint: 'Copy cells in Excel or Google Sheets and paste here (Ctrl+V).', tabHint: 'Add data by: filling a form, pasting a table, or attaching a file.' },
+      impRow: 'Row', dupSame: 'Identical record found – the old one was overwritten', dupTitle: 'Possible duplicate – please review', dupHint: 'Same as an existing record except for 1 column. The old record may already have been checked or edited, so choose for each row.', dupDiff: 'Differs in', dupOld: 'Existing', dupNew: 'New', dupEmpty: '(empty)', dupOverwrite: 'Overwrite old', dupKeep: 'Keep old (skip)', dupAddNew: 'Add as new', dupAll: 'All:', dupKept: 'Kept the existing record – nothing saved', dupConfirm: 'Confirm', impNewN: 'new', impSame: 'identical (overwrite)', impReview: 'to review', impInFile: 'repeated in file (skipped)', impOver: 'overwritten', impKept: 'kept old', delAskN: 'Delete {n} records? They are removed from the web but stay in the Google Sheet with a red note.', delType: 'To confirm, type the number of records to delete: {n}', delCancel: 'Delete cancelled', deleting: 'Deleting…', delSheetFail: 'Deleted on the web, but the Google Sheet note was NOT added: ', delNote: 'หน้าเว็บลบข้อมูลนี้แล้ว', impAutoTag: 'auto', impEditTag: 'edited', impMissing: 'Not matched yet: ', impSolMode: 'Issue & solution in the file', impSolSep: 'Separate columns', impSolComb: 'Both in one cell', impSplitBy: 'Split at', impSepAuto: 'Auto', impNl: 'New line', impCombHint: 'Text before the first separator = issue, the rest = solution.', impSwapped: 'Swapped with: ', impSolSame: '= same column as Issue', impBadFile: 'Cannot read this file', fDate: 'Date 日期 (if separate from time)', viaPaste: 'Paste (copy a table)', impPaste: 'Paste the table here (copy from Excel / Google Sheets, include the header row)', clear: 'Clear', pasteHint: 'Copy cells in Excel or Google Sheets and paste here (Ctrl+V).', tabHint: 'Add data by: filling a form, pasting a table, or attaching a file.' },
     zh: { add: '新增数据', edit: '修改数据', del: '删除', confirm: '确认（数值无误）', unconfirm: '取消确认', save: '保存', saveNew: '保存并继续新增', cancel: '取消', pinTitle: '管理员 PIN', pinHint: '请输入管理员 PIN（每次浏览只需一次）。',
-      ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（同时从 Google 表格删除）', deleted: '已删除',
+      ok: '确定', badPin: 'PIN 错误', addNew: '新值', saving: '保存中…', saved: '已保存', sheetFail: '已保存到 Supabase，但 Google 表格未更新：', delAsk: '删除此记录？（网页中删除；Google 表格中保留并加红字备注）', deleted: '已删除',
       confirmed: '已确认', need: '必填：工厂、日期时间、设备或问题', badFactory: '工厂必须是：', secWhen: '时间 / 地点', secMachine: '设备', secIssue: '问题与解决方法', secRepair: '维修', secPeople: '人员',
       factory: '工厂', time: '报修时间', shift: '班别', station: '站别', machine: '设备名称', machineNo: '设备编号', product: '机种', issueType: '设备问题点', issue: '问题', solution: '解决方法',
       repairStart: '维修时间', recoveryEnd: '复机时间', minutes: '维修总时间(min)', qty: '设备数量', failRate: '设备故障率（自动）', leader: '领班确认', technician: '维修人员', remark: '备注', fixed: '已修正', negMin: '复机时间早于报修时间（分钟为负）– 请检查日期和时间',
       viaForm: '通过表单填写', viaFile: '导入文件 (.xlsx / .csv)', impTitle: '从文件导入数据', impPick: '文件 (.xlsx, .xls, .csv)', impSheet: '工作表', impHdr: '表头行号', impDateOrder: '文本日期顺序',
-      impDefFactory: '工厂（文件中没有时）', impMap: '将文件列与字段匹配', impMapHint: '已按列名自动匹配 — 如有错误请修改。', impNone: '— 文件中没有 —', impSkipDup: '跳过系统中已有的记录',
+      impDefFactory: '工厂（文件中没有时）', impMap: '将文件列与字段匹配', impMapHint: '已按列名自动匹配 — 如有错误请修改。', impNone: '— 文件中没有 —', impSkipDup: '检查重复（完全相同则覆盖；仅 1 列不同则先核对）',
       impPreview: '预览', impReady: '可导入', impDup: '重复已跳过', impErr: '有错误', impBadDate: '无法识别日期时间', impStart: '开始导入', impBusy: '导入中', impDone: '已导入', impFailed: '失败',
-      impRow: '行', impAutoTag: '自动', impEditTag: '已改', impMissing: '尚未匹配：', impSolMode: '文件中问题与解决办法的位置', impSolSep: '分开两列', impSolComb: '同一单元格', impSplitBy: '分隔符', impSepAuto: '自动', impNl: '换行', impCombHint: '第一个分隔符之前 = 问题，其余 = 解决办法。', impSwapped: '已互换：', impSolSame: '= 与「问题」同一列', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）', viaPaste: '粘贴（复制表格）', impPaste: '在此粘贴表格（从 Excel / Google 表格复制，含表头行）', clear: '清空', pasteHint: '在 Excel 或 Google 表格中复制单元格，然后粘贴到这里 (Ctrl+V)。', tabHint: '添加数据的方式：填写表单、粘贴表格或附加文件。' },
+      impRow: '行', dupSame: '发现完全相同的记录，已覆盖旧记录', dupTitle: '可能重复，请先核对', dupHint: '与已有记录只有 1 列不同。旧记录可能已被核对或修改，请逐条选择。', dupDiff: '不同的列', dupOld: '已有', dupNew: '新', dupEmpty: '（空）', dupOverwrite: '覆盖旧记录', dupKeep: '保留旧记录（跳过）', dupAddNew: '作为新记录添加', dupAll: '全部：', dupKept: '已保留旧记录，未保存', dupConfirm: '确认', impNewN: '新增', impSame: '完全相同（覆盖）', impReview: '待核对', impInFile: '文件内重复（跳过）', impOver: '已覆盖', impKept: '保留旧记录', delAskN: '删除 {n} 条记录？网页中将删除，Google 表格中保留并加红字备注。', delType: '请输入要删除的记录数以确认：{n}', delCancel: '已取消删除', deleting: '删除中…', delSheetFail: '网页已删除，但 Google 表格备注未添加：', delNote: 'หน้าเว็บลบข้อมูลนี้แล้ว', impAutoTag: '自动', impEditTag: '已改', impMissing: '尚未匹配：', impSolMode: '文件中问题与解决办法的位置', impSolSep: '分开两列', impSolComb: '同一单元格', impSplitBy: '分隔符', impSepAuto: '自动', impNl: '换行', impCombHint: '第一个分隔符之前 = 问题，其余 = 解决办法。', impSwapped: '已互换：', impSolSame: '= 与「问题」同一列', impBadFile: '无法读取此文件', fDate: '日期（与时间分开时）', viaPaste: '粘贴（复制表格）', impPaste: '在此粘贴表格（从 Excel / Google 表格复制，含表头行）', clear: '清空', pasteHint: '在 Excel 或 Google 表格中复制单元格，然后粘贴到这里 (Ctrl+V)。', tabHint: '添加数据的方式：填写表单、粘贴表格或附加文件。' },
     th: { add: 'เพิ่มข้อมูล', edit: 'แก้ไขข้อมูล', del: 'ลบ', confirm: 'ยืนยัน (ค่าถูกต้อง)', unconfirm: 'ยกเลิกการยืนยัน', save: 'บันทึก', saveNew: 'บันทึกแล้วเพิ่มรายการถัดไป', cancel: 'ยกเลิก', pinTitle: 'PIN แอดมิน',
       pinHint: 'ใส่ PIN แอดมิน (ถามครั้งเดียวต่อการเปิดเบราว์เซอร์)', ok: 'ตกลง', badPin: 'PIN ไม่ถูกต้อง', addNew: 'ค่าใหม่', saving: 'กำลังบันทึก…', saved: 'บันทึกแล้ว',
-      sheetFail: 'บันทึกใน Supabase แล้ว แต่ Google Sheet ยังไม่ถูกอัปเดต: ', delAsk: 'ลบรายการนี้? (จะลบออกจาก Google Sheet ด้วย)', deleted: 'ลบแล้ว', confirmed: 'ยืนยันแล้ว',
+      sheetFail: 'บันทึกใน Supabase แล้ว แต่ Google Sheet ยังไม่ถูกอัปเดต: ', delAsk: 'ลบรายการนี้? (ลบจากหน้าเว็บ แต่ในกูเกิ้ลชีทจะเก็บไว้และใส่หมายเหตุตัวแดง)', deleted: 'ลบแล้ว', confirmed: 'ยืนยันแล้ว',
       need: 'ต้องกรอก: โรงงาน วันเวลา และเครื่องหรือปัญหา', badFactory: 'โรงงานต้องเป็นหนึ่งใน: ', secWhen: 'เมื่อไร / ที่ไหน', secMachine: 'เครื่อง', secIssue: 'ปัญหาและวิธีแก้', secRepair: 'การซ่อม',
       secPeople: 'บุคลากร', factory: 'โรงงาน', time: 'เวลาแจ้งซ่อม 报修时间', shift: 'กะ 班别', station: 'กระบวนการ 站别', machine: 'ชื่อเครื่อง', machineNo: 'หมายเลขเครื่อง', product: 'โมดูล 机种',
       issueType: 'จุดปัญหา 设备问题点', issue: 'ปัญหา', solution: 'วิธีแก้', repairStart: 'เวลาซ่อม 维修时间', recoveryEnd: 'เวลาพักฟื้น 复机时间', minutes: 'เวลาซ่อม(นาที) 维修总时间',
       qty: 'จำนวนเครื่อง 设备数量', failRate: 'อัตราล้มเหลว 设备故障率 (อัตโนมัติ)', leader: 'หัวหน้างาน 领班确认', technician: 'ช่างเทคนิค 维修人员', remark: 'หมายเหตุ 备注', fixed: 'แก้ไขแล้ว', negMin: 'เวลาพักฟื้นอยู่ก่อนเวลาแจ้งซ่อม (นาทีติดลบ) – กรุณาตรวจสอบวันที่/เวลา',
       viaForm: 'กรอกผ่านฟอร์ม', viaFile: 'แนบไฟล์ (.xlsx / .csv)', impTitle: 'นำเข้าข้อมูลจากไฟล์', impPick: 'ไฟล์ (.xlsx, .xls, .csv)', impSheet: 'ชีต', impHdr: 'แถวหัวตารางที่', impDateOrder: 'ลำดับวันที่ (แบบข้อความ)',
-      impDefFactory: 'โรงงาน (ถ้าไฟล์ไม่มีคอลัมน์)', impMap: 'จับคู่คอลัมน์ในไฟล์กับฟิลด์', impMapHint: 'เดาจากชื่อคอลัมน์ให้อัตโนมัติ — แก้ที่ไม่ตรงได้', impNone: '— ไม่มีในไฟล์ —', impSkipDup: 'ข้ามรายการที่มีอยู่แล้วในระบบ',
+      impDefFactory: 'โรงงาน (ถ้าไฟล์ไม่มีคอลัมน์)', impMap: 'จับคู่คอลัมน์ในไฟล์กับฟิลด์', impMapHint: 'เดาจากชื่อคอลัมน์ให้อัตโนมัติ — แก้ที่ไม่ตรงได้', impNone: '— ไม่มีในไฟล์ —', impSkipDup: 'ตรวจข้อมูลซ้ำ (ซ้ำทุกคอลัมน์ → เขียนทับ, ต่างแค่ 1 คอลัมน์ → ให้รีวิวก่อน)',
       impPreview: 'ตัวอย่าง', impReady: 'พร้อมนำเข้า', impDup: 'ข้ามรายการซ้ำ', impErr: 'มีข้อผิดพลาด', impBadDate: 'อ่านวันที่/เวลาไม่ได้', impStart: 'นำเข้า', impBusy: 'กำลังนำเข้า', impDone: 'นำเข้าแล้ว', impFailed: 'ล้มเหลว',
-      impRow: 'แถว', impAutoTag: 'อัตโนมัติ', impEditTag: 'แก้แล้ว', impMissing: 'ยังจับคู่ไม่ได้: ', impSolMode: 'ปัญหา & วิธีแก้ ในไฟล์', impSolSep: 'แยกคอลัมน์', impSolComb: 'รวมอยู่ในเซลล์เดียว', impSplitBy: 'คั่นด้วย', impSepAuto: 'อัตโนมัติ', impNl: 'ขึ้นบรรทัดใหม่', impCombHint: 'ข้อความก่อนตัวคั่นแรก = ปัญหา ที่เหลือ = วิธีแก้', impSwapped: 'สลับกับ: ', impSolSame: '= คอลัมน์เดียวกับปัญหา', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)', viaPaste: 'ก๊อปวาง (คัดลอกตาราง)', impPaste: 'วางตารางที่นี่ (คัดลอกจาก Excel / Google Sheets พร้อมแถวหัวตาราง)', clear: 'ล้าง', pasteHint: 'คัดลอกเซลล์จาก Excel หรือ Google Sheets แล้ววางที่นี่ (Ctrl+V)', tabHint: 'เพิ่มข้อมูลได้ 3 แบบ: กรอกฟอร์ม, ก๊อปตารางมาวาง หรือแนบไฟล์' }
+      impRow: 'แถว', dupSame: 'พบข้อมูลซ้ำทุกคอลัมน์ — เขียนทับของเดิมแล้ว', dupTitle: 'อาจซ้ำ — กรุณาตรวจสอบก่อน', dupHint: 'เหมือนข้อมูลเดิมแต่ต่างกันแค่ 1 คอลัมน์ ข้อมูลเดิมอาจถูกตรวจสอบหรือแก้ไขแล้ว กรุณาเลือกทีละรายการ', dupDiff: 'ต่างกันที่', dupOld: 'ของเดิม', dupNew: 'ใหม่', dupEmpty: '(ว่าง)', dupOverwrite: 'เขียนทับของเดิม', dupKeep: 'เก็บของเดิม (ข้าม)', dupAddNew: 'เพิ่มเป็นรายการใหม่', dupAll: 'ทั้งหมด:', dupKept: 'เก็บของเดิมไว้ — ไม่ได้บันทึก', dupConfirm: 'ยืนยัน', impNewN: 'ใหม่', impSame: 'ซ้ำทุกคอลัมน์ (เขียนทับ)', impReview: 'รอตรวจสอบ', impInFile: 'ซ้ำในไฟล์ (ข้าม)', impOver: 'เขียนทับ', impKept: 'เก็บของเดิม', delAskN: 'ลบ {n} รายการ? จะลบจากหน้าเว็บ แต่ในกูเกิ้ลชีทจะเก็บไว้และใส่หมายเหตุตัวแดง', delType: 'พิมพ์จำนวนรายการที่จะลบเพื่อยืนยัน: {n}', delCancel: 'ยกเลิกการลบ', deleting: 'กำลังลบ…', delSheetFail: 'ลบจากหน้าเว็บแล้ว แต่ยังไม่ได้ใส่หมายเหตุใน Google Sheet: ', delNote: 'หน้าเว็บลบข้อมูลนี้แล้ว', impAutoTag: 'อัตโนมัติ', impEditTag: 'แก้แล้ว', impMissing: 'ยังจับคู่ไม่ได้: ', impSolMode: 'ปัญหา & วิธีแก้ ในไฟล์', impSolSep: 'แยกคอลัมน์', impSolComb: 'รวมอยู่ในเซลล์เดียว', impSplitBy: 'คั่นด้วย', impSepAuto: 'อัตโนมัติ', impNl: 'ขึ้นบรรทัดใหม่', impCombHint: 'ข้อความก่อนตัวคั่นแรก = ปัญหา ที่เหลือ = วิธีแก้', impSwapped: 'สลับกับ: ', impSolSame: '= คอลัมน์เดียวกับปัญหา', impBadFile: 'อ่านไฟล์นี้ไม่ได้', fDate: 'วันที่ 日期 (ถ้าแยกจากเวลา)', viaPaste: 'ก๊อปวาง (คัดลอกตาราง)', impPaste: 'วางตารางที่นี่ (คัดลอกจาก Excel / Google Sheets พร้อมแถวหัวตาราง)', clear: 'ล้าง', pasteHint: 'คัดลอกเซลล์จาก Excel หรือ Google Sheets แล้ววางที่นี่ (Ctrl+V)', tabHint: 'เพิ่มข้อมูลได้ 3 แบบ: กรอกฟอร์ม, ก๊อปตารางมาวาง หรือแนบไฟล์' }
   };
   const T = k => ((TXT[lang] || TXT.en)[k]) || TXT.en[k] || k;
   const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -63,6 +63,7 @@ const PRA = (() => {
   .pra-toast.err{background:#d93025;color:#fff}
   .kebab{padding:3px 8px !important;font-size:15px !important;line-height:1 !important}`;
   st.textContent += `\n.pra-inline .pra-body{max-height:none;padding:12px 0} .pra-inline .pra-foot{padding:10px 0;border-top:1px solid var(--line)}`;
+  st.textContent += `\n#praDup{width:min(900px,96vw);max-height:92vh;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text)} #praDup::backdrop{background:rgba(0,0,0,.55)} #praDup td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top} #praDup select{font-size:12px;padding:5px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--text)}`;
   document.head.appendChild(st);
 
   
@@ -126,6 +127,11 @@ const PRA = (() => {
     if (!v.factory || !v.timestamp || !(v.machine || v.issue)) { toast(T('need'), true); return false; }
     if (!FACTORIES.includes(v.factory)) { toast(T('badFactory') + FACTORIES.join(', '), true); return false; }
     if (v.minutes !== '' && Number(v.minutes) < 0) { toast(T('negMin'), true); return false; }
+    if (!editing) {                                                  // new record: identical -> overwrite the old one; 1 column differs -> review first
+      const hit = dupFind(dupIndex(), v);
+      if (hit && hit.kind === 'same') { editing = hit.row; toast(T('dupSame')); }
+      else if (hit) { const ch = await reviewDlg([{ v, hit }]); if (!ch) return false; if (ch[0] === 'keep') { toast(T('dupKept')); return false; } if (ch[0] === 'overwrite') editing = hit.row; }
+    }
     const pin = await ensurePin(); if (!pin) return false;
     toast(T('saving'));
     let r; try { r = await saveOne(pin, v, editing); } catch (e) { toast(e.message, true); return false; }
@@ -207,13 +213,29 @@ const PRA = (() => {
   }
 
   /* ---------- delete / confirm / quick fix / row menu ---------- */
-  async function del(r) {
-    if (!confirm(T('delAsk') + '\n\n' + r.factory + ' · ' + (r.timestamp || '').replace('T', ' ').slice(0, 16) + ' · ' + r.machineEn)) return;
-    const pin = await ensurePin(); if (!pin) return;
-    try { await rpc('pr_delete_log', { p_pin: pin, p_id: Number(r.pk) }); } catch (e) { toast(e.message, true); return; }
-    if (GAS_URL) { try { await gas({ action: 'delete', pin, pk: r.pk, factory: r.factory, prev: prevOf(r) }); } catch (e) { toast(T('sheetFail') + e.message, true); await load(); return; } }
-    toast(T('deleted')); await load();
+  async function delMany(rows) {                                   // web/Supabase: removed. Google Sheet: row stays, a red note is written instead ('markDeleted')
+    rows = rows.filter(r => r.pk); const n = rows.length; if (!n) return false;
+    const r0 = rows[0], head = n === 1 ? T('delAsk') + '\n\n' + r0.factory + ' · ' + (r0.timestamp || '').replace('T', ' ').slice(0, 16) + ' · ' + r0.machineEn : T('delAskN').replace('{n}', n);
+    if (!confirm(head)) return false;
+    if (n >= 20 && String(prompt(T('delType').replace('{n}', n)) || '').trim() !== String(n)) { toast(T('delCancel'), true); return false; }
+    const pin = await ensurePin(); if (!pin) return false;
+    toast(T('deleting'));
+    const todo = rows.slice(), done = []; let fail = 0, stop = false;
+    const worker = async () => { while (todo.length && !stop) { const r = todo.shift(); try { await rpc('pr_delete_log', { p_pin: pin, p_id: Number(r.pk) }); done.push(r); } catch (e) { fail++; if (e.message === T('badPin')) { stop = true; toast(e.message, true); } } } };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    let gasFail = 0, gasMsg = '';
+    if (GAS_URL && done.length) {
+      const note = T('delNote') + ' (' + nowLocal().replace('T', ' ') + ')';
+      for (let i = 0; i < done.length; i += 40) {
+        try { await gas({ action: 'markDeleted', pin, note, items: done.slice(i, i + 40).map(r => ({ pk: r.pk, factory: r.factory, prev: prevOf(r) })) }); }
+        catch (e) { gasFail += Math.min(40, done.length - i); gasMsg = e.message; }
+      }
+    }
+    toast(`${T('deleted')} ${done.length}` + (fail ? ` · ${T('impFailed')} ${fail}` : ''), !!fail);
+    if (gasFail) toast(T('delSheetFail') + gasMsg, true);
+    await load(); return done.length > 0;
   }
+  const del = r => delMany([r]);
   async function confirmRow(r, val) {
     const pin = await ensurePin(); if (!pin) return;
     try { await rpc('pr_confirm_log', { p_pin: pin, p_id: Number(r.pk), p_val: val !== false }); } catch (e) { toast(e.message, true); return; }
@@ -273,7 +295,6 @@ const PRA = (() => {
       let t = String(x).trim(); if (o.mdy) t = t.replace(/^(\d{1,2})([\/.\-])(\d{1,2})([\/.\-])(\d{2,4})/, '$3$2$1$4$5');
       const r = toLocal_(t); return r ? r.slice(0, 16) : '';
     }, tOnly = x => { const m = /^\s*(\d{1,2})[:.](\d{2})/.exec(String(x ?? '')); return m ? p2(+m[1]) + ':' + m[2] : ''; };
-    const have = new Set(all().map(r => [r.factory, (r.timestamp || '').slice(0, 16), nk(r.machineRaw), digits_(r.machineNo), nk(r.issueRaw)].join('|')));
     const good = [], errs = []; let dup = 0;
     grid.slice(hdr).forEach((r, i) => {
       if (!r.some(x => String(x).trim() !== '')) return;
@@ -291,7 +312,6 @@ const PRA = (() => {
       let why = '';
       if (!ts) why = T('impBadDate'); else if (!v.machine && !v.issue) why = T('need'); else if (!FACTORIES.includes(factory)) why = T('badFactory') + FACTORIES.join(', '); else if (v.minutes !== '' && Number(v.minutes) < 0) why = T('negMin');
       if (why) { errs.push(`${T('impRow')} ${rowNo}: ${why}`); return; }
-      if (o.skipDup && have.has([v.factory, ts, nk(v.machine), digits_(v.machineNo), nk(v.issue)].join('|'))) { dup++; return; }
       good.push({ v, rowNo });
     });
     return { good, errs, dup };
@@ -330,6 +350,46 @@ const PRA = (() => {
     if (m.factory < 0) { const c = pick(v => v.filter(x => FACTORIES.some(f => nk(f) === nk(x))).length / v.length >= 0.6); if (c >= 0) m.factory = c; }
     if (m.timestamp < 0 && m.date < 0) { const c = pick(v => v.filter(x => /\d[\/\-.:]\d/.test(x) && toLocal_(x)).length / v.length >= 0.7); if (c >= 0) m.timestamp = c; }
   };
+  /* ---------- duplicates: identical in every column -> overwrite; differs in exactly 1 column -> review first ---------- */
+  const DUPCOLS = ['factory', 'timestamp', 'shift', 'station', 'machine', 'machineNo', 'product', 'issueType', 'issue', 'solution', 'repairStart', 'recoveryEnd', 'minutes', 'qty', 'leader', 'technician', 'remark'];
+  const TSCOL = ['timestamp', 'repairStart', 'recoveryEnd'];
+  const dnorm = (c, x) => { x = String(x ?? '').trim(); if (TSCOL.includes(c)) return iso16(x); if (c === 'minutes' || c === 'qty') return (x === '' || isNaN(Number(x))) ? x : String(Number(x)); return nk(x).replace(/\s+/g, ' '); };
+  const dvals = v => DUPCOLS.map(c => dnorm(c, v[c]));
+  const SEP = '\u0001', without = (a, i) => a.map((x, j) => (j === i ? '' : x)).join(SEP);
+  function dupIndex() {                                              // built once per save / import: full-row key + one key per "all columns except i"
+    const full = new Map(), part = DUPCOLS.map(() => new Map());
+    all().forEach(r => { if (!r.pk) return; const a = dvals(toForm(r)), k = a.join(SEP); if (!full.has(k)) full.set(k, r); a.forEach((_, i) => { const pk = without(a, i); if (!part[i].has(pk)) part[i].set(pk, r); }); });
+    return { full, part };
+  }
+  function dupFind(idx, v) {                                         // -> { kind:'same'|'one', row, col } or null
+    const a = dvals(v), same = idx.full.get(a.join(SEP)); if (same) return { kind: 'same', row: same };
+    for (let i = 0; i < a.length; i++) { const r = idx.part[i].get(without(a, i)); if (r) return { kind: 'one', row: r, col: DUPCOLS[i] }; }
+    return null;
+  }
+  function classify(good) {                                          // import plan: new | same (overwrite) | one (review) | skip (repeated inside the file)
+    const idx = dupIndex(), seen = new Set();
+    return good.map(g => { const k = dvals(g.v).join(SEP); if (seen.has(k)) return { ...g, kind: 'skip' }; seen.add(k); const hit = dupFind(idx, g.v); return hit ? { ...g, kind: hit.kind, hit } : { ...g, kind: 'new' }; });
+  }
+  function reviewDlg(items) {                                        // -> Promise<['keep'|'overwrite'|'new', ...] | null (cancelled)>
+    return new Promise(res => {
+      const d = document.createElement('dialog'); d.id = 'praDup';
+      const lab = c => T(c === 'timestamp' ? 'time' : c), show = (c, x) => { x = String(x ?? '').trim(); return x === '' ? `<i style="opacity:.6">${T('dupEmpty')}</i>` : E(TSCOL.includes(c) ? x.replace('T', ' ') : x); };
+      const opt = [['keep', T('dupKeep')], ['overwrite', T('dupOverwrite')], ['new', T('dupAddNew')]];
+      d.innerHTML = `<div class="pra-head"><span>⚠ ${T('dupTitle')} (${items.length})</span></div><div class="pra-body"><div class="lbl" style="margin-bottom:8px">${T('dupHint')}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><span class="lbl">${T('dupAll')}</span>${opt.map(([k, l]) => `<button class="btn" data-all="${k}">${E(l)}</button>`).join('')}</div>
+        <table class="w-full" style="font-size:12px">${items.map((it, i) => { const c = it.hit.col, o = toForm(it.hit.row)[c];
+          return `<tr><td>${it.label ? `<b>${E(it.label)}</b> · ` : ''}${E(it.v.factory)} · ${E((it.v.timestamp || '').replace('T', ' '))} · ${E(it.v.machine)} · ${E((it.v.issue || '').slice(0, 60))}<div class="lbl">${T('dupDiff')}: <b>${E(lab(c))}</b></div></td>
+          <td>${T('dupOld')}: ${show(c, o)}<br>${T('dupNew')}: <b style="color:var(--accent)">${show(c, it.v[c])}</b></td>
+          <td><select data-i="${i}">${opt.map(([k, l]) => `<option value="${k}">${E(l)}</option>`).join('')}</select></td></tr>`; }).join('')}</table></div>
+        <div class="pra-foot"><button class="btn" data-x="0">${T('cancel')}</button><button class="btn primary" data-x="1">${T('dupConfirm')}</button></div>`;
+      document.body.appendChild(d); let done = false;
+      const fin = v => { if (done) return; done = true; d.close(); d.remove(); res(v); };
+      d.querySelectorAll('[data-all]').forEach(b => (b.onclick = () => d.querySelectorAll('select[data-i]').forEach(x => (x.value = b.dataset.all))));
+      d.querySelector('[data-x="0"]').onclick = () => fin(null);
+      d.querySelector('[data-x="1"]').onclick = () => fin([...d.querySelectorAll('select[data-i]')].map(x => x.value));
+      d.addEventListener('cancel', () => fin(null)); d.showModal();
+    });
+  }
   function importDlg(mode) {
     const isPaste = mode === 'paste', host = q('praAddImp'); if (!host) return;
     const d = document.createElement('div'); d.className = 'pra-inline';
@@ -361,7 +421,7 @@ const PRA = (() => {
     const comb = () => q('imp_sm_comb').checked;
     const opts = () => ({ mdy: q('imp_ord').value === 'mdy', factory: q('imp_fac').value, skipDup: q('imp_dup').checked, comb: comb(), sep: q('imp_sep').value });
     const labelOf = f => (f === 'timestamp' ? T('time') : f === 'date' ? T('fDate') : T(f));
-    let curMap = {}, autoSet = new Set();                               // curMap: field -> column index; autoSet: fields matched automatically (and not changed since)
+    let curMap = {}, autoSet = new Set(), plan = [];                               // curMap: field -> column index; autoSet: fields matched automatically (and not changed since)
     const mapNow = () => { const m = Object.assign({}, curMap); if (comb()) m.solution = -1; return m; };
     const sampleOf = c => { if (c < 0) return ''; for (const r of grid.slice(hdrIdx() + 1)) { const x = String(r[c] ?? '').replace(/\s+/g, ' ').trim(); if (x) return x.slice(0, 40); } return ''; };
     const paint = () => {                                               // selects, auto/edited tags and a sample value under each field
@@ -374,9 +434,10 @@ const PRA = (() => {
     };
     const missing = () => { const m = mapNow(), o = opts(), out = []; if (m.timestamp < 0 && m.date < 0) out.push(T('time')); if (m.factory < 0 && !o.factory) out.push(T('factory')); if (m.machine < 0 && m.issue < 0) out.push(T('machine') + ' / ' + T('issue')); return out; };
     const preview = () => {
-      const r = impRows(grid, hdrIdx() + 1, mapNow(), opts()); good = r.good;
+      const r = impRows(grid, hdrIdx() + 1, mapNow(), opts()); good = r.good; plan = opts().skipDup ? classify(r.good) : r.good.map(g => ({ ...g, kind: 'new' }));
       const miss = missing(); q('imp_warn').textContent = miss.length ? '⚠ ' + T('impMissing') + miss.join(', ') : '';
-      q('imp_sum').textContent = `${r.good.length} ${T('impReady')} · ${r.dup} ${T('impDup')} · ${r.errs.length} ${T('impErr')}`;
+      const cnt = k => plan.filter(p => p.kind === k).length;
+      q('imp_sum').textContent = `${cnt('new')} ${T('impNewN')} · ${cnt('same')} ${T('impSame')} · ${cnt('one')} ${T('impReview')}` + (cnt('skip') ? ` · ${cnt('skip')} ${T('impInFile')}` : '') + ` · ${r.errs.length} ${T('impErr')}`;
       q('imp_tbl').innerHTML = '<tr>' + ['factory', 'time', 'machine', 'issue', 'solution', 'minutes', 'qty'].map(k => `<th style="position:static;padding:4px 8px">${T(k)}</th>`).join('') + '</tr>' +
         r.good.slice(0, 6).map(({ v }) => `<tr>${[v.factory, v.timestamp.replace('T', ' '), (v.machine + ' ' + v.machineNo).trim(), v.issue.slice(0, 50), v.solution.slice(0, 50), v.minutes, v.qty].map(x => `<td style="padding:4px 8px">${E(x)}</td>`).join('')}</tr>`).join('');
       q('imp_err').innerHTML = r.errs.slice(0, 30).map(E).join('<br>') + (r.errs.length > 30 ? '<br>…' : '');
@@ -410,14 +471,21 @@ const PRA = (() => {
     const close = () => { if (busy) return; importDlg(mode); };                // back to an empty import box
     q('imp_cancel').onclick = close;
     q('imp_go').onclick = async () => {
-      const pin = await ensurePin(); if (!pin || !good.length) return;
-      busy = true; q('imp_go').disabled = q('imp_cancel').disabled = true; let ok = 0, fail = 0, gasFail = 0; const errs = [];
-      for (let i = 0; i < good.length; i++) {
-        q('imp_prog').textContent = `${T('impBusy')} ${i + 1} / ${good.length}`;
-        try { const r = await saveOne(pin, good[i].v, null); ok++; if (r.gasErr) gasFail++; }
-        catch (e) { fail++; errs.push(`${T('impRow')} ${good[i].rowNo}: ${e.message}`); if (e.message === T('badPin')) break; }
+      if (!plan.length) return;
+      const rv = plan.filter(p => p.kind === 'one'), ch = new Map();
+      if (rv.length) { const c = await reviewDlg(rv.map(p => ({ v: p.v, hit: p.hit, label: `${T('impRow')} ${p.rowNo}` }))); if (!c) return; rv.forEach((p, i) => ch.set(p, c[i])); }
+      const pin = await ensurePin(); if (!pin) return;
+      busy = true; q('imp_go').disabled = q('imp_cancel').disabled = true; let ok = 0, fail = 0, gasFail = 0, ow = 0, kept = 0; const errs = [];
+      for (let i = 0; i < plan.length; i++) {
+        const p = plan[i]; q('imp_prog').textContent = `${T('impBusy')} ${i + 1} / ${plan.length}`;
+        let target = null;
+        if (p.kind === 'skip') continue;
+        if (p.kind === 'same') target = p.hit.row;
+        else if (p.kind === 'one') { const c = ch.get(p); if (c === 'keep') { kept++; continue; } if (c === 'overwrite') target = p.hit.row; }
+        try { const r = await saveOne(pin, p.v, target); ok++; if (target) ow++; if (r.gasErr) gasFail++; }
+        catch (e) { fail++; errs.push(`${T('impRow')} ${p.rowNo}: ${e.message}`); if (e.message === T('badPin')) break; }
       }
-      busy = false; toast(`${T('impDone')} ${ok}` + (fail ? ` · ${T('impFailed')} ${fail}` : '') + (gasFail ? ` · ${T('sheetFail')}${gasFail}` : ''), !!(fail || gasFail));
+      busy = false; toast(`${T('impDone')} ${ok}` + (ow ? ` · ${T('impOver')} ${ow}` : '') + (kept ? ` · ${T('impKept')} ${kept}` : '') + (fail ? ` · ${T('impFailed')} ${fail}` : '') + (gasFail ? ` · ${T('sheetFail')}${gasFail}` : ''), !!(fail || gasFail));
       await load(); if (fail) { q('imp_err').innerHTML = errs.slice(0, 30).map(E).join('<br>'); q('imp_prog').textContent = ''; q('imp_cancel').disabled = false; good = []; } else { q('imp_cancel').disabled = false; close(); }
     };
   }
@@ -447,5 +515,5 @@ const PRA = (() => {
     host.appendChild(d);
     setTimeout(() => d.remove(), err ? 7000 : 2400);
   };
-  return { open, menu, del, confirm: confirmRow, applyFix, mount };
+  return { open, menu, del, delMany, confirm: confirmRow, applyFix, mount };
 })();
