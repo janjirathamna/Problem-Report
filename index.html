@@ -265,11 +265,11 @@
 
   <section class="view panel p-3 hidden" data-view="log">
     <div class="flex items-center justify-between mb-2">
-      <div class="font-semibold" data-i18n="logTitle"></div><span id="logCount" class="lbl"></span>
+      <div class="flex items-center gap-2"><span class="font-semibold" data-i18n="logTitle"></span><span id="logCount" class="lbl"></span></div><div class="flex items-center gap-2 flex-wrap justify-end"><span id="logSelInfo" class="lbl"></span><button class="btn" id="logAllBtn" style="display:none"></button><button class="btn" id="logDelBtn" style="display:none;background:#d93025;border-color:#d93025;color:#fff;font-weight:600"></button><button class="btn" id="logSelBtn"></button></div>
     </div>
     <div class="scroll">
       <table class="w-full" id="tblLog">
-        <thead><tr><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="issue"></th><th data-i18n="solution"></th><th></th></tr></thead>
+        <thead><tr><th id="thSel" style="display:none;width:28px"><input type="checkbox" id="logAllCk" aria-label="select all"></th><th data-i18n="time"></th><th data-i18n="factory"></th><th data-i18n="machine"></th><th data-i18n="issue"></th><th data-i18n="solution"></th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -344,7 +344,7 @@
 <script>
 /* ================== CONFIG ================== */
 const APP_VERSION = 'v38-2026-11-20';
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?usp=sharing';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WzJHUFbjMDLKLfQ_uhiPR2o03y_cvBrWBEGtgKe2cTM/edit?gid=1565639877#gid=1565639877';   // <- paste the Google Sheet link here (backup copy to look at); empty = button stays hidden
 (() => { const a = document.getElementById('btnSheet'); if (a && SHEET_URL) { a.href = SHEET_URL; a.style.display = ''; } })();
 const MODEL_SORT_ASC = false;   // Model Summary tab: true = fewest -> most (as in the spec). false = most -> fewest   // shown under the title so you can tell which file is live
 const FACTORIES = ['Ayutthaya', 'Terahop 5000', 'Pinewave'];
@@ -352,7 +352,7 @@ const FCOLOR = { 'Ayutthaya': '#2dd4bf', 'Terahop 5000': '#f59e0b', 'Pinewave': 
 
 /* ================== i18n ================== */
 const I18N = {
-  en: { tabAdd:'＋ Add data', export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
+  en: { logSelect:'☑ Select rows', logDone:'✕ Done', logAllBtn:'Select all', logNone:'Clear selection', logDelSel:'🗑 Delete selected', tabAdd:'＋ Add data', export:'⇩ Export', today:'Today', tabAnom:'Data check', expTitle:'Export', expPng:'PNG image (chart / screen)', expForm:'Report form (table image)', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'Report form', rfBusy:'Building the picture…', rfFail:'Could not build the picture (try fewer rows)', rfCopy:'Copy image', rfDl:'Download PNG', rfCopied:'Image copied to clipboard', rfCopyFail:'Copy not allowed here – use Download PNG',
  anomTitle:'Data check – records with problems', anomNote:'Fix the record (✎), apply the suggested date (→), or confirm it if the value is really correct (✓).', anomShowOk:'Show confirmed', anomNone:'No problems found 👍',
  anomReason:'Reason', anomValue:'Values', anomEdit:'Edit', anomConfirm:'Confirm', anomUndo:'Undo confirm',
@@ -386,7 +386,7 @@ const I18N = {
     saveTitle:'Save as image', saveChart:'Chart only', saveBoth:'Chart + table', yes:'Yes', exit:'Exit', imgBusy:'Creating the image…', imgFail:'Could not create the image. Try CSV or PDF instead.', dlPng:'⇩ Download PNG',
     loading:'Loading data…', demo:'Demo data shown. Set GAS_URL in index.html to load your sheets.',
     error:'Could not load data: ', empty:'No records match the current filters.', updated:'Updated', total:'Total' },
-  zh: { tabAdd:'＋ 添加数据', export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
+  zh: { logSelect:'☑ 选择多条', logDone:'✕ 完成', logAllBtn:'全选', logNone:'取消选择', logDelSel:'🗑 删除所选', tabAdd:'＋ 添加数据', export:'⇩ 导出', today:'今天', tabAnom:'数据检查', expTitle:'导出', expPng:'PNG 图片（图表/画面）', expForm:'报告表单（表格图片）', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'报告表单', rfBusy:'正在生成图片…', rfFail:'无法生成图片（请减少行数）', rfCopy:'复制图片', rfDl:'下载 PNG', rfCopied:'图片已复制到剪贴板', rfCopyFail:'此处不允许复制 – 请下载 PNG',
  anomTitle:'数据检查 – 有问题的记录', anomNote:'请修改记录（✎）、采用建议日期（→），或在数值确实正确时确认（✓）。', anomShowOk:'显示已确认', anomNone:'未发现问题 👍',
  anomReason:'原因', anomValue:'数值', anomEdit:'修改', anomConfirm:'确认', anomUndo:'取消确认',
@@ -420,7 +420,7 @@ const I18N = {
     saveTitle:'保存为图片', saveChart:'仅图表', saveBoth:'图表 + 表格', yes:'是', exit:'退出', imgBusy:'正在生成图片…', imgFail:'无法生成图片，请改用 CSV 或 PDF。', dlPng:'⇩ 下载 PNG',
     loading:'数据加载中…', demo:'当前为演示数据。请在 index.html 中设置 GAS_URL 以加载表格数据。',
     error:'数据加载失败：', empty:'没有符合当前筛选条件的记录。', updated:'更新时间', total:'总计' },
-  th:{ tabAdd:'＋ เพิ่มข้อมูล', export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
+  th:{ logSelect:'☑ เลือกหลายรายการ', logDone:'✕ เสร็จ', logAllBtn:'เลือกทั้งหมด', logNone:'ล้างที่เลือก', logDelSel:'🗑 ลบที่เลือก', tabAdd:'＋ เพิ่มข้อมูล', export:'⇩ ส่งออก', today:'วันนี้', tabAnom:'ตรวจข้อมูล', expTitle:'ส่งออก', expPng:'รูป PNG (กราฟ/หน้าจอ)', expForm:'ฟอร์มรายงาน (รูปตาราง)', expCsv:'CSV', expPdf:'PDF',
  rfTitle:'ฟอร์มรายงาน', rfBusy:'กำลังสร้างรูปภาพ…', rfFail:'สร้างรูปไม่ได้ (ลองลดจำนวนแถว)', rfCopy:'คัดลอกรูปภาพ', rfDl:'ดาวน์โหลดรูป (PNG)', rfCopied:'คัดลอกรูปไปคลิปบอร์ดแล้ว', rfCopyFail:'คัดลอกไม่ได้ที่นี่ – ใช้ดาวน์โหลด PNG แทน',
  anomTitle:'ตรวจข้อมูล – รายการที่มีปัญหา', anomNote:'แก้ไขรายการ (✎) ใช้วันที่ที่แนะนำ (→) หรือกดยืนยัน (✓) ถ้าค่าถูกต้องจริง', anomShowOk:'แสดงที่ยืนยันแล้ว', anomNone:'ไม่พบความผิดปกติ 👍',
  anomReason:'สาเหตุ', anomValue:'ค่า', anomEdit:'แก้ไข', anomConfirm:'ยืนยัน', anomUndo:'ยกเลิกยืนยัน',
@@ -1361,23 +1361,37 @@ function pageTitle() {                               // heading used in saved im
 }
 const TABLE_ONLY = ['log', 'modules', 'remarks', 'anom'];     // pages that have a table but no chart
 
+let lastLogRows = [], logSelMode = false, logShown = []; const logSel = new Set();   // multi-select delete in the Issue Log
 function renderLog(rows) {
+  lastLogRows = rows;
   rows = [...rows].sort(byTimeAsc);                  // Issue Log: oldest -> newest
   const fl = rows.filter(r => r.dateWarn); rows = [...fl, ...rows.filter(r => !r.dateWarn)];   // dates waiting for a check: on top, light yellow
   $('logCount').textContent = `${rows.length} ${t('cases')}`;
+  logShown = rows.filter(r => r.pk); { const have = new Set(logShown.map(r => String(r.pk))); [...logSel].forEach(k => { if (!have.has(k)) logSel.delete(k); }); }
+  const cols = logSelMode ? 7 : 6; $('thSel').style.display = logSelMode ? '' : 'none';
   const DW = ({ th: ['⚠ ตรวจสอบวันที่ก่อนแก้ — ยังไม่ได้แก้ ยืนยันได้ในชีท (ตารางนี้ยังแสดงวันที่ตามที่เขียนไว้)', 'จะแก้เป็น'], zh: ['⚠ 请先核对日期 — 尚未修改，请在表格中确认（此处仍显示原始日期）', '将改为'], en: ['⚠ Check these dates before fixing — nothing changed yet, confirm in the sheet (this table still shows the date as written)', 'will become'] })[lang] || ['⚠ Check dates', 'will become'];
-  const banner = fl.length ? `<tr class="dwarn"><td colspan="6"><b>${DW[0]} (${fl.length})</b><ul style="margin:4px 0 0 18px;list-style:disc">${fl.map(r => (r.dateFix || []).map(x => `<li>${esc(mName(r))} · ${esc(x.f)}: ${esc(x.from)} → ${DW[1]} <b>${esc(x.to)}</b></li>`).join('')).join('')}</ul></td></tr>` : '';
+  const banner = fl.length ? `<tr class="dwarn"><td colspan="${cols}"><b>${DW[0]} (${fl.length})</b><ul style="margin:4px 0 0 18px;list-style:disc">${fl.map(r => (r.dateFix || []).map(x => `<li>${esc(mName(r))} · ${esc(x.f)}: ${esc(x.from)} → ${DW[1]} <b>${esc(x.to)}</b></li>`).join('')).join('')}</ul></td></tr>` : '';
   const sub = v => (lang !== 'en' && v) ? `<div class="lbl">${esc(v)}</div>` : '';
   const subI = r => sub(lang === 'th' ? r.issueTh : r.issueCn), subS = r => sub(lang === 'th' ? r.solutionTh : r.solutionCn);
   const dwNote = r => r.dateWarn ? `<div class="lbl">⚠ ${esc(r.dateWarn)}</div>` : '';
-  $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}">
+  $('tblLog').tBodies[0].innerHTML = banner + rows.map(r => `<tr class="align-top${r.dateWarn ? ' dwarn' : ''}">${logSelMode ? `<td>${r.pk ? `<input type="checkbox" class="logck" data-pk="${esc(r.pk)}"${logSel.has(String(r.pk)) ? ' checked' : ''}>` : ''}</td>` : ''}
     <td class="whitespace-nowrap">${esc((r.timestamp || '').replace('T', ' ').slice(0, 16))}${r.anomalies && r.anomalies.length && !r.confirmed ? ' <span title="' + esc(t('tabAnom')) + '">⚠</span>' : ''}${dwNote(r)}</td>
     <td class="whitespace-nowrap"><span class="dot" style="background:${FCOLOR[r.factory]}"></span>${esc(r.factory)}</td>
     <td>${esc(mName(r))}</td>
     <td>${esc(r.issueEn || r.issueRaw)}${subI(r)}</td>
     <td>${esc(r.solutionEn || r.solutionRaw)}${subS(r)}</td>
     <td class="whitespace-nowrap">${r.pk ? `<button class="btn kebab" data-kebab="${esc(r.pk)}" aria-label="Edit / Delete">⋮</button>` : ''}</td></tr>`).join('')
-    || `<tr><td colspan="6" class="text-center lbl">${t('empty')}</td></tr>`;
+    || `<tr><td colspan="${cols}" class="text-center lbl">${t('empty')}</td></tr>`;
+  updLogSel();
+}
+function updLogSel() {
+  const full = logShown.length > 0 && logSel.size === logShown.length;
+  $('logSelBtn').textContent = logSelMode ? t('logDone') : t('logSelect');
+  $('logAllBtn').style.display = $('logDelBtn').style.display = logSelMode ? '' : 'none';
+  $('logAllBtn').textContent = full ? t('logNone') : t('logAllBtn');
+  $('logDelBtn').textContent = `${t('logDelSel')} (${logSel.size})`; $('logDelBtn').disabled = !logSel.size; $('logDelBtn').style.opacity = logSel.size ? '' : '.45';
+  $('logSelInfo').textContent = logSelMode ? `${logSel.size} / ${logShown.length}` : '';
+  if ($('logAllCk')) $('logAllCk').checked = full;
 }
 
 /* ================== EXPORT ================== */
@@ -1749,6 +1763,13 @@ $('tblAnom').onclick = e => {
   if (b.dataset.act === 'edit') PRA.open(r); else if (b.dataset.act === 'cf') PRA.confirm(r, !r.confirmed); else if (b.dataset.act === 'fix') PRA.applyFix(r, r.anomalies[+b.dataset.ai]);
 };
 $('tblLog').addEventListener('click', e => { const b = e.target.closest('[data-kebab]'); if (!b) return; const r = byPk(b.dataset.kebab); if (r) PRA.menu(b, r); });
+$('logSelBtn').onclick = () => { logSelMode = !logSelMode; if (!logSelMode) logSel.clear(); renderLog(lastLogRows); };
+const setAllLog = on => { logSel.clear(); if (on) logShown.forEach(r => logSel.add(String(r.pk))); renderLog(lastLogRows); };
+$('logAllBtn').onclick = () => setAllLog(logSel.size !== logShown.length);
+$('logAllCk').onchange = e => setAllLog(e.target.checked);
+$('tblLog').addEventListener('change', e => { const c = e.target.closest('.logck'); if (!c) return; if (c.checked) logSel.add(c.dataset.pk); else logSel.delete(c.dataset.pk); updLogSel(); });
+$('logDelBtn').onclick = async () => { const rows = logShown.filter(r => logSel.has(String(r.pk))); if (rows.length && await PRA.delMany(rows)) { logSel.clear(); updLogSel(); } };
+updLogSel();
 window.addEventListener('beforeprint', () => { if (reportBuilt) { reportBuilt = false; return; } buildReport(); });   // Ctrl+P gets the same report
 
 /* ================== DEMO DATA (used only when GAS_URL is empty) ================== */
