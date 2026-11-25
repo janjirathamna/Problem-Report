@@ -226,9 +226,10 @@ const PRA = (() => {
     let gasFail = 0, gasMsg = '';
     if (GAS_URL && done.length) {
       const note = T('delNote') + ' (' + nowLocal().replace('T', ' ') + ')';
-      for (let i = 0; i < done.length; i += 40) {
-        try { await gas({ action: 'markDeleted', pin, note, items: done.slice(i, i + 40).map(r => ({ pk: r.pk, factory: r.factory, prev: prevOf(r) })) }); }
-        catch (e) { gasFail += Math.min(40, done.length - i); gasMsg = e.message; }
+      const byF = {}; done.forEach(r => (byF[r.factory] = byF[r.factory] || []).push(r));          // one request per factory sheet, factory also at top level like the other actions
+      for (const [factory, list] of Object.entries(byF)) for (let i = 0; i < list.length; i += 40) {
+        try { await gas({ action: 'markDeleted', pin, factory, note, items: list.slice(i, i + 40).map(r => ({ pk: r.pk, factory: r.factory, prev: prevOf(r) })) }); }
+        catch (e) { gasFail += Math.min(40, list.length - i); gasMsg = e.message; }
       }
     }
     toast(`${T('deleted')} ${done.length}` + (fail ? ` · ${T('impFailed')} ${fail}` : ''), !!fail);
